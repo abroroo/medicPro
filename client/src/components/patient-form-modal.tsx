@@ -117,7 +117,7 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-sm w-[calc(100vw-2rem)] mx-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Patient" : "Add New Patient"}
