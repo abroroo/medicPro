@@ -44,80 +44,58 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Users className="text-primary text-xl" />
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Today's Patients</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="stat-today-patients">
+        {/* Compact Stats Overview */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Activity className="w-5 h-5 mr-2" />
+              Today's Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 rounded-full bg-primary" />
+                <div>
+                  <p className="text-lg font-bold text-foreground" data-testid="stat-today-patients">
                     {(patientStats as any)?.today || 0}
                   </p>
+                  <p className="text-xs text-muted-foreground">Today's Patients</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center">
-                    <Clock className="text-secondary text-xl" />
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">In Queue</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="stat-queue-length">
+              
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <div>
+                  <p className="text-lg font-bold text-foreground" data-testid="stat-queue-length">
                     {(queueStats as any)?.waiting || 0}
                   </p>
+                  <p className="text-xs text-muted-foreground">In Queue</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="text-green-600 text-xl" />
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Completed</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="stat-completed">
+              
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 rounded-full bg-green-500" />
+                <div>
+                  <p className="text-lg font-bold text-foreground" data-testid="stat-completed">
                     {(queueStats as any)?.completed || 0}
                   </p>
+                  <p className="text-xs text-muted-foreground">Completed</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                    <Database className="text-amber-600 text-xl" />
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Total Patients</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="stat-total-patients">
+              
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-2 rounded-full bg-amber-500" />
+                <div>
+                  <p className="text-lg font-bold text-foreground" data-testid="stat-total-patients">
                     {(patientStats as any)?.total || 0}
                   </p>
+                  <p className="text-xs text-muted-foreground">Total Patients</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Quick Actions and Recent Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
