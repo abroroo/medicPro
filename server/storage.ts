@@ -240,6 +240,18 @@ export class DatabaseStorage implements IStorage {
       whereClause = and(whereClause, ilike(patients.name, `%${filters.patientName}%`)) || whereClause;
     }
     
+    if (filters?.dateFrom) {
+      const fromDate = new Date(filters.dateFrom);
+      whereClause = and(whereClause, gte(patients.createdAt, fromDate)) || whereClause;
+    }
+    
+    if (filters?.dateTo) {
+      const toDate = new Date(filters.dateTo);
+      // Add one day to include the entire 'to' date
+      toDate.setDate(toDate.getDate() + 1);
+      whereClause = and(whereClause, lt(patients.createdAt, toDate)) || whereClause;
+    }
+    
     return await db
       .select()
       .from(patients)

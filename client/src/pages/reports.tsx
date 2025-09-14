@@ -57,6 +57,14 @@ export default function Reports() {
     }));
   };
 
+  const handleResetFilters = () => {
+    setFilters({
+      dateFrom: "",
+      dateTo: "",
+      patientName: "",
+    });
+  };
+
   const handleExportCSV = () => {
     // Create CSV export URL with current filters
     const params = new URLSearchParams();
@@ -144,14 +152,12 @@ export default function Reports() {
               </div>
               <div className="flex items-end">
                 <Button 
+                  variant="outline"
                   className="w-full"
-                  onClick={() => {
-                    // Triggers query refetch with new filters
-                  }}
-                  data-testid="button-apply-filters"
+                  onClick={handleResetFilters}
+                  data-testid="button-reset-filters"
                 >
-                  <Filter className="w-4 h-4 mr-2" />
-                  Apply Filters
+                  Reset Filters
                 </Button>
               </div>
             </div>
