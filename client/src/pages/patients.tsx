@@ -117,44 +117,45 @@ export default function Patients() {
                 {searchQuery ? "No patients found matching your search." : "No patients registered yet."}
               </div>
             ) : isMobile ? (
-              // Mobile Card Layout
-              <div className="space-y-3">
+              // Mobile Compact List Layout
+              <div className="space-y-1">
                 {filteredPatients.map((patient) => (
-                  <Card key={patient.id} className="p-4" data-testid={`patient-card-${patient.id}`}>
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground" data-testid={`patient-name-${patient.id}`}>
+                  <div 
+                    key={patient.id} 
+                    className="flex items-center justify-between p-3 hover:bg-accent transition-colors border-b border-border"
+                    data-testid={`patient-row-${patient.id}`}
+                  >
+                    <div className="flex items-center space-x-3 flex-1">
+                      <div className="w-2 h-2 rounded-full bg-primary" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate" data-testid={`patient-name-${patient.id}`}>
                           {patient.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1" data-testid={`patient-phone-${patient.id}`}>
-                          {patient.phone}
                         </p>
-                        <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                          <span>Age: {patient.age || 'N/A'}</span>
-                          <span>Last Visit: {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}</span>
-                        </div>
-                      </div>
-                      <div className="flex gap-1 ml-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditPatient(patient)}
-                          data-testid={`button-edit-${patient.id}`}
-                        >
-                          <Edit className="w-4 h-4 text-primary" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleAddToQueue(patient.id)}
-                          disabled={addToQueueMutation.isPending}
-                          data-testid={`button-add-to-queue-${patient.id}`}
-                        >
-                          <PlusCircle className="w-4 h-4 text-green-600" />
-                        </Button>
+                        <p className="text-xs text-muted-foreground" data-testid={`patient-phone-${patient.id}`}>
+                          {patient.phone} • Age: {patient.age || 'N/A'} • Last: {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}
+                        </p>
                       </div>
                     </div>
-                  </Card>
+                    <div className="flex gap-1 ml-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditPatient(patient)}
+                        data-testid={`button-edit-${patient.id}`}
+                      >
+                        <Edit className="w-4 h-4 text-primary" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleAddToQueue(patient.id)}
+                        disabled={addToQueueMutation.isPending}
+                        data-testid={`button-add-to-queue-${patient.id}`}
+                      >
+                        <PlusCircle className="w-4 h-4 text-green-600" />
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
