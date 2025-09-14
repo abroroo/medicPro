@@ -1,9 +1,10 @@
 const CACHE_NAME = 'dentalqueue-pro-v1';
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css',
-  '/manifest.json'
+  '/manifest.json',
+  '/src/main.tsx',
+  '/src/index.css',
+  '/src/App.tsx'
 ];
 
 self.addEventListener('install', (event) => {
