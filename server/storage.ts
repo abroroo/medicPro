@@ -1,6 +1,6 @@
 import { clinics, patients, queue, type Clinic, type InsertClinic, type Patient, type InsertPatient, type Queue, type InsertQueue, type User, type InsertUser } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, ilike, or, max } from "drizzle-orm";
+import { eq, desc, and, ilike, or, max, gte, lt } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -129,7 +129,8 @@ export class DatabaseStorage implements IStorage {
   // Queue methods
   async getTodayQueue(clinicId: number): Promise<(Queue & { patient: Patient })[]> {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
     
     return await db
       .select({
@@ -146,7 +147,10 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(queue.clinicId, clinicId),
-          eq(queue.createdAt, today)
+          and(
+            gte(queue.createdAt, startOfDay),
+            lt(queue.createdAt, endOfDay)
+          )
         )
       )
       .orderBy(queue.queueNumber);
@@ -171,7 +175,8 @@ export class DatabaseStorage implements IStorage {
 
   async getNextQueueNumber(clinicId: number): Promise<number> {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
     
     const result = await db
       .select({ maxNumber: max(queue.queueNumber) })
@@ -179,7 +184,10 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(queue.clinicId, clinicId),
-          eq(queue.createdAt, today)
+          and(
+            gte(queue.createdAt, startOfDay),
+            lt(queue.createdAt, endOfDay)
+          )
         )
       );
     
@@ -201,7 +209,8 @@ export class DatabaseStorage implements IStorage {
 
   async getQueueStats(clinicId: number): Promise<{ waiting: number; serving: number; completed: number }> {
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
     
     const queueItems = await db
       .select()
@@ -209,7 +218,10 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(queue.clinicId, clinicId),
-          eq(queue.createdAt, today)
+          and(
+            gte(queue.createdAt, startOfDay),
+            lt(queue.createdAt, endOfDay)
+          )
         )
       );
     

@@ -27,7 +27,17 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
   const { toast } = useToast();
 
   const { data: patients = [] } = useQuery<Patient[]>({
-    queryKey: ["/api/patients", searchQuery],
+    queryKey: ["/api/patients", { search: searchQuery || undefined }],
+    queryFn: async () => {
+      const url = searchQuery 
+        ? `/api/patients?search=${encodeURIComponent(searchQuery)}`
+        : '/api/patients';
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) {
+        throw new Error(`${res.status}: ${res.statusText}`);
+      }
+      return res.json();
+    },
     enabled: searchQuery.length > 2,
   });
 
