@@ -1,0 +1,30 @@
+{
+  "name": "DentalQueue Pro",
+  "short_name": "DentalQueue",
+  "description": "Complete dental clinic management system with patient database, queue management, and waiting room display",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iNDgiIGZpbGw9IiMzYjgyZjYiLz4KPHBhdGggZD0iTTU5IDUwQzU5IDQ0LjQ3NzIgNjMuNDc3MiA0MCA2OSA0MEgxMjNDMTI4LjUyMyA0MCAxMzMgNDQuNDc3MiAxMzMgNTBWMTEwQzEzMyAxMTUuNTIzIDEyOC41MjMgMTIwIDEyMyAxMjBINjlDNjMuNDc3MiAxMjAgNTkgMTE1LjUyMyA1OSAxMTBWNTBaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNzYgMTEwQzc2IDExOC4yODQgODMuNzE1NyAxMjYgOTIgMTI2SDEwMEMxMDguMjg0IDEyNiAxMTYgMTE4LjI4NCAxMTYgMTEwVjk2SDc2VjExMFoiIGZpbGw9IiNmZmZmZmYiLz4KPGNpcmNsZSBjeD0iODAiIGN5PSI2NCIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPgo8Y2lyY2xlIGN4PSIxMTIiIGN5PSI2NCIgcj0iNCIgZmlsbD0iIzNiODJmNiIvPgo8L3N2Zz4K",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTI4IiBmaWxsPSIjM2I4MmY2Ii8+CjxwYXRoIGQ9Ik0xNjAgMTM2QzE2MCAxMTkuNDMxIDE3My40MzEgMTA2IDE5MCAxMDZIMzIyQzMzOC41NjkgMTA2IDM1MiAxMTkuNDMxIDM1MiAxMzZWMjk2QzM1MiAzMTIuNTY5IDMzOC41NjkgMzI2IDMyMiAzMjZIMTkwQzE3My40MzEgMzI2IDE2MCAzMTIuNTY5IDE2MCAyOTZWMTM2WiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTIwOCAyOTZDMjA4IDMyMC44MDEgMjI3LjE5OSAzNDAgMjUyIDM0MEgyNjBDMjg0LjgwMSAzNDAgMzA0IDMyMC44MDEgMzA0IDI5NlYyNTZIMjA4VjI5NloiIGZpbGw9IiNmZmZmZmYiLz4KPGNpcmNsZSBjeD0iMjI0IiBjeT0iMTc2IiByPSIxMiIgZmlsbD0iIzNiODJmNiIvPgo8Y2lyY2xlIGN4PSIyODgiIGN5PSIxNzYiIHI9IjEyIiBmaWxsPSIjM2I4MmY2Ii8+Cjwvc3ZnPgo=",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["healthcare", "medical", "productivity", "business"],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHZpZXdCb3g9IjAgMCAxMjgwIDcyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSIjZjlmYWZiIi8+CjxyZWN0IHg9IjY0IiB5PSI2NCIgd2lkdGg9IjExNTIiIGhlaWdodD0iNTkyIiByeD0iOCIgZmlsbD0id2hpdGUiIHN0cm9rZT0iI2UyZThmMCIvPgo8dGV4dCB4PSI2NDAiIHk9IjM2MCIgZmlsbD0iIzM3NDE1MSIgZm9udC1mYW1pbHk9IkludGVyLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iYm9sZCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+RGVudGFsUXVldWUgUHJvPC90ZXh0Pgo8dGV4dCB4PSI2NDAiIHk9IjQwMCIgZmlsbD0iIzZiNzI4MCIgZm9udC1mYW1pbHk9IkludGVyLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5Db21wbGV0ZSBDbGluaWMgTWFuYWdlbWVudCBTeXN0ZW08L3RleHQ+Cjwvc3ZnPgo=",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    }
+  ]
+}
