@@ -100,7 +100,16 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const { patientId } = req.body;
+      // Validate request body
+      const validation = insertQueueSchema.omit({ clinicId: true, queueNumber: true }).safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({ 
+          message: "Invalid queue data", 
+          errors: validation.error.errors 
+        });
+      }
+
+      const { patientId } = validation.data;
       const queueNumber = await storage.getNextQueueNumber(req.user!.id);
       
       const queueItem = await storage.addToQueue({
@@ -108,10 +117,14 @@ export function registerRoutes(app: Express): Server {
         patientId,
         queueNumber,
         status: "waiting"
-      });
+      }, req.user!.id);
       
       res.status(201).json(queueItem);
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Patient not found')) {
+        return res.status(404).json({ message: "Patient not found or does not belong to this clinic" });
+      }
+      console.error("Queue creation error:", error);
       res.status(500).json({ message: "Failed to add to queue" });
     }
   });

@@ -23,7 +23,7 @@ export interface IStorage {
   
   // Queue methods
   getTodayQueue(clinicId: number): Promise<(Queue & { patient: Patient })[]>;
-  addToQueue(queueItem: InsertQueue): Promise<Queue>;
+  addToQueue(queueItem: InsertQueue, clinicId: number): Promise<Queue>;
   updateQueueStatus(id: number, status: string, clinicId: number): Promise<Queue | undefined>;
   getNextQueueNumber(clinicId: number): Promise<number>;
   getCurrentServing(clinicId: number): Promise<Queue | undefined>;
@@ -147,6 +147,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(queue.clinicId, clinicId),
+          eq(patients.clinicId, clinicId), // CRITICAL: Ensure patient also belongs to same clinic
           and(
             gte(queue.createdAt, startOfDay),
             lt(queue.createdAt, endOfDay)
@@ -156,10 +157,22 @@ export class DatabaseStorage implements IStorage {
       .orderBy(queue.queueNumber);
   }
 
-  async addToQueue(queueItem: InsertQueue): Promise<Queue> {
+  async addToQueue(queueItem: InsertQueue, clinicId: number): Promise<Queue> {
+    // CRITICAL: Verify patient belongs to the authenticated clinic before adding to queue
+    const patient = await this.getPatient(queueItem.patientId, clinicId);
+    if (!patient) {
+      throw new Error('Patient not found or does not belong to this clinic');
+    }
+
+    // CRITICAL: Enforce clinic ID invariant - always use the authenticated clinic ID
+    const secureQueueItem = {
+      ...queueItem,
+      clinicId: clinicId // Override any client-provided clinicId with authenticated clinic
+    };
+
     const [newQueueItem] = await db
       .insert(queue)
-      .values(queueItem)
+      .values(secureQueueItem)
       .returning();
     return newQueueItem;
   }
