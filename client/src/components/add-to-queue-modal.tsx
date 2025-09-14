@@ -127,7 +127,7 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Patient to Queue</DialogTitle>
         </DialogHeader>

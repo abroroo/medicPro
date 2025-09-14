@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
 import { Patient } from "@shared/schema";
 
 export default function Patients() {
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
@@ -114,7 +116,49 @@ export default function Patients() {
               <div className="text-center py-8 text-muted-foreground">
                 {searchQuery ? "No patients found matching your search." : "No patients registered yet."}
               </div>
+            ) : isMobile ? (
+              // Mobile Card Layout
+              <div className="space-y-3">
+                {filteredPatients.map((patient) => (
+                  <Card key={patient.id} className="p-4" data-testid={`patient-card-${patient.id}`}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-foreground" data-testid={`patient-name-${patient.id}`}>
+                          {patient.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1" data-testid={`patient-phone-${patient.id}`}>
+                          {patient.phone}
+                        </p>
+                        <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                          <span>Age: {patient.age || 'N/A'}</span>
+                          <span>Last Visit: {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 ml-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditPatient(patient)}
+                          data-testid={`button-edit-${patient.id}`}
+                        >
+                          <Edit className="w-4 h-4 text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleAddToQueue(patient.id)}
+                          disabled={addToQueueMutation.isPending}
+                          data-testid={`button-add-to-queue-${patient.id}`}
+                        >
+                          <PlusCircle className="w-4 h-4 text-green-600" />
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             ) : (
+              // Desktop Table Layout
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-border">
                   <thead className="bg-muted">
