@@ -23,7 +23,17 @@ export default function Patients() {
   const { toast } = useToast();
 
   const { data: patients = [], isLoading } = useQuery<Patient[]>({
-    queryKey: ["/api/patients", searchQuery],
+    queryKey: ["/api/patients", { search: searchQuery || undefined }],
+    queryFn: async () => {
+      const url = searchQuery 
+        ? `/api/patients?search=${encodeURIComponent(searchQuery)}`
+        : '/api/patients';
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) {
+        throw new Error(`${res.status}: ${res.statusText}`);
+      }
+      return res.json();
+    },
   });
 
   const addToQueueMutation = useMutation({
@@ -46,13 +56,8 @@ export default function Patients() {
     },
   });
 
-  const filteredPatients = searchQuery
-    ? patients.filter(
-        (patient) =>
-          patient.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          patient.phone.includes(searchQuery)
-      )
-    : patients;
+  // No need for client-side filtering since API handles search
+  const filteredPatients = patients;
 
   const handleEditPatient = (patient: Patient) => {
     setEditingPatient(patient);
