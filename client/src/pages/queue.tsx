@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { Queue as QueueItem, Patient } from "@shared/schema";
 type QueueWithPatient = QueueItem & { patient: Patient };
 
 export default function Queue() {
+  const isMobile = useIsMobile();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
 
@@ -99,12 +101,12 @@ export default function Queue() {
       
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-center'} mb-6`}>
           <div>
-            <h2 className="text-3xl font-bold text-foreground">Queue Management</h2>
+            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>Queue Management</h2>
             <p className="text-muted-foreground mt-2">Manage today's waiting queue</p>
           </div>
-          <div className="flex space-x-3">
+          <div className={`${isMobile ? 'grid grid-cols-1 gap-3' : 'flex space-x-3'}`}>
             <Button 
               onClick={handleCallNext}
               disabled={!nextInLine || updateQueueMutation.isPending}
@@ -125,7 +127,7 @@ export default function Queue() {
         </div>
 
         {/* Current Status */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 md:grid-cols-3 gap-6'} mb-8`}>
           <Card>
             <CardContent className="p-6">
               <h3 className="text-lg font-semibold text-foreground mb-2">Currently Serving</h3>
@@ -178,7 +180,7 @@ export default function Queue() {
                 {queue.map((item) => (
                   <div 
                     key={item.id} 
-                    className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
+                    className={`${isMobile ? 'flex flex-col space-y-3' : 'flex items-center justify-between'} p-4 border border-border rounded-lg hover:bg-accent transition-colors`}
                     data-testid={`queue-item-${item.id}`}
                   >
                     <div className="flex items-center space-x-4">
@@ -190,7 +192,7 @@ export default function Queue() {
                           {item.queueNumber}
                         </span>
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-foreground" data-testid={`patient-name-${item.id}`}>
                           {item.patient.name}
                         </p>
@@ -198,29 +200,54 @@ export default function Queue() {
                           Added at {new Date(item.createdAt).toLocaleTimeString()}
                         </p>
                       </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <Badge 
-                        variant={getStatusBadgeVariant(item.status)}
-                        data-testid={`status-${item.id}`}
-                      >
-                        {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                      </Badge>
-                      
-                      {item.status === 'serving' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleMarkComplete(item.id)}
-                          disabled={updateQueueMutation.isPending}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                          data-testid={`button-complete-${item.id}`}
-                        >
-                          <Check className="w-4 h-4 mr-1" />
-                          Complete
-                        </Button>
+                      {!isMobile && (
+                        <div className="flex items-center space-x-2">
+                          <Badge 
+                            variant={getStatusBadgeVariant(item.status)}
+                            data-testid={`status-${item.id}`}
+                          >
+                            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                          </Badge>
+                          
+                          {item.status === 'serving' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleMarkComplete(item.id)}
+                              disabled={updateQueueMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              data-testid={`button-complete-${item.id}`}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Complete
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </div>
+                    
+                    {isMobile && (
+                      <div className="flex items-center justify-between w-full">
+                        <Badge 
+                          variant={getStatusBadgeVariant(item.status)}
+                          data-testid={`status-${item.id}`}
+                        >
+                          {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                        </Badge>
+                        
+                        {item.status === 'serving' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleMarkComplete(item.id)}
+                            disabled={updateQueueMutation.isPending}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            data-testid={`button-complete-${item.id}`}
+                          >
+                            <Check className="w-4 h-4 mr-1" />
+                            Complete
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
