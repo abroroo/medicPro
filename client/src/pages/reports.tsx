@@ -12,7 +12,8 @@ import {
   Users, 
   Calendar, 
   CalendarDays, 
-  CalendarCheck 
+  CalendarCheck,
+  RotateCcw
 } from "lucide-react";
 import { Patient } from "@shared/schema";
 
@@ -152,12 +153,14 @@ export default function Reports() {
               </div>
               <div className="flex items-end">
                 <Button 
-                  variant="outline"
-                  className="w-full"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-muted-foreground hover:text-foreground"
                   onClick={handleResetFilters}
                   data-testid="button-reset-filters"
                 >
-                  Reset Filters
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Clear Filters
                 </Button>
               </div>
             </div>
