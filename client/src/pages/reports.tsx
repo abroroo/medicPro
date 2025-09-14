@@ -113,47 +113,48 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-6 no-print">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Filter className="w-5 h-5 mr-2" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="dateFrom">Date From</Label>
-                <Input
-                  id="dateFrom"
-                  type="date"
-                  value={filters.dateFrom}
-                  onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
-                  data-testid="input-filter-date-from"
-                />
-              </div>
-              <div>
-                <Label htmlFor="dateTo">Date To</Label>
-                <Input
-                  id="dateTo"
-                  type="date"
-                  value={filters.dateTo}
-                  onChange={(e) => handleFilterChange('dateTo', e.target.value)}
-                  data-testid="input-filter-date-to"
-                />
-              </div>
-              <div>
-                <Label htmlFor="patientName">Patient Name</Label>
-                <Input
-                  id="patientName"
-                  placeholder="Search patient..."
-                  value={filters.patientName}
-                  onChange={(e) => handleFilterChange('patientName', e.target.value)}
-                  data-testid="input-filter-patient-name"
-                />
-              </div>
-              <div className="flex items-end">
+        {/* Main Content Layout */}
+        <div className={`${isMobile ? 'space-y-6' : 'grid grid-cols-12 gap-6'}`}>
+          {/* Filters */}
+          <Card className={`${isMobile ? '' : 'col-span-4'} no-print`}>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Filter className="w-5 h-5 mr-2" />
+                Filters
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="dateFrom">Date From</Label>
+                  <Input
+                    id="dateFrom"
+                    type="date"
+                    value={filters.dateFrom}
+                    onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                    data-testid="input-filter-date-from"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dateTo">Date To</Label>
+                  <Input
+                    id="dateTo"
+                    type="date"
+                    value={filters.dateTo}
+                    onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                    data-testid="input-filter-date-to"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="patientName">Patient Name</Label>
+                  <Input
+                    id="patientName"
+                    placeholder="Search patient..."
+                    value={filters.patientName}
+                    onChange={(e) => handleFilterChange('patientName', e.target.value)}
+                    data-testid="input-filter-patient-name"
+                  />
+                </div>
                 <Button 
                   variant="ghost"
                   size="sm"
@@ -164,76 +165,84 @@ export default function Reports() {
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Clear Filters
                 </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Summary Statistics */}
-        <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 md:grid-cols-4 gap-6'} mb-8`}>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Patients</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="stat-total-patients">
-                    {(patientStats as any)?.total || 0}
-                  </p>
-                </div>
-                <Users className="text-primary text-2xl" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">This Month</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="stat-this-month">
-                    {(patientStats as any)?.thisMonth || 0}
-                  </p>
-                </div>
-                <Calendar className="text-secondary text-2xl" />
+                
+                {/* Desktop Stats in Sidebar */}
+                {!isMobile && (
+                  <div className="mt-6 pt-6 border-t border-border">
+                    <h4 className="font-medium text-foreground mb-4 flex items-center">
+                      <Users className="w-4 h-4 mr-2" />
+                      Statistics
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Total</span>
+                        <span className="font-medium" data-testid="stat-total-patients">{(patientStats as any)?.total || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">This Month</span>
+                        <span className="font-medium" data-testid="stat-this-month">{(patientStats as any)?.thisMonth || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">This Week</span>
+                        <span className="font-medium" data-testid="stat-this-week">{(patientStats as any)?.thisWeek || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Today</span>
+                        <span className="font-medium" data-testid="stat-today">{(patientStats as any)?.today || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">This Week</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="stat-this-week">
-                    {(patientStats as any)?.thisWeek || 0}
-                  </p>
+          {/* Compact Summary Statistics */}
+          {isMobile && (
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg">
+                  <Users className="w-5 h-5 mr-2" />
+                  Patient Statistics
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-foreground" data-testid="stat-total-patients">
+                      {(patientStats as any)?.total || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Total Patients</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-foreground" data-testid="stat-this-month">
+                      {(patientStats as any)?.thisMonth || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">This Month</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-foreground" data-testid="stat-this-week">
+                      {(patientStats as any)?.thisWeek || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">This Week</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-foreground" data-testid="stat-today">
+                      {(patientStats as any)?.today || 0}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Today</p>
+                  </div>
                 </div>
-                <CalendarDays className="text-green-600 text-2xl" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Today</p>
-                  <p className="text-2xl font-bold text-foreground" data-testid="stat-today">
-                    {(patientStats as any)?.today || 0}
-                  </p>
-                </div>
-                <CalendarCheck className="text-amber-600 text-2xl" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Patient Report Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Patient Report</CardTitle>
-          </CardHeader>
-          <CardContent>
+          {/* Patient Report */}
+          <Card className={`${isMobile ? '' : 'col-span-8'}`}>
+            <CardHeader>
+              <CardTitle>Patient Report</CardTitle>
+            </CardHeader>
+            <CardContent>
             {patients.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 No patients found matching the current filters.
@@ -326,7 +335,8 @@ export default function Reports() {
               </div>
             )}
           </CardContent>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );
