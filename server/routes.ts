@@ -189,7 +189,12 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const patients = await storage.getPatients(req.user!.id);
+      const { dateFrom, dateTo, patientName } = req.query;
+      const patients = await storage.getPatientsReport(req.user!.id, {
+        dateFrom: dateFrom as string,
+        dateTo: dateTo as string,
+        patientName: patientName as string
+      });
       
       const csvHeader = "Name,Phone,Age,Address,Emergency Contact,Notes,Created At,Last Visit\n";
       const csvData = patients.map(p => 
@@ -197,7 +202,7 @@ export function registerRoutes(app: Express): Server {
       ).join("\n");
       
       res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', 'attachment; filename="patients.csv"');
+      res.setHeader('Content-Disposition', 'attachment; filename="patients-report.csv"');
       res.send(csvHeader + csvData);
     } catch (error) {
       res.status(500).json({ message: "Failed to export data" });

@@ -35,6 +35,19 @@ export default function Reports() {
 
   const { data: patients = [] } = useQuery<Patient[]>({
     queryKey: ["/api/reports/patients", filters],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
+      if (filters.dateTo) params.append('dateTo', filters.dateTo);
+      if (filters.patientName) params.append('patientName', filters.patientName);
+      
+      const url = `/api/reports/patients${params.toString() ? '?' + params.toString() : ''}`;
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) {
+        throw new Error(`${res.status}: ${res.statusText}`);
+      }
+      return res.json();
+    },
   });
 
   const handleFilterChange = (field: keyof ReportFilters, value: string) => {
