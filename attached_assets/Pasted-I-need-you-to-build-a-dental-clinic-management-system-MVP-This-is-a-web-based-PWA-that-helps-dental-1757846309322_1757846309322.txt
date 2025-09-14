@@ -1,0 +1,133 @@
+I need you to build a dental clinic management system MVP. This is a web-based PWA that helps dental clinics digitize their patient management and waiting room queue system.
+
+PRODUCT OVERVIEW
+
+Build a multi-clinic SaaS web app where each dental clinic can:
+
+Manage their patient database
+
+Control waiting room queue (take-a-number system)
+
+View reports and export data
+
+Each clinic's data is completely isolated from others
+
+TECHNICAL ARCHITECTURE
+
+Framework: Express.js + Node.js (keep it simple for MVP)
+
+Frontend: React or Nextjs the one you prefer
+
+Database: Postgress for simplicity and easier for deployment later
+
+Authentication: Simple JWT or session-based
+
+PWA: Make it installable and mobile-friendly
+
+Structure: Single app with different routes/modules
+
+DATABASE SCHEMA
+
+clinics (id, name, email, password_hash, created_at)
+
+patients (id, clinic_id, name, phone, age_dob, address, emergency_contact, notes, created_at, last_visit)
+
+queue (id, clinic_id, patient_id, queue_number, status, created_at)
+
+MAIN FEATURES TO BUILD
+
+1. AUTHENTICATION
+
+Registration: clinic name, email, password
+
+Login page with session management
+
+Each clinic only sees their own data
+
+2. PATIENT MANAGEMENT (/patients route)
+
+Add new patient form: name*, phone*, age, address, emergency contact, notes
+
+Search patients by name/phone (real-time)
+
+Patient list table with edit functionality
+
+Patient detail view showing visit history
+
+3. QUEUE SYSTEM (/queue route)
+
+Add patient to queue (search existing or quick-add new)
+
+Auto-assign queue numbers (1, 2, 3...)
+
+"Call Next" and "Mark Complete" buttons
+
+Current queue status view for staff
+
+4. WAITING ROOM DISPLAY (/display route)
+
+Full-screen TV display mode
+
+Shows "NOW SERVING: #XX"
+
+Shows next 3-4 numbers waiting
+
+Auto-refresh every 10 seconds
+
+No patient names (privacy)
+
+5. DASHBOARD (/dashboard route - make this the home page)
+
+Today's stats: patient count, queue length, total patients
+
+Quick links to other modules
+
+Recent activity feed
+
+6. REPORTS & EXPORT (/reports route)
+
+Patient list table (sortable, filterable)
+
+Export to CSV button (all patient data)
+
+Print functionality for daily reports
+
+Basic date filtering
+
+KEY USER FLOWS
+
+Daily workflow: Staff logs in → adds patients to queue → manages queue → marks complete
+
+New patient: Quick add during queue OR detailed add in patient management
+
+Waiting room: Display screen shows current numbers, patients wait for their number
+
+End of day: Export/print reports for records
+
+SPECIFIC REQUIREMENTS
+
+Mobile-responsive (staff use tablets/phones)
+
+Queue numbers reset daily automatically
+
+Search should be fast (real-time as you type)
+
+Export CSV should include all patient fields
+
+Print views should be clean and professional
+
+Multiple staff can use simultaneously
+
+START WITH
+
+Basic authentication and clinic registration
+
+Patient management (add, search, edit)
+
+Simple queue system (add to queue, mark complete)
+
+Then add display screen and dashboard
+
+Make the UI clean and simple - this is for busy medical staff who need efficiency. Focus on functionality over fancy design.
+
+Can you start building this? Begin with the authentication system and basic project structure."
