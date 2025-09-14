@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ interface ReportFilters {
 }
 
 export default function Reports() {
+  const isMobile = useIsMobile();
   const [filters, setFilters] = useState<ReportFilters>({
     dateFrom: "",
     dateTo: "",
@@ -86,12 +88,12 @@ export default function Reports() {
       
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6 no-print">
+        <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-center'} mb-6 no-print`}>
           <div>
-            <h2 className="text-3xl font-bold text-foreground">Reports & Analytics</h2>
+            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>Reports & Analytics</h2>
             <p className="text-muted-foreground mt-2">View patient data and export reports</p>
           </div>
-          <div className="flex space-x-3">
+          <div className={`${isMobile ? 'grid grid-cols-1 gap-3' : 'flex space-x-3'}`}>
             <Button 
               onClick={handleExportCSV}
               className="bg-green-600 hover:bg-green-700 text-white"
@@ -168,7 +170,7 @@ export default function Reports() {
         </Card>
 
         {/* Summary Statistics */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 md:grid-cols-4 gap-6'} mb-8`}>
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -236,7 +238,30 @@ export default function Reports() {
               <div className="text-center py-8 text-muted-foreground">
                 No patients found matching the current filters.
               </div>
+            ) : isMobile ? (
+              // Mobile Card Layout
+              <div className="space-y-3">
+                {patients.map((patient) => (
+                  <Card key={patient.id} className="p-4" data-testid={`report-patient-${patient.id}`}>
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-foreground">{patient.name}</h3>
+                      <div className="text-sm text-muted-foreground space-y-1">
+                        <p><span className="font-medium">Phone:</span> {patient.phone}</p>
+                        <p><span className="font-medium">Age:</span> {patient.age || 'N/A'}</p>
+                        {patient.address && (
+                          <p><span className="font-medium">Address:</span> {patient.address}</p>
+                        )}
+                        {patient.emergencyContact && (
+                          <p><span className="font-medium">Emergency:</span> {patient.emergencyContact}</p>
+                        )}
+                        <p><span className="font-medium">Last Visit:</span> {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}</p>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             ) : (
+              // Desktop Table Layout
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-border">
                   <thead className="bg-muted">
