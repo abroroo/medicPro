@@ -23,6 +23,7 @@ import {
   PlusCircle
 } from "lucide-react";
 import { Patient, Visit, ClinicalNotes, Doctor } from "@shared/schema";
+import { VisitFormModal } from "@/components/visit-form-modal";
 
 type VisitWithRelations = Visit & { patient: Patient; doctor: Doctor };
 
@@ -30,6 +31,8 @@ export default function PatientDetail() {
   const params = useParams<{ id: string }>();
   const [location, setLocation] = useLocation();
   const isMobile = useIsMobile();
+  const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
+  const [editingVisit, setEditingVisit] = useState<any>(null);
   
   const patientId = parseInt(params.id || '0');
 
@@ -78,6 +81,16 @@ export default function PatientDetail() {
 
   const handleBack = () => {
     setLocation("/patients");
+  };
+
+  const handleNewVisit = () => {
+    setEditingVisit(null);
+    setIsVisitModalOpen(true);
+  };
+
+  const handleEditVisit = (visit: any) => {
+    setEditingVisit(visit);
+    setIsVisitModalOpen(true);
   };
 
   if (patientLoading) {
@@ -140,6 +153,7 @@ export default function PatientDetail() {
             </Button>
             <Button 
               size={isMobile ? "sm" : "default"}
+              onClick={handleNewVisit}
               data-testid="button-new-visit"
             >
               <PlusCircle className="w-4 h-4 mr-2" />
@@ -285,7 +299,7 @@ export default function PatientDetail() {
                   <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                   <h3 className="text-lg font-medium mb-2">No visits recorded</h3>
                   <p className="mb-4">This patient hasn't had any visits yet.</p>
-                  <Button data-testid="button-first-visit">
+                  <Button onClick={handleNewVisit} data-testid="button-first-visit">
                     <PlusCircle className="w-4 h-4 mr-2" />
                     Schedule First Visit
                   </Button>
@@ -313,12 +327,22 @@ export default function PatientDetail() {
                               </p>
                             </div>
                           </div>
-                          <Badge 
-                            variant={visit.status === 'Completed' ? 'default' : 'secondary'}
-                            data-testid={`visit-status-${visit.id}`}
-                          >
-                            {visit.status}
-                          </Badge>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditVisit(visit)}
+                              data-testid={`button-edit-visit-${visit.id}`}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Badge 
+                              variant={visit.status === 'Completed' ? 'default' : 'secondary'}
+                              data-testid={`visit-status-${visit.id}`}
+                            >
+                              {visit.status}
+                            </Badge>
+                          </div>
                         </div>
 
                         {/* Chief Complaint */}
@@ -383,6 +407,19 @@ export default function PatientDetail() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Visit Form Modal */}
+        <VisitFormModal
+          open={isVisitModalOpen}
+          onOpenChange={(open) => {
+            setIsVisitModalOpen(open);
+            if (!open) {
+              setEditingVisit(null);
+            }
+          }}
+          preSelectedPatientId={patientId}
+          visit={editingVisit}
+        />
       </div>
     </div>
   );
