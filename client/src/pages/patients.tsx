@@ -15,10 +15,12 @@ import {
   Eye, 
   PlusCircle 
 } from "lucide-react";
+import { useLocation } from "wouter";
 import { Patient } from "@shared/schema";
 
 export default function Patients() {
   const isMobile = useIsMobile();
+  const [location, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
@@ -68,6 +70,10 @@ export default function Patients() {
 
   const handleAddToQueue = (patientId: number) => {
     addToQueueMutation.mutate(patientId);
+  };
+
+  const handleViewPatient = (patientId: number) => {
+    setLocation(`/patients/${patientId}`);
   };
 
   return (
@@ -140,6 +146,14 @@ export default function Patients() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleViewPatient(patient.id)}
+                        data-testid={`button-view-${patient.id}`}
+                      >
+                        <Eye className="w-4 h-4 text-blue-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleEditPatient(patient)}
                         data-testid={`button-edit-${patient.id}`}
                       >
@@ -205,6 +219,14 @@ export default function Patients() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewPatient(patient.id)}
+                            data-testid={`button-view-${patient.id}`}
+                          >
+                            <Eye className="w-4 h-4 text-blue-600" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
