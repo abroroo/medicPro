@@ -1,6 +1,6 @@
-import { clinics, patients, queue, type Clinic, type InsertClinic, type Patient, type InsertPatient, type Queue, type InsertQueue, type User, type InsertUser } from "@shared/schema";
+import { clinics, patients, doctors, visits, clinicalNotes, queue, type Clinic, type InsertClinic, type Patient, type InsertPatient, type Doctor, type InsertDoctor, type Visit, type InsertVisit, type ClinicalNotes, type InsertClinicalNotes, type Queue, type InsertQueue, type User, type InsertUser } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, ilike, or, max, gte, lt } from "drizzle-orm";
+import { eq, desc, and, ilike, or, max, gte, lt, isNull } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -22,12 +22,33 @@ export interface IStorage {
   deletePatient(id: number, clinicId: number): Promise<boolean>;
   
   // Queue methods
-  getTodayQueue(clinicId: number): Promise<(Queue & { patient: Patient })[]>;
+  getTodayQueue(clinicId: number): Promise<(Queue & { patient: Patient; doctor?: Doctor | undefined; visit?: Visit | undefined })[]>;
   addToQueue(queueItem: InsertQueue, clinicId: number): Promise<Queue>;
   updateQueueStatus(id: number, status: string, clinicId: number): Promise<Queue | undefined>;
   getNextQueueNumber(clinicId: number): Promise<number>;
   getCurrentServing(clinicId: number): Promise<Queue | undefined>;
   getQueueStats(clinicId: number): Promise<{ waiting: number; serving: number; completed: number }>;
+  
+  // Doctor methods
+  getDoctors(clinicId: number): Promise<Doctor[]>;
+  getDoctor(id: number, clinicId: number): Promise<Doctor | undefined>;
+  createDoctor(doctor: InsertDoctor & { clinicId: number }): Promise<Doctor>;
+  updateDoctor(id: number, doctor: Partial<InsertDoctor>, clinicId: number): Promise<Doctor | undefined>;
+  deleteDoctor(id: number, clinicId: number): Promise<boolean>;
+  
+  // Visit methods
+  getVisits(clinicId: number): Promise<(Visit & { patient: Patient; doctor: Doctor })[]>;
+  getVisit(id: number, clinicId: number): Promise<(Visit & { patient: Patient; doctor: Doctor }) | undefined>;
+  createVisit(visit: InsertVisit & { clinicId: number }): Promise<Visit>;
+  updateVisit(id: number, visit: Partial<InsertVisit>, clinicId: number): Promise<Visit | undefined>;
+  deleteVisit(id: number, clinicId: number): Promise<boolean>;
+  
+  // Clinical Notes methods
+  getClinicalNotes(visitId: number, clinicId: number): Promise<ClinicalNotes[]>;
+  getClinicalNote(id: number, clinicId: number): Promise<ClinicalNotes | undefined>;
+  createClinicalNote(note: InsertClinicalNotes, clinicId: number): Promise<ClinicalNotes>;
+  updateClinicalNote(id: number, note: Partial<InsertClinicalNotes>, clinicId: number): Promise<ClinicalNotes | undefined>;
+  deleteClinicalNote(id: number, clinicId: number): Promise<boolean>;
   
   // Report methods
   getPatientsReport(clinicId: number, filters?: { dateFrom?: string; dateTo?: string; patientName?: string }): Promise<Patient[]>;
@@ -127,27 +148,42 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Queue methods
-  async getTodayQueue(clinicId: number): Promise<(Queue & { patient: Patient })[]> {
+  async getTodayQueue(clinicId: number): Promise<(Queue & { patient: Patient; doctor?: Doctor; visit?: Visit })[]> {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
     
-    return await db
+    const results = await db
       .select({
         id: queue.id,
         clinicId: queue.clinicId,
         patientId: queue.patientId,
+        doctorId: queue.doctorId,
+        visitId: queue.visitId,
         queueNumber: queue.queueNumber,
+        visitType: queue.visitType,
         status: queue.status,
         createdAt: queue.createdAt,
         patient: patients,
+        doctor: doctors,
+        visit: visits,
       })
       .from(queue)
       .innerJoin(patients, eq(queue.patientId, patients.id))
+      .leftJoin(doctors, eq(queue.doctorId, doctors.id))
+      .leftJoin(visits, eq(queue.visitId, visits.id))
       .where(
         and(
           eq(queue.clinicId, clinicId),
-          eq(patients.clinicId, clinicId), // CRITICAL: Ensure patient also belongs to same clinic
+          eq(patients.clinicId, clinicId), // CRITICAL: Ensure patient belongs to same clinic
+          or(
+            isNull(queue.doctorId), // Doctor can be null
+            eq(doctors.clinicId, clinicId) // CRITICAL: If doctor exists, ensure it belongs to same clinic
+          ),
+          or(
+            isNull(queue.visitId), // Visit can be null  
+            eq(visits.clinicId, clinicId) // CRITICAL: If visit exists, ensure it belongs to same clinic
+          ),
           and(
             gte(queue.createdAt, startOfDay),
             lt(queue.createdAt, endOfDay)
@@ -155,6 +191,13 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(queue.queueNumber);
+    
+    // Transform null values to undefined for TypeScript compatibility
+    return results.map(result => ({
+      ...result,
+      doctor: result.doctor || undefined,
+      visit: result.visit || undefined,
+    }));
   }
 
   async addToQueue(queueItem: InsertQueue, clinicId: number): Promise<Queue> {
@@ -162,6 +205,22 @@ export class DatabaseStorage implements IStorage {
     const patient = await this.getPatient(queueItem.patientId, clinicId);
     if (!patient) {
       throw new Error('Patient not found or does not belong to this clinic');
+    }
+
+    // CRITICAL: If doctor is specified, validate it belongs to the authenticated clinic
+    if (queueItem.doctorId) {
+      const doctor = await this.getDoctor(queueItem.doctorId, clinicId);
+      if (!doctor) {
+        throw new Error('Doctor not found or does not belong to this clinic');
+      }
+    }
+
+    // CRITICAL: If visit is specified, validate it belongs to the authenticated clinic
+    if (queueItem.visitId) {
+      const visit = await this.getVisit(queueItem.visitId, clinicId);
+      if (!visit) {
+        throw new Error('Visit not found or does not belong to this clinic');
+      }
     }
 
     // CRITICAL: Enforce clinic ID invariant - always use the authenticated clinic ID
@@ -289,6 +348,275 @@ export class DatabaseStorage implements IStorage {
       thisWeek: allPatients.filter(p => p.createdAt >= thisWeek).length,
       today: allPatients.filter(p => p.createdAt >= today).length,
     };
+  }
+
+  // Doctor methods
+  async getDoctors(clinicId: number): Promise<Doctor[]> {
+    return await db
+      .select()
+      .from(doctors)
+      .where(eq(doctors.clinicId, clinicId))
+      .orderBy(doctors.name);
+  }
+
+  async getDoctor(id: number, clinicId: number): Promise<Doctor | undefined> {
+    const [doctor] = await db
+      .select()
+      .from(doctors)
+      .where(and(eq(doctors.id, id), eq(doctors.clinicId, clinicId)));
+    return doctor || undefined;
+  }
+
+  async createDoctor(doctor: InsertDoctor & { clinicId: number }): Promise<Doctor> {
+    // CRITICAL: Always enforce the clinic ID from the authenticated session
+    const secureDoctor = {
+      ...doctor,
+      clinicId: doctor.clinicId // This should come from authenticated user session
+    };
+    
+    const [newDoctor] = await db
+      .insert(doctors)
+      .values(secureDoctor)
+      .returning();
+    return newDoctor;
+  }
+
+  async updateDoctor(id: number, doctor: Partial<InsertDoctor>, clinicId: number): Promise<Doctor | undefined> {
+    const [updatedDoctor] = await db
+      .update(doctors)
+      .set(doctor)
+      .where(and(eq(doctors.id, id), eq(doctors.clinicId, clinicId)))
+      .returning();
+    return updatedDoctor || undefined;
+  }
+
+  async deleteDoctor(id: number, clinicId: number): Promise<boolean> {
+    const result = await db
+      .delete(doctors)
+      .where(and(eq(doctors.id, id), eq(doctors.clinicId, clinicId)));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Visit methods  
+  async getVisits(clinicId: number): Promise<(Visit & { patient: Patient; doctor: Doctor })[]> {
+    return await db
+      .select({
+        id: visits.id,
+        clinicId: visits.clinicId,
+        patientId: visits.patientId,
+        doctorId: visits.doctorId,
+        visitDate: visits.visitDate,
+        visitType: visits.visitType,
+        chiefComplaint: visits.chiefComplaint,
+        status: visits.status,
+        createdAt: visits.createdAt,
+        patient: patients,
+        doctor: doctors,
+      })
+      .from(visits)
+      .innerJoin(patients, eq(visits.patientId, patients.id))
+      .innerJoin(doctors, eq(visits.doctorId, doctors.id))
+      .where(
+        and(
+          eq(visits.clinicId, clinicId),
+          eq(patients.clinicId, clinicId), // CRITICAL: Ensure patient belongs to same clinic
+          eq(doctors.clinicId, clinicId)   // CRITICAL: Ensure doctor belongs to same clinic
+        )
+      )
+      .orderBy(desc(visits.visitDate));
+  }
+
+  async getVisit(id: number, clinicId: number): Promise<(Visit & { patient: Patient; doctor: Doctor }) | undefined> {
+    const [visit] = await db
+      .select({
+        id: visits.id,
+        clinicId: visits.clinicId,
+        patientId: visits.patientId,
+        doctorId: visits.doctorId,
+        visitDate: visits.visitDate,
+        visitType: visits.visitType,
+        chiefComplaint: visits.chiefComplaint,
+        status: visits.status,
+        createdAt: visits.createdAt,
+        patient: patients,
+        doctor: doctors,
+      })
+      .from(visits)
+      .innerJoin(patients, eq(visits.patientId, patients.id))
+      .innerJoin(doctors, eq(visits.doctorId, doctors.id))
+      .where(
+        and(
+          eq(visits.id, id),
+          eq(visits.clinicId, clinicId),
+          eq(patients.clinicId, clinicId), // CRITICAL: Ensure patient belongs to same clinic
+          eq(doctors.clinicId, clinicId)   // CRITICAL: Ensure doctor belongs to same clinic
+        )
+      );
+    return visit || undefined;
+  }
+
+  async createVisit(visit: InsertVisit & { clinicId: number }): Promise<Visit> {
+    // CRITICAL: Validate patient belongs to the authenticated clinic
+    const patient = await this.getPatient(visit.patientId, visit.clinicId);
+    if (!patient) {
+      throw new Error('Patient not found or does not belong to this clinic');
+    }
+
+    // CRITICAL: Validate doctor belongs to the authenticated clinic
+    const doctor = await this.getDoctor(visit.doctorId, visit.clinicId);
+    if (!doctor) {
+      throw new Error('Doctor not found or does not belong to this clinic');
+    }
+
+    // CRITICAL: Enforce clinic ID invariant - always use the authenticated clinic ID
+    const secureVisit = {
+      ...visit,
+      clinicId: visit.clinicId // Override any client-provided clinicId with authenticated clinic
+    };
+
+    const [newVisit] = await db
+      .insert(visits)
+      .values(secureVisit)
+      .returning();
+    return newVisit;
+  }
+
+  async updateVisit(id: number, visit: Partial<InsertVisit>, clinicId: number): Promise<Visit | undefined> {
+    // If updating patient or doctor, validate they belong to the clinic
+    if (visit.patientId) {
+      const patient = await this.getPatient(visit.patientId, clinicId);
+      if (!patient) {
+        throw new Error('Patient not found or does not belong to this clinic');
+      }
+    }
+
+    if (visit.doctorId) {
+      const doctor = await this.getDoctor(visit.doctorId, clinicId);
+      if (!doctor) {
+        throw new Error('Doctor not found or does not belong to this clinic');
+      }
+    }
+
+    const [updatedVisit] = await db
+      .update(visits)
+      .set(visit)
+      .where(and(eq(visits.id, id), eq(visits.clinicId, clinicId)))
+      .returning();
+    return updatedVisit || undefined;
+  }
+
+  async deleteVisit(id: number, clinicId: number): Promise<boolean> {
+    const result = await db
+      .delete(visits)
+      .where(and(eq(visits.id, id), eq(visits.clinicId, clinicId)));
+    return (result.rowCount || 0) > 0;
+  }
+
+  // Clinical Notes methods
+  async getClinicalNotes(visitId: number, clinicId: number): Promise<ClinicalNotes[]> {
+    // CRITICAL: First verify the visit belongs to the clinic
+    const visit = await this.getVisit(visitId, clinicId);
+    if (!visit) {
+      throw new Error('Visit not found or does not belong to this clinic');
+    }
+
+    return await db
+      .select()
+      .from(clinicalNotes)
+      .where(eq(clinicalNotes.visitId, visitId))
+      .orderBy(desc(clinicalNotes.createdAt));
+  }
+
+  async getClinicalNote(id: number, clinicId: number): Promise<ClinicalNotes | undefined> {
+    // CRITICAL: Use join to ensure note belongs to a visit that belongs to the clinic
+    const [note] = await db
+      .select({
+        id: clinicalNotes.id,
+        visitId: clinicalNotes.visitId,
+        doctorId: clinicalNotes.doctorId,
+        symptoms: clinicalNotes.symptoms,
+        clinicalExamination: clinicalNotes.clinicalExamination,
+        diagnosis: clinicalNotes.diagnosis,
+        treatmentGiven: clinicalNotes.treatmentGiven,
+        medications: clinicalNotes.medications,
+        recommendations: clinicalNotes.recommendations,
+        followUpDate: clinicalNotes.followUpDate,
+        followUpNeeded: clinicalNotes.followUpNeeded,
+        additionalNotes: clinicalNotes.additionalNotes,
+        createdAt: clinicalNotes.createdAt,
+      })
+      .from(clinicalNotes)
+      .innerJoin(visits, eq(clinicalNotes.visitId, visits.id))
+      .where(
+        and(
+          eq(clinicalNotes.id, id),
+          eq(visits.clinicId, clinicId) // CRITICAL: Ensure via visit's clinic
+        )
+      );
+    return note || undefined;
+  }
+
+  async createClinicalNote(note: InsertClinicalNotes, clinicId: number): Promise<ClinicalNotes> {
+    // CRITICAL: Validate visit belongs to the authenticated clinic
+    const visit = await this.getVisit(note.visitId, clinicId);
+    if (!visit) {
+      throw new Error('Visit not found or does not belong to this clinic');
+    }
+
+    // CRITICAL: Validate doctor belongs to the authenticated clinic
+    const doctor = await this.getDoctor(note.doctorId, clinicId);
+    if (!doctor) {
+      throw new Error('Doctor not found or does not belong to this clinic');
+    }
+
+    const [newNote] = await db
+      .insert(clinicalNotes)
+      .values(note)
+      .returning();
+    return newNote;
+  }
+
+  async updateClinicalNote(id: number, note: Partial<InsertClinicalNotes>, clinicId: number): Promise<ClinicalNotes | undefined> {
+    // CRITICAL: First get the existing note to ensure it belongs to the clinic
+    const existingNote = await this.getClinicalNote(id, clinicId);
+    if (!existingNote) {
+      throw new Error('Clinical note not found or does not belong to this clinic');
+    }
+
+    // If updating visit or doctor, validate they belong to the clinic
+    if (note.visitId) {
+      const visit = await this.getVisit(note.visitId, clinicId);
+      if (!visit) {
+        throw new Error('Visit not found or does not belong to this clinic');
+      }
+    }
+
+    if (note.doctorId) {
+      const doctor = await this.getDoctor(note.doctorId, clinicId);
+      if (!doctor) {
+        throw new Error('Doctor not found or does not belong to this clinic');
+      }
+    }
+
+    const [updatedNote] = await db
+      .update(clinicalNotes)
+      .set(note)
+      .where(eq(clinicalNotes.id, id))
+      .returning();
+    return updatedNote || undefined;
+  }
+
+  async deleteClinicalNote(id: number, clinicId: number): Promise<boolean> {
+    // CRITICAL: First verify the note belongs to the clinic via visit validation
+    const existingNote = await this.getClinicalNote(id, clinicId);
+    if (!existingNote) {
+      throw new Error('Clinical note not found or does not belong to this clinic');
+    }
+
+    const result = await db
+      .delete(clinicalNotes)
+      .where(eq(clinicalNotes.id, id));
+    return (result.rowCount || 0) > 0;
   }
 }
 

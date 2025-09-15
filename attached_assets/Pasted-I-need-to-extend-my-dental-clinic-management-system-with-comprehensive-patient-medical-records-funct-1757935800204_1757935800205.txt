@@ -1,0 +1,125 @@
+I need to extend my dental clinic management system with comprehensive patient medical records functionality. This transforms the app from basic queue management into a complete medical record system that replaces paper notebooks used in Uzbekistan clinics.
+
+CURRENT STATE:
+- Authentication, patient management, queue system, reports working
+- Database: clinics, patients, queue tables
+- Frontend: React/Next.js, Backend: Node.js/Express, Database: PostgreSQL
+- Multi-clinic isolation working properly
+
+DATABASE SCHEMA EXTENSIONS:
+1. doctors table:
+   - id, clinic_id, name, specialization, cabinet_number, phone, email, created_at
+   - Constraint: clinic_id isolation for multi-clinic support
+
+2. visits table:
+   - id, clinic_id, patient_id, doctor_id, visit_date, visit_type, chief_complaint, status, created_at
+   - visit_type: enum ['Consultation', 'Dental', 'Gynecology', 'Follow-up', 'Emergency']
+   - status: enum ['Scheduled', 'In-Progress', 'Completed', 'Cancelled']
+
+3. clinical_notes table:
+   - id, visit_id, doctor_id, symptoms, diagnosis, treatment_given, medications, recommendations, follow_up_date, follow_up_needed, notes, created_at
+   - Link to visits table for complete medical timeline
+
+CORE WORKFLOWS TO IMPLEMENT:
+
+1. ENHANCED PATIENT DETAIL PAGE:
+   - Replace current basic patient view with comprehensive medical record
+   - Layout: Patient info header + Medical timeline + Action buttons
+   - Medical summary sidebar: Last visit, total visits, allergies, chronic conditions
+   - Visit timeline: Chronological list (newest first) with expandable cards
+   - Each visit card shows: Date, Doctor, Visit type, Chief complaint, Status
+   - Expandable details: Full diagnosis, treatment, medications, notes, follow-up
+   - Quick actions: "Add New Visit", "Schedule Follow-up", "Print Medical History"
+
+2. NEW VISIT REGISTRATION WORKFLOW:
+   - Add "New Visit" button to patient detail page
+   - Form fields: Visit date (default today), Visit type dropdown, Chief complaint, Assigned doctor
+   - Integration: After visit creation, redirect to clinical notes entry
+   - Auto-update patient's "last_visit" field
+
+3. CLINICAL NOTES ENTRY INTERFACE:
+   - Comprehensive form for medical documentation
+   - Fields organized in sections:
+     * Patient Symptoms: Text area for chief complaint details
+     * Clinical Examination: Findings and observations
+     * Diagnosis: Primary and secondary diagnoses
+     * Treatment Given: Procedures, therapies performed today
+     * Medications: Prescribed drugs with dosage and duration
+     * Recommendations: Patient instructions, lifestyle advice
+     * Follow-up: Checkbox + date picker for next appointment needed
+     * Additional Notes: Free-form medical notes
+   - Save button updates visit status to "Completed"
+   - Real-time save drafts while typing
+
+4. MEDICAL SEARCH & FILTERING:
+   - Enhance existing patient search with medical history search
+   - Search capabilities: Patient name, phone, medical keywords, diagnosis, medications
+   - Filters: Visit type, Doctor, Date range, Follow-up needed
+   - Results show: Patient name + most recent visit summary
+   - Advanced search: Find all patients with specific condition or treatment
+
+5. DOCTOR MANAGEMENT INTERFACE:
+   - New "Doctors" page in main navigation
+   - List all doctors with: Name, Specialization, Cabinet, Patient count today
+   - Add Doctor form: Name, Specialization, Cabinet number, Contact info
+   - Edit/delete doctor functionality
+   - Integration: Doctor dropdown appears in visit forms
+
+6. ENHANCED PATIENT REGISTRATION:
+   - Add medical fields to existing patient form:
+     * Allergies (medications, food, environmental)
+     * Chronic conditions (diabetes, hypertension, etc.)
+     * Emergency contact (name, relationship, phone)
+     * Blood type, date of birth (for age calculation)
+   - Make these fields searchable and displayable in patient summary
+
+7. QUEUE INTEGRATION:
+   - When adding patient to queue, include visit type selection
+   - Queue display shows: Queue number + Visit type + Doctor assigned
+   - Auto-create visit record when patient added to queue
+   - Update visit status when patient called/completed
+
+8. MEDICAL REPORTS & EXPORT:
+   - Extend existing reports with medical data
+   - Daily medical summary: Patients seen by doctor, visit types, common diagnoses
+   - Patient medical history export (PDF/CSV)
+   - Follow-up reminders report (patients needing follow-up)
+   - Medical statistics: Most common conditions, treatments, etc.
+
+UI/UX REQUIREMENTS:
+- Information-dense interface optimized for medical professionals
+- Quick navigation between patients and their medical records
+- Mobile-responsive for tablet use during appointments
+- Fast loading of patient medical history (pagination for large histories)
+- Clear visual hierarchy: Critical info prominent, details expandable
+- Keyboard shortcuts for rapid data entry
+- Auto-save functionality to prevent data loss
+
+INTEGRATION WITH EXISTING FEATURES:
+- Maintain all current functionality (authentication, basic patient management, queue, reports)
+- Extend patient list to show last visit date and next follow-up
+- Add medical summary to dashboard statistics
+- Include visit data in existing CSV exports
+- Preserve multi-clinic data isolation
+
+VALIDATION & DATA INTEGRITY:
+- Required fields: Patient must exist before creating visit
+- Doctor must be assigned to same clinic as patient
+- Visit dates cannot be future dates (except for scheduled visits)
+- Clinical notes can only be added to existing visits
+- Soft delete for doctors (mark inactive instead of delete if they have visit history)
+
+PERFORMANCE CONSIDERATIONS:
+- Index visit dates and patient_id for fast timeline loading
+- Pagination for patients with extensive medical history
+- Lazy loading of clinical note details
+- Efficient queries for medical search functionality
+
+AUTHENTICATION & PERMISSIONS:
+- Maintain existing clinic-based isolation
+- All medical data scoped to clinic_id
+- Consider adding basic role separation (admin vs staff) for doctor management
+
+This replaces paper-based medical record keeping with comprehensive digital system. Focus on medical utility and workflow efficiency over aesthetic design. The interface should feel familiar to medical professionals and support rapid data entry during patient consultations.
+
+Build incrementally: Database schema first, then core viewing interfaces, then data entry forms, finally search and reporting enhancements.
