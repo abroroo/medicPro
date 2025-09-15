@@ -24,6 +24,7 @@ export function Navbar() {
   const navItems = [
     { path: "/", label: "Dashboard", icon: BarChart3 },
     { path: "/patients", label: "Patients", icon: Users },
+    { path: "/doctors", label: "Doctors", icon: Stethoscope },
     { path: "/queue", label: "Queue", icon: Clock },
     { path: "/display", label: "Display", icon: Monitor },
     { path: "/reports", label: "Reports", icon: FileText },

@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import Patients from "@/pages/patients";
+import Doctors from "@/pages/doctors";
 import Queue from "@/pages/queue";
 import WaitingDisplay from "@/pages/waiting-display";
 import Reports from "@/pages/reports";
@@ -18,6 +19,7 @@ function Router() {
     <Switch>
       <ProtectedRoute path="/" component={Dashboard} />
       <ProtectedRoute path="/patients" component={Patients} />
+      <ProtectedRoute path="/doctors" component={Doctors} />
       <ProtectedRoute path="/queue" component={Queue} />
       <ProtectedRoute path="/display" component={WaitingDisplay} />
       <ProtectedRoute path="/reports" component={Reports} />
