@@ -32,8 +32,14 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
       name: patient?.name || "",
       phone: patient?.phone || "",
       age: patient?.age || undefined,
+      dateOfBirth: patient?.dateOfBirth || "",
+      bloodType: patient?.bloodType || "",
       address: patient?.address || "",
-      emergencyContact: patient?.emergencyContact || "",
+      emergencyContactName: patient?.emergencyContactName || "",
+      emergencyContactPhone: patient?.emergencyContactPhone || "",
+      emergencyContactRelation: patient?.emergencyContactRelation || "",
+      allergies: patient?.allergies || "",
+      chronicConditions: patient?.chronicConditions || "",
       notes: patient?.notes || "",
     },
   });
@@ -99,8 +105,14 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
         name: patient.name,
         phone: patient.phone,
         age: patient.age || undefined,
+        dateOfBirth: patient.dateOfBirth || "",
+        bloodType: patient.bloodType || "",
         address: patient.address || "",
-        emergencyContact: patient.emergencyContact || "",
+        emergencyContactName: patient.emergencyContactName || "",
+        emergencyContactPhone: patient.emergencyContactPhone || "",
+        emergencyContactRelation: patient.emergencyContactRelation || "",
+        allergies: patient.allergies || "",
+        chronicConditions: patient.chronicConditions || "",
         notes: patient.notes || "",
       });
     } else {
@@ -108,8 +120,14 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
         name: "",
         phone: "",
         age: undefined,
+        dateOfBirth: "",
+        bloodType: "",
         address: "",
-        emergencyContact: "",
+        emergencyContactName: "",
+        emergencyContactPhone: "",
+        emergencyContactRelation: "",
+        allergies: "",
+        chronicConditions: "",
         notes: "",
       });
     }
@@ -159,7 +177,7 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
             <Input
               id="age"
               type="number"
-              {...form.register("age", { valueAsNumber: true })}
+              {...form.register("age", { setValueAs: v => v === '' ? undefined : Number(v) })}
               data-testid="input-patient-age"
             />
             {form.formState.errors.age && (
@@ -180,11 +198,73 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="emergencyContact">Emergency Contact</Label>
+            <Label htmlFor="dateOfBirth">Date of Birth</Label>
             <Input
-              id="emergencyContact"
-              {...form.register("emergencyContact")}
-              data-testid="input-patient-emergency"
+              id="dateOfBirth"
+              type="date"
+              {...form.register("dateOfBirth")}
+              data-testid="input-patient-dob"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bloodType">Blood Type</Label>
+            <Input
+              id="bloodType"
+              placeholder="e.g., A+, B-, O+, AB-"
+              {...form.register("bloodType")}
+              data-testid="input-patient-bloodtype"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
+            <Input
+              id="emergencyContactName"
+              {...form.register("emergencyContactName")}
+              data-testid="input-patient-emergency-name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
+            <Input
+              id="emergencyContactPhone"
+              type="tel"
+              {...form.register("emergencyContactPhone")}
+              data-testid="input-patient-emergency-phone"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="emergencyContactRelation">Emergency Contact Relation</Label>
+            <Input
+              id="emergencyContactRelation"
+              placeholder="e.g., Spouse, Parent, Sibling"
+              {...form.register("emergencyContactRelation")}
+              data-testid="input-patient-emergency-relation"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="allergies">Allergies</Label>
+            <Textarea
+              id="allergies"
+              rows={2}
+              placeholder="List any allergies to medications, foods, or environmental factors"
+              {...form.register("allergies")}
+              data-testid="input-patient-allergies"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="chronicConditions">Chronic Conditions</Label>
+            <Textarea
+              id="chronicConditions"
+              rows={2}
+              placeholder="List any chronic medical conditions (diabetes, hypertension, etc.)"
+              {...form.register("chronicConditions")}
+              data-testid="input-patient-chronic-conditions"
             />
           </div>
 
