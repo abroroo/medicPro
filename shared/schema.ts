@@ -197,7 +197,7 @@ export const insertQueueSchema = createInsertSchema(queue).omit({
 // Enums for better type safety
 export const visitTypeEnum = z.enum(['Consultation', 'Dental', 'Gynecology', 'Follow-up', 'Emergency']);
 export const visitStatusEnum = z.enum(['Scheduled', 'In-Progress', 'Completed', 'Cancelled']);
-export const queueStatusEnum = z.enum(['waiting', 'serving', 'completed']);
+export const queueStatusEnum = z.enum(['waiting', 'serving', 'completed', 'skipped', 'cancelled']);
 
 // Types
 export type InsertClinic = z.infer<typeof insertClinicSchema>;

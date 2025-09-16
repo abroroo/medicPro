@@ -237,11 +237,34 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateQueueStatus(id: number, status: string, clinicId: number): Promise<Queue | undefined> {
+    // First get the queue item to check if it has an associated visit
+    const queueItem = await db
+      .select()
+      .from(queue)
+      .where(and(eq(queue.id, id), eq(queue.clinicId, clinicId)))
+      .limit(1);
+    
+    if (!queueItem.length) {
+      return undefined;
+    }
+
+    const currentQueue = queueItem[0];
+
+    // If queue is being skipped or cancelled, update associated visit status
+    if ((status === 'skipped' || status === 'cancelled') && currentQueue.visitId) {
+      await db
+        .update(visits)
+        .set({ status: 'Cancelled' })
+        .where(and(eq(visits.id, currentQueue.visitId), eq(visits.clinicId, clinicId)));
+    }
+
+    // Update the queue status
     const [updatedQueue] = await db
       .update(queue)
       .set({ status })
       .where(and(eq(queue.id, id), eq(queue.clinicId, clinicId)))
       .returning();
+    
     return updatedQueue || undefined;
   }
 
@@ -279,7 +302,7 @@ export class DatabaseStorage implements IStorage {
     return serving || undefined;
   }
 
-  async getQueueStats(clinicId: number): Promise<{ waiting: number; serving: number; completed: number }> {
+  async getQueueStats(clinicId: number): Promise<{ waiting: number; serving: number; completed: number; skipped: number; cancelled: number }> {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
@@ -301,6 +324,8 @@ export class DatabaseStorage implements IStorage {
       waiting: queueItems.filter(item => item.status === 'waiting').length,
       serving: queueItems.filter(item => item.status === 'serving').length,
       completed: queueItems.filter(item => item.status === 'completed').length,
+      skipped: queueItems.filter(item => item.status === 'skipped').length,
+      cancelled: queueItems.filter(item => item.status === 'cancelled').length,
     };
   }
 

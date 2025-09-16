@@ -154,6 +154,12 @@ export function registerRoutes(app: Express): Server {
       const id = parseInt(req.params.id);
       const { status } = req.body;
       
+      // Validate status
+      const validStatuses = ['waiting', 'serving', 'completed', 'skipped', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid queue status" });
+      }
+      
       const queueItem = await storage.updateQueueStatus(id, status, req.user!.id);
       
       if (!queueItem) {

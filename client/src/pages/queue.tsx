@@ -11,7 +11,9 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Megaphone, 
   Plus, 
-  Check 
+  Check,
+  SkipForward,
+  X
 } from "lucide-react";
 import { Queue as QueueItem, Patient } from "@shared/schema";
 
@@ -77,11 +79,31 @@ export default function Queue() {
     });
   };
 
+  const handleSkipPatient = (id: number) => {
+    updateQueueMutation.mutate({ id, status: 'skipped' });
+    toast({
+      title: "Patient Skipped",
+      description: "Patient skipped, visit marked as unattended",
+      variant: "default",
+    });
+  };
+
+  const handleCancelPatient = (id: number) => {
+    updateQueueMutation.mutate({ id, status: 'cancelled' });
+    toast({
+      title: "Patient Cancelled",
+      description: "Patient cancelled, visit marked as unattended",
+      variant: "default",
+    });
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'serving': return 'default';
       case 'waiting': return 'secondary';
       case 'completed': return 'outline';
+      case 'skipped': return 'secondary';
+      case 'cancelled': return 'destructive';
       default: return 'secondary';
     }
   };
@@ -91,6 +113,8 @@ export default function Queue() {
       case 'serving': return 'bg-yellow-500';
       case 'waiting': return 'bg-blue-500';
       case 'completed': return 'bg-green-500';
+      case 'skipped': return 'bg-orange-500';
+      case 'cancelled': return 'bg-red-500';
       default: return 'bg-gray-500';
     }
   };
@@ -210,15 +234,40 @@ export default function Queue() {
                           </Badge>
                           
                           {item.status === 'serving' && (
+                            <>
+                              <Button
+                                size="sm"
+                                onClick={() => handleMarkComplete(item.id)}
+                                disabled={updateQueueMutation.isPending}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                                data-testid={`button-complete-${item.id}`}
+                              >
+                                <Check className="w-4 h-4 mr-1" />
+                                Complete
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => handleSkipPatient(item.id)}
+                                disabled={updateQueueMutation.isPending}
+                                className="bg-orange-600 hover:bg-orange-700 text-white"
+                                data-testid={`button-skip-${item.id}`}
+                              >
+                                <SkipForward className="w-4 h-4 mr-1" />
+                                Skip
+                              </Button>
+                            </>
+                          )}
+                          
+                          {(item.status === 'waiting' || item.status === 'serving') && (
                             <Button
                               size="sm"
-                              onClick={() => handleMarkComplete(item.id)}
+                              onClick={() => handleCancelPatient(item.id)}
                               disabled={updateQueueMutation.isPending}
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                              data-testid={`button-complete-${item.id}`}
+                              className="bg-red-600 hover:bg-red-700 text-white"
+                              data-testid={`button-cancel-${item.id}`}
                             >
-                              <Check className="w-4 h-4 mr-1" />
-                              Complete
+                              <X className="w-4 h-4 mr-1" />
+                              Cancel
                             </Button>
                           )}
                         </div>
@@ -235,15 +284,40 @@ export default function Queue() {
                         </Badge>
                         
                         {item.status === 'serving' && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() => handleMarkComplete(item.id)}
+                              disabled={updateQueueMutation.isPending}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                              data-testid={`button-complete-${item.id}`}
+                            >
+                              <Check className="w-4 h-4 mr-1" />
+                              Complete
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleSkipPatient(item.id)}
+                              disabled={updateQueueMutation.isPending}
+                              className="bg-orange-600 hover:bg-orange-700 text-white"
+                              data-testid={`button-skip-${item.id}`}
+                            >
+                              <SkipForward className="w-4 h-4 mr-1" />
+                              Skip
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {(item.status === 'waiting' || item.status === 'serving') && (
                           <Button
                             size="sm"
-                            onClick={() => handleMarkComplete(item.id)}
+                            onClick={() => handleCancelPatient(item.id)}
                             disabled={updateQueueMutation.isPending}
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                            data-testid={`button-complete-${item.id}`}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                            data-testid={`button-cancel-${item.id}`}
                           >
-                            <Check className="w-4 h-4 mr-1" />
-                            Complete
+                            <X className="w-4 h-4 mr-1" />
+                            Cancel
                           </Button>
                         )}
                       </div>
