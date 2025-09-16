@@ -100,32 +100,46 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      // Validate request body
-      const validation = insertQueueSchema.omit({ clinicId: true, queueNumber: true }).safeParse(req.body);
-      if (!validation.success) {
+      // Validate request body for visit data (excluding clinicId and status which are set server-side)
+      const visitValidation = insertVisitSchema.omit({ clinicId: true, status: true }).safeParse(req.body);
+      if (!visitValidation.success) {
         return res.status(400).json({ 
-          message: "Invalid queue data", 
-          errors: validation.error.errors 
+          message: "Invalid visit data", 
+          errors: visitValidation.error.errors 
         });
       }
 
-      const { patientId } = validation.data;
+      const visitData = visitValidation.data;
       const queueNumber = await storage.getNextQueueNumber(req.user!.id);
       
+      // First create the visit
+      const visit = await storage.createVisit({
+        ...visitData,
+        clinicId: req.user!.id,
+        status: "Scheduled"
+      });
+
+      // Then add to queue with visit ID
       const queueItem = await storage.addToQueue({
         clinicId: req.user!.id,
-        patientId,
+        patientId: visitData.patientId,
+        doctorId: visitData.doctorId,
+        visitId: visit.id,
+        visitType: visitData.visitType,
         queueNumber,
         status: "waiting"
       }, req.user!.id);
       
-      res.status(201).json(queueItem);
+      res.status(201).json({ 
+        queueItem,
+        visit
+      });
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Patient not found')) {
-        return res.status(404).json({ message: "Patient not found or does not belong to this clinic" });
+      if (error instanceof Error && error.message.includes('not found')) {
+        return res.status(404).json({ message: error.message });
       }
       console.error("Queue creation error:", error);
-      res.status(500).json({ message: "Failed to add to queue" });
+      res.status(500).json({ message: "Failed to schedule visit and add to queue" });
     }
   });
 
@@ -211,7 +225,7 @@ export function registerRoutes(app: Express): Server {
       
       const csvHeader = "Name,Phone,Age,Address,Emergency Contact,Notes,Created At,Last Visit\n";
       const csvData = patients.map(p => 
-        `"${p.name}","${p.phone}","${p.age || ''}","${p.address || ''}","${p.emergencyContactName || ''}","${p.notes || ''}","${p.createdAt?.toISOString() || ''}","${p.lastVisit?.toISOString() || ''}"`
+        `"${p.name}","${p.phone}","${p.age || ''}","${p.address || ''}","${p.notes || ''}","${p.createdAt?.toISOString() || ''}","${p.lastVisit?.toISOString() || ''}"`
       ).join("\n");
       
       res.setHeader('Content-Type', 'text/csv');
