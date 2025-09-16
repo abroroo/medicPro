@@ -6,15 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PatientFormModal } from "@/components/patient-form-modal";
-import { VisitFormModal } from "@/components/visit-form-modal";
+import { AddToQueueModal } from "@/components/add-to-queue-modal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Search, 
   UserPlus, 
   Edit, 
-  PlusCircle,
-  Calendar
+  PlusCircle
 } from "lucide-react";
 import { Patient } from "@shared/schema";
 
@@ -23,8 +22,7 @@ export default function Patients() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
-  const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
-  const [selectedPatientForVisit, setSelectedPatientForVisit] = useState<number | null>(null);
+  const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const { toast } = useToast();
 
   const { data: patients = [], isLoading } = useQuery<Patient[]>({
@@ -41,25 +39,6 @@ export default function Patients() {
     },
   });
 
-  const addToQueueMutation = useMutation({
-    mutationFn: async (patientId: number) => {
-      const res = await apiRequest("POST", "/api/queue", { patientId });
-      return res.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: "Patient added to queue successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
   // No need for client-side filtering since API handles search
   const filteredPatients = patients;
@@ -69,13 +48,8 @@ export default function Patients() {
     setIsModalOpen(true);
   };
 
-  const handleAddToQueue = (patientId: number) => {
-    addToQueueMutation.mutate(patientId);
-  };
-
-  const handleScheduleVisit = (patientId: number) => {
-    setSelectedPatientForVisit(patientId);
-    setIsVisitModalOpen(true);
+  const handleAddToQueue = () => {
+    setIsQueueModalOpen(true);
   };
 
   return (
@@ -148,14 +122,6 @@ export default function Patients() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleScheduleVisit(patient.id)}
-                        data-testid={`button-schedule-visit-${patient.id}`}
-                      >
-                        <Calendar className="w-4 h-4 text-blue-600" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
                         onClick={() => handleEditPatient(patient)}
                         data-testid={`button-edit-${patient.id}`}
                       >
@@ -164,8 +130,7 @@ export default function Patients() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleAddToQueue(patient.id)}
-                        disabled={addToQueueMutation.isPending}
+                        onClick={handleAddToQueue}
                         data-testid={`button-add-to-queue-${patient.id}`}
                       >
                         <PlusCircle className="w-4 h-4 text-green-600" />
@@ -224,14 +189,6 @@ export default function Patients() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleScheduleVisit(patient.id)}
-                            data-testid={`button-schedule-visit-${patient.id}`}
-                          >
-                            <Calendar className="w-4 h-4 text-blue-600" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
                             onClick={() => handleEditPatient(patient)}
                             data-testid={`button-edit-${patient.id}`}
                           >
@@ -240,8 +197,7 @@ export default function Patients() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleAddToQueue(patient.id)}
-                            disabled={addToQueueMutation.isPending}
+                            onClick={handleAddToQueue}
                             data-testid={`button-add-to-queue-${patient.id}`}
                           >
                             <PlusCircle className="w-4 h-4 text-green-600" />
@@ -268,16 +224,10 @@ export default function Patients() {
           patient={editingPatient}
         />
 
-        {/* Visit Form Modal */}
-        <VisitFormModal
-          open={isVisitModalOpen}
-          onOpenChange={(open) => {
-            setIsVisitModalOpen(open);
-            if (!open) {
-              setSelectedPatientForVisit(null);
-            }
-          }}
-          preSelectedPatientId={selectedPatientForVisit || undefined}
+        {/* Add To Queue Modal */}
+        <AddToQueueModal
+          open={isQueueModalOpen}
+          onOpenChange={setIsQueueModalOpen}
         />
       </div>
     </div>
