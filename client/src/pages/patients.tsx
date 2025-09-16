@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,7 @@ import { Patient } from "@shared/schema";
 
 export default function Patients() {
   const isMobile = useIsMobile();
+  const [location, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
@@ -50,6 +52,14 @@ export default function Patients() {
 
   const handleAddToQueue = () => {
     setIsQueueModalOpen(true);
+  };
+
+  const handlePatientClick = (patientId: number, event: React.MouseEvent) => {
+    // Prevent navigation if clicking on action buttons
+    if ((event.target as HTMLElement).closest('button')) {
+      return;
+    }
+    setLocation(`/patients/${patientId}`);
   };
 
   return (
@@ -102,10 +112,11 @@ export default function Patients() {
               // Mobile Compact List Layout
               <div className="space-y-1">
                 {filteredPatients.map((patient) => (
-                  <div 
-                    key={patient.id} 
-                    className="flex items-center justify-between p-3 hover:bg-accent transition-colors border-b border-border"
+                  <div
+                    key={patient.id}
+                    className="flex items-center justify-between p-3 hover:bg-accent transition-colors border-b border-border cursor-pointer"
                     data-testid={`patient-row-${patient.id}`}
+                    onClick={(e) => handlePatientClick(patient.id, e)}
                   >
                     <div className="flex items-center space-x-3 flex-1">
                       <div className="w-2 h-2 rounded-full bg-primary" />
@@ -164,7 +175,12 @@ export default function Patients() {
                   </thead>
                   <tbody className="bg-card divide-y divide-border">
                     {filteredPatients.map((patient) => (
-                      <tr key={patient.id} className="hover:bg-accent transition-colors" data-testid={`patient-row-${patient.id}`}>
+                      <tr
+                        key={patient.id}
+                        className="hover:bg-accent transition-colors cursor-pointer"
+                        data-testid={`patient-row-${patient.id}`}
+                        onClick={(e) => handlePatientClick(patient.id, e)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-medium text-foreground" data-testid={`patient-name-${patient.id}`}>
                             {patient.name}

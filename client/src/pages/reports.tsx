@@ -70,9 +70,9 @@ export default function Reports() {
     dateFrom: "",
     dateTo: "",
     patientName: "",
-    doctorId: "",
-    visitType: "",
-    status: "",
+    doctorId: "all",
+    visitType: "all",
+    status: "all",
   });
 
   const { data: patientStats } = useQuery({
@@ -112,9 +112,9 @@ export default function Reports() {
       if (visitFilters.dateFrom) params.append('dateFrom', visitFilters.dateFrom);
       if (visitFilters.dateTo) params.append('dateTo', visitFilters.dateTo);
       if (visitFilters.patientName) params.append('patientName', visitFilters.patientName);
-      if (visitFilters.doctorId) params.append('doctorId', visitFilters.doctorId);
-      if (visitFilters.visitType) params.append('visitType', visitFilters.visitType);
-      if (visitFilters.status) params.append('status', visitFilters.status);
+      if (visitFilters.doctorId && visitFilters.doctorId !== "all") params.append('doctorId', visitFilters.doctorId);
+      if (visitFilters.visitType && visitFilters.visitType !== "all") params.append('visitType', visitFilters.visitType);
+      if (visitFilters.status && visitFilters.status !== "all") params.append('status', visitFilters.status);
       
       const url = `/api/reports/visits${params.toString() ? '?' + params.toString() : ''}`;
       const res = await fetch(url, { credentials: "include" });
@@ -152,9 +152,9 @@ export default function Reports() {
         dateFrom: "",
         dateTo: "",
         patientName: "",
-        doctorId: "",
-        visitType: "",
-        status: "",
+        doctorId: "all",
+        visitType: "all",
+        status: "all",
       });
     }
   };
@@ -173,9 +173,9 @@ export default function Reports() {
       if (visitFilters.dateFrom) params.append('dateFrom', visitFilters.dateFrom);
       if (visitFilters.dateTo) params.append('dateTo', visitFilters.dateTo);
       if (visitFilters.patientName) params.append('patientName', visitFilters.patientName);
-      if (visitFilters.doctorId) params.append('doctorId', visitFilters.doctorId);
-      if (visitFilters.visitType) params.append('visitType', visitFilters.visitType);
-      if (visitFilters.status) params.append('status', visitFilters.status);
+      if (visitFilters.doctorId && visitFilters.doctorId !== "all") params.append('doctorId', visitFilters.doctorId);
+      if (visitFilters.visitType && visitFilters.visitType !== "all") params.append('visitType', visitFilters.visitType);
+      if (visitFilters.status && visitFilters.status !== "all") params.append('status', visitFilters.status);
       window.open(`/api/reports/visits/export?${params.toString()}`, '_blank');
     }
   };
@@ -309,7 +309,7 @@ export default function Reports() {
                             <SelectValue placeholder="All doctors" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">All doctors</SelectItem>
+                            <SelectItem value="all">All doctors</SelectItem>
                             {doctors.map((doctor) => (
                               <SelectItem key={doctor.id} value={doctor.id.toString()}>
                                 {doctor.name} - {doctor.specialization}
@@ -329,7 +329,7 @@ export default function Reports() {
                             <SelectValue placeholder="All visit types" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">All visit types</SelectItem>
+                            <SelectItem value="all">All visit types</SelectItem>
                             <SelectItem value="Consultation">Consultation</SelectItem>
                             <SelectItem value="Cleaning">Cleaning</SelectItem>
                             <SelectItem value="Treatment">Treatment</SelectItem>
@@ -349,7 +349,7 @@ export default function Reports() {
                             <SelectValue placeholder="All statuses" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">All statuses</SelectItem>
+                            <SelectItem value="all">All statuses</SelectItem>
                             <SelectItem value="Scheduled">Scheduled</SelectItem>
                             <SelectItem value="Completed">Completed</SelectItem>
                             <SelectItem value="Cancelled">Cancelled</SelectItem>
