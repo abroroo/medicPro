@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
 import { 
   Dialog, 
   DialogContent, 
@@ -10,11 +9,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Search } from "lucide-react";
-import { Patient, InsertPatient } from "@shared/schema";
+import { Patient } from "@shared/schema";
 
 interface AddToQueueModalProps {
   open: boolean;
@@ -41,9 +39,6 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
     enabled: searchQuery.length > 2,
   });
 
-  const form = useForm<{ name: string; phone: string }>({
-    defaultValues: { name: "", phone: "" },
-  });
 
   const addToQueueMutation = useMutation({
     mutationFn: async (patientId: number) => {
@@ -68,39 +63,10 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
     },
   });
 
-  const createAndAddPatientMutation = useMutation({
-    mutationFn: async (patientData: { name: string; phone: string }) => {
-      // Create patient first
-      const createRes = await apiRequest("POST", "/api/patients", patientData);
-      const newPatient = await createRes.json();
-      
-      // Then add to queue
-      const queueRes = await apiRequest("POST", "/api/queue", { patientId: newPatient.id });
-      return queueRes.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/queue"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
-      toast({
-        title: "Success",
-        description: "New patient created and added to queue",
-      });
-      onOpenChange(false);
-      resetForm();
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
 
   const resetForm = () => {
     setSearchQuery("");
     setSelectedPatient(null);
-    form.reset();
   };
 
   const handleAddExistingPatient = () => {
@@ -109,11 +75,6 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
     }
   };
 
-  const handleQuickAdd = (data: { name: string; phone: string }) => {
-    if (data.name && data.phone) {
-      createAndAddPatientMutation.mutate(data);
-    }
-  };
 
   const handlePatientSelect = (patient: Patient) => {
     setSelectedPatient(patient);
@@ -183,53 +144,19 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
             )}
           </div>
 
-          {/* OR Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
+          {/* No Selection Message */}
+          {!selectedPatient && searchQuery.length <= 2 && (
+            <div className="text-center p-4 text-muted-foreground">
+              <p className="text-sm">Search for an existing patient to add to queue</p>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-background text-muted-foreground">OR</span>
+          )}
+          
+          {searchQuery.length > 2 && filteredPatients.length === 0 && (
+            <div className="text-center p-4 text-muted-foreground">
+              <p className="text-sm">No patients found</p>
+              <p className="text-xs mt-1">Try a different search term</p>
             </div>
-          </div>
-
-          {/* Quick Add New */}
-          <div>
-            <Label>Quick Add New Patient</Label>
-            <form onSubmit={form.handleSubmit(handleQuickAdd)} className="space-y-3 mt-1">
-              <Input
-                placeholder="Patient name"
-                {...form.register("name", { required: true })}
-                data-testid="input-quick-add-name"
-              />
-              <Input
-                placeholder="Phone number"
-                type="tel"
-                {...form.register("phone", { required: true })}
-                data-testid="input-quick-add-phone"
-              />
-              
-              <div className="flex space-x-3 pt-4">
-                <Button 
-                  type="submit"
-                  className="flex-1"
-                  disabled={createAndAddPatientMutation.isPending}
-                  data-testid="button-quick-add-to-queue"
-                >
-                  {createAndAddPatientMutation.isPending ? "Adding..." : "Add to Queue"}
-                </Button>
-                <Button 
-                  type="button"
-                  variant="secondary"
-                  className="flex-1"
-                  onClick={() => onOpenChange(false)}
-                  data-testid="button-cancel-add-queue"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
