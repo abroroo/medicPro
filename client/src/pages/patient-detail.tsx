@@ -20,12 +20,52 @@ import {
   Stethoscope,
   Clock,
   Edit,
-  PlusCircle
+  PlusCircle,
+  Download,
+  Printer
 } from "lucide-react";
 import { Patient, Visit, ClinicalNotes, Doctor } from "@shared/schema";
 import { VisitFormModal } from "@/components/visit-form-modal";
 
 type VisitWithRelations = Visit & { patient: Patient; doctor: Doctor };
+
+// Security utility functions
+const escapeCSVField = (field: string): string => {
+  if (!field) return '';
+  
+  // Convert to string and handle null/undefined
+  const strField = String(field);
+  
+  // Prevent CSV injection by prefixing dangerous characters
+  const dangerousChars = ['=', '+', '-', '@', '\t', '\r'];
+  let escaped = strField;
+  
+  if (dangerousChars.some(char => escaped.startsWith(char))) {
+    escaped = "'" + escaped;
+  }
+  
+  // Escape double quotes by doubling them
+  escaped = escaped.replace(/"/g, '""');
+  
+  // Wrap in quotes if contains comma, newline, or quote
+  if (escaped.includes(',') || escaped.includes('\n') || escaped.includes('\r') || escaped.includes('"')) {
+    escaped = `"${escaped}"`;
+  }
+  
+  return escaped;
+};
+
+const escapeHTML = (text: string): string => {
+  if (!text) return '';
+  
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+};
 
 export default function PatientDetail() {
   const params = useParams<{ id: string }>();
@@ -33,6 +73,146 @@ export default function PatientDetail() {
   const isMobile = useIsMobile();
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [editingVisit, setEditingVisit] = useState<any>(null);
+
+  // Export and Print handlers
+  const handleExportToCSV = () => {
+    if (!patient || visits.length === 0) return;
+    
+    // Create comprehensive CSV content with all clinical notes
+    const headers = ['Date', 'Visit Type', 'Doctor', 'Status', 'Chief Complaint', 'Note Date', 'Symptoms', 'Diagnosis', 'Treatment', 'Medications', 'Follow-up Date'];
+    const rows: string[][] = [];
+    
+    visits.forEach(visit => {
+      const visitNotes = allClinicalNotes.filter(note => note.visitId === visit.id);
+      
+      if (visitNotes.length === 0) {
+        // Visit without clinical notes
+        rows.push([
+          escapeCSVField(new Date(visit.visitDate).toLocaleDateString()),
+          escapeCSVField(visit.visitType),
+          escapeCSVField(`Dr. ${visit.doctor.name}`),
+          escapeCSVField(visit.status),
+          escapeCSVField(visit.chiefComplaint || ''),
+          escapeCSVField(''),
+          escapeCSVField(''),
+          escapeCSVField(''),
+          escapeCSVField(''),
+          escapeCSVField(''),
+          escapeCSVField('')
+        ]);
+      } else {
+        // Include all clinical notes for this visit
+        visitNotes.forEach(note => {
+          rows.push([
+            escapeCSVField(new Date(visit.visitDate).toLocaleDateString()),
+            escapeCSVField(visit.visitType),
+            escapeCSVField(`Dr. ${visit.doctor.name}`),
+            escapeCSVField(visit.status),
+            escapeCSVField(visit.chiefComplaint || ''),
+            escapeCSVField(new Date(note.createdAt).toLocaleDateString()),
+            escapeCSVField(note.symptoms || ''),
+            escapeCSVField(note.diagnosis || ''),
+            escapeCSVField(note.treatmentGiven || ''),
+            escapeCSVField(note.medications || ''),
+            escapeCSVField(note.followUpDate ? new Date(note.followUpDate).toLocaleDateString() : '')
+          ]);
+        });
+      }
+    });
+    
+    // Convert to CSV with proper escaping
+    const csvContent = [headers.map(escapeCSVField), ...rows]
+      .map(row => row.join(','))
+      .join('\n');
+    
+    // Download file with escaped filename
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${escapeCSVField(patient.name).replace(/[^a-zA-Z0-9]/g, '_')}_medical_history.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  const handlePrintHistory = () => {
+    if (!patient || visits.length === 0) return;
+    
+    // Create printable content with HTML escaping for security
+    const printContent = `
+      <html>
+        <head>
+          <title>Medical History - ${escapeHTML(patient.name)}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+            .header { text-align: center; margin-bottom: 30px; }
+            .patient-info { background: #f5f5f5; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+            .visit { margin-bottom: 25px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+            .visit-header { font-weight: bold; margin-bottom: 10px; color: #2563eb; }
+            .visit-detail { margin: 5px 0; }
+            .label { font-weight: bold; color: #666; }
+            .notes { background: #f9f9f9; padding: 10px; margin: 10px 0; border-left: 4px solid #2563eb; }
+            .print-date { text-align: right; font-size: 12px; color: #666; margin-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Medical History Report</h1>
+            <h2>${escapeHTML(patient.name)}</h2>
+          </div>
+          
+          <div class="patient-info">
+            <div><span class="label">Phone:</span> ${escapeHTML(patient.phone)}</div>
+            ${patient.age ? `<div><span class="label">Age:</span> ${escapeHTML(patient.age.toString())} years</div>` : ''}
+            ${patient.dateOfBirth ? `<div><span class="label">Date of Birth:</span> ${escapeHTML(new Date(patient.dateOfBirth).toLocaleDateString())}</div>` : ''}
+            ${patient.bloodType ? `<div><span class="label">Blood Type:</span> ${escapeHTML(patient.bloodType)}</div>` : ''}
+            ${patient.allergies ? `<div><span class="label">Allergies:</span> ${escapeHTML(patient.allergies)}</div>` : ''}
+            ${patient.chronicConditions ? `<div><span class="label">Chronic Conditions:</span> ${escapeHTML(patient.chronicConditions)}</div>` : ''}
+          </div>
+          
+          <h3>Visit History</h3>
+          ${visits.map(visit => {
+            const visitNotes = allClinicalNotes.filter(note => note.visitId === visit.id);
+            return `
+              <div class="visit">
+                <div class="visit-header">
+                  ${escapeHTML(visit.visitType)} - ${escapeHTML(new Date(visit.visitDate).toLocaleDateString())}
+                </div>
+                <div class="visit-detail"><span class="label">Doctor:</span> Dr. ${escapeHTML(visit.doctor.name)}</div>
+                <div class="visit-detail"><span class="label">Status:</span> ${escapeHTML(visit.status)}</div>
+                ${visit.chiefComplaint ? `<div class="visit-detail"><span class="label">Chief Complaint:</span> ${escapeHTML(visit.chiefComplaint)}</div>` : ''}
+                
+                ${visitNotes.map(note => `
+                  <div class="notes">
+                    ${note.symptoms ? `<div><span class="label">Symptoms:</span> ${escapeHTML(note.symptoms)}</div>` : ''}
+                    ${note.diagnosis ? `<div><span class="label">Diagnosis:</span> ${escapeHTML(note.diagnosis)}</div>` : ''}
+                    ${note.treatmentGiven ? `<div><span class="label">Treatment:</span> ${escapeHTML(note.treatmentGiven)}</div>` : ''}
+                    ${note.medications ? `<div><span class="label">Medications:</span> ${escapeHTML(note.medications)}</div>` : ''}
+                    ${note.followUpNeeded && note.followUpDate ? `<div><span class="label">Follow-up:</span> ${escapeHTML(new Date(note.followUpDate).toLocaleDateString())}</div>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }).join('')}
+          
+          <div class="print-date">
+            Generated on: ${escapeHTML(new Date().toLocaleString())}
+          </div>
+        </body>
+      </html>
+    `;
+    
+    // Open print window
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(printContent);
+      printWindow.document.close();
+      printWindow.focus();
+      printWindow.print();
+    }
+  };
   
   const patientId = parseInt(params.id || '0');
 
@@ -261,10 +441,34 @@ export default function PatientDetail() {
           {/* Medical Timeline */}
           <Card className={isMobile ? '' : 'lg:col-span-2'}>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <ClipboardList className="w-5 h-5 mr-2" />
-                Medical Timeline
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center">
+                  <ClipboardList className="w-5 h-5 mr-2" />
+                  Medical Timeline
+                </CardTitle>
+                {visits.length > 0 && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExportToCSV}
+                      data-testid="button-export-history"
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      Export
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePrintHistory}
+                      data-testid="button-print-history"
+                    >
+                      <Printer className="w-4 h-4 mr-1" />
+                      Print
+                    </Button>
+                  </div>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {visitsLoading ? (
