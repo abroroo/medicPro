@@ -100,32 +100,36 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      // Validate request body for visit data (excluding clinicId and status which are set server-side)
-      const visitValidation = insertVisitSchema.omit({ clinicId: true, status: true }).safeParse(req.body);
-      if (!visitValidation.success) {
+      // Extract visit data from request body
+      const { patientId, doctorId, visitType, visitDate, chiefComplaint } = req.body;
+      
+      // Basic validation
+      if (!patientId || !doctorId || !visitType || !visitDate) {
         return res.status(400).json({ 
-          message: "Invalid visit data", 
-          errors: visitValidation.error.errors 
+          message: "Missing required fields: patientId, doctorId, visitType, visitDate" 
         });
       }
 
-      const visitData = visitValidation.data;
       const queueNumber = await storage.getNextQueueNumber(req.user!.id);
       
       // First create the visit
       const visit = await storage.createVisit({
-        ...visitData,
-        clinicId: req.user!.id,
-        status: "Scheduled"
+        patientId,
+        doctorId,
+        visitDate,
+        visitType,
+        chiefComplaint: chiefComplaint || null,
+        status: "Scheduled",
+        clinicId: req.user!.id
       });
 
       // Then add to queue with visit ID
       const queueItem = await storage.addToQueue({
         clinicId: req.user!.id,
-        patientId: visitData.patientId,
-        doctorId: visitData.doctorId,
+        patientId,
+        doctorId,
         visitId: visit.id,
-        visitType: visitData.visitType,
+        visitType,
         queueNumber,
         status: "waiting"
       }, req.user!.id);
