@@ -35,9 +35,6 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
       dateOfBirth: patient?.dateOfBirth || "",
       bloodType: patient?.bloodType || "",
       address: patient?.address || "",
-      emergencyContactName: patient?.emergencyContactName || "",
-      emergencyContactPhone: patient?.emergencyContactPhone || "",
-      emergencyContactRelation: patient?.emergencyContactRelation || "",
       allergies: patient?.allergies || "",
       chronicConditions: patient?.chronicConditions || "",
       notes: patient?.notes || "",
@@ -108,9 +105,6 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
         dateOfBirth: patient.dateOfBirth || "",
         bloodType: patient.bloodType || "",
         address: patient.address || "",
-        emergencyContactName: patient.emergencyContactName || "",
-        emergencyContactPhone: patient.emergencyContactPhone || "",
-        emergencyContactRelation: patient.emergencyContactRelation || "",
         allergies: patient.allergies || "",
         chronicConditions: patient.chronicConditions || "",
         notes: patient.notes || "",
@@ -123,9 +117,6 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
         dateOfBirth: "",
         bloodType: "",
         address: "",
-        emergencyContactName: "",
-        emergencyContactPhone: "",
-        emergencyContactRelation: "",
         allergies: "",
         chronicConditions: "",
         notes: "",
@@ -217,34 +208,6 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="emergencyContactName">Emergency Contact Name</Label>
-            <Input
-              id="emergencyContactName"
-              {...form.register("emergencyContactName")}
-              data-testid="input-patient-emergency-name"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="emergencyContactPhone">Emergency Contact Phone</Label>
-            <Input
-              id="emergencyContactPhone"
-              type="tel"
-              {...form.register("emergencyContactPhone")}
-              data-testid="input-patient-emergency-phone"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="emergencyContactRelation">Emergency Contact Relation</Label>
-            <Input
-              id="emergencyContactRelation"
-              placeholder="e.g., Spouse, Parent, Sibling"
-              {...form.register("emergencyContactRelation")}
-              data-testid="input-patient-emergency-relation"
-            />
-          </div>
 
           <div className="space-y-2">
             <Label htmlFor="allergies">Allergies</Label>

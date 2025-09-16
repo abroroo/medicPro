@@ -6,24 +6,25 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PatientFormModal } from "@/components/patient-form-modal";
+import { VisitFormModal } from "@/components/visit-form-modal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Search, 
   UserPlus, 
   Edit, 
-  Eye, 
-  PlusCircle 
+  PlusCircle,
+  Calendar
 } from "lucide-react";
-import { useLocation } from "wouter";
 import { Patient } from "@shared/schema";
 
 export default function Patients() {
   const isMobile = useIsMobile();
-  const [location, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
+  const [selectedPatientForVisit, setSelectedPatientForVisit] = useState<number | null>(null);
   const { toast } = useToast();
 
   const { data: patients = [], isLoading } = useQuery<Patient[]>({
@@ -72,8 +73,9 @@ export default function Patients() {
     addToQueueMutation.mutate(patientId);
   };
 
-  const handleViewPatient = (patientId: number) => {
-    setLocation(`/patients/${patientId}`);
+  const handleScheduleVisit = (patientId: number) => {
+    setSelectedPatientForVisit(patientId);
+    setIsVisitModalOpen(true);
   };
 
   return (
@@ -146,10 +148,10 @@ export default function Patients() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleViewPatient(patient.id)}
-                        data-testid={`button-view-${patient.id}`}
+                        onClick={() => handleScheduleVisit(patient.id)}
+                        data-testid={`button-schedule-visit-${patient.id}`}
                       >
-                        <Eye className="w-4 h-4 text-blue-600" />
+                        <Calendar className="w-4 h-4 text-blue-600" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -222,10 +224,10 @@ export default function Patients() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleViewPatient(patient.id)}
-                            data-testid={`button-view-${patient.id}`}
+                            onClick={() => handleScheduleVisit(patient.id)}
+                            data-testid={`button-schedule-visit-${patient.id}`}
                           >
-                            <Eye className="w-4 h-4 text-blue-600" />
+                            <Calendar className="w-4 h-4 text-blue-600" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -264,6 +266,18 @@ export default function Patients() {
             }
           }}
           patient={editingPatient}
+        />
+
+        {/* Visit Form Modal */}
+        <VisitFormModal
+          open={isVisitModalOpen}
+          onOpenChange={(open) => {
+            setIsVisitModalOpen(open);
+            if (!open) {
+              setSelectedPatientForVisit(null);
+            }
+          }}
+          preSelectedPatientId={selectedPatientForVisit || undefined}
         />
       </div>
     </div>

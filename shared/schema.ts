@@ -21,9 +21,6 @@ export const patients = pgTable("patients", {
   dateOfBirth: date("date_of_birth"),
   bloodType: text("blood_type"),
   address: text("address"),
-  emergencyContactName: text("emergency_contact_name"),
-  emergencyContactPhone: text("emergency_contact_phone"),
-  emergencyContactRelation: text("emergency_contact_relation"),
   allergies: text("allergies"), // JSON string for flexible allergy data
   chronicConditions: text("chronic_conditions"), // JSON string for conditions
   notes: text("notes"),

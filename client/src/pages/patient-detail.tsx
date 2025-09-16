@@ -217,31 +217,6 @@ export default function PatientDetail() {
 
               <Separator />
 
-              {/* Emergency Contact */}
-              {(patient.emergencyContactName || patient.emergencyContactPhone) && (
-                <div>
-                  <p className="text-sm font-medium text-foreground mb-2">Emergency Contact</p>
-                  <div className="space-y-2">
-                    {patient.emergencyContactName && (
-                      <p className="text-sm" data-testid="patient-detail-emergency-name">
-                        <strong>Name:</strong> {patient.emergencyContactName}
-                      </p>
-                    )}
-                    {patient.emergencyContactPhone && (
-                      <p className="text-sm" data-testid="patient-detail-emergency-phone">
-                        <strong>Phone:</strong> {patient.emergencyContactPhone}
-                      </p>
-                    )}
-                    {patient.emergencyContactRelation && (
-                      <p className="text-sm" data-testid="patient-detail-emergency-relation">
-                        <strong>Relation:</strong> {patient.emergencyContactRelation}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              <Separator />
 
               {/* Medical Information */}
               <div>
