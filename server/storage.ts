@@ -375,6 +375,122 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
+  async getVisitsReport(clinicId: number, filters?: { 
+    dateFrom?: string; 
+    dateTo?: string; 
+    patientName?: string;
+    doctorId?: number;
+    visitType?: string;
+    status?: string;
+  }): Promise<any[]> {
+    let whereClause = eq(visits.clinicId, clinicId);
+    
+    if (filters?.dateFrom) {
+      const fromDate = new Date(filters.dateFrom);
+      whereClause = and(whereClause, gte(visits.visitDate, fromDate)) || whereClause;
+    }
+    
+    if (filters?.dateTo) {
+      const toDate = new Date(filters.dateTo);
+      toDate.setDate(toDate.getDate() + 1);
+      whereClause = and(whereClause, lt(visits.visitDate, toDate)) || whereClause;
+    }
+    
+    if (filters?.doctorId) {
+      whereClause = and(whereClause, eq(visits.doctorId, filters.doctorId)) || whereClause;
+    }
+    
+    if (filters?.visitType) {
+      whereClause = and(whereClause, eq(visits.visitType, filters.visitType)) || whereClause;
+    }
+    
+    if (filters?.status) {
+      whereClause = and(whereClause, eq(visits.status, filters.status)) || whereClause;
+    }
+    
+    const result = await db
+      .select({
+        id: visits.id,
+        visitDate: visits.visitDate,
+        visitType: visits.visitType,
+        status: visits.status,
+        chiefComplaint: visits.chiefComplaint,
+        patient: {
+          id: patients.id,
+          name: patients.name,
+          phone: patients.phone,
+        },
+        doctor: {
+          id: doctors.id,
+          name: doctors.name,
+          specialty: doctors.specialty,
+        },
+      })
+      .from(visits)
+      .innerJoin(patients, eq(visits.patientId, patients.id))
+      .innerJoin(doctors, eq(visits.doctorId, doctors.id))
+      .where(whereClause)
+      .orderBy(desc(visits.visitDate));
+    
+    // Add patient name filtering after database query if needed
+    if (filters?.patientName) {
+      return result.filter(v => 
+        v.patient.name.toLowerCase().includes(filters.patientName!.toLowerCase())
+      );
+    }
+    
+    // Fetch clinical notes for each visit
+    const visitsWithNotes = await Promise.all(
+      result.map(async (visit) => {
+        const notes = await db
+          .select()
+          .from(clinicalNotes)
+          .where(eq(clinicalNotes.visitId, visit.id))
+          .orderBy(desc(clinicalNotes.createdAt));
+        
+        return {
+          ...visit,
+          clinicalNotes: notes,
+        };
+      })
+    );
+    
+    return visitsWithNotes;
+  }
+  
+  async getVisitStats(clinicId: number): Promise<{ 
+    total: number; 
+    thisMonth: number; 
+    thisWeek: number; 
+    today: number;
+    completed: number;
+    scheduled: number;
+    cancelled: number;
+  }> {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const thisWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const allVisits = await db
+      .select()
+      .from(visits)
+      .where(eq(visits.clinicId, clinicId));
+    
+    return {
+      total: allVisits.length,
+      thisMonth: allVisits.filter(v => v.visitDate >= thisMonth).length,
+      thisWeek: allVisits.filter(v => v.visitDate >= thisWeek).length,
+      today: allVisits.filter(v => {
+        const visitDate = new Date(v.visitDate);
+        return visitDate.toDateString() === today.toDateString();
+      }).length,
+      completed: allVisits.filter(v => v.status === 'Completed').length,
+      scheduled: allVisits.filter(v => v.status === 'Scheduled').length,
+      cancelled: allVisits.filter(v => v.status === 'Cancelled').length,
+    };
+  }
+
   // Doctor methods
   async getDoctors(clinicId: number): Promise<Doctor[]> {
     return await db

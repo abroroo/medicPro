@@ -233,7 +233,7 @@ export function registerRoutes(app: Express): Server {
         patientName: patientName as string
       });
       
-      const csvHeader = "Name,Phone,Age,Address,Emergency Contact,Notes,Created At,Last Visit\n";
+      const csvHeader = "Name,Phone,Age,Address,Notes,Created At,Last Visit\n";
       const csvData = patients.map(p => 
         `"${p.name}","${p.phone}","${p.age || ''}","${p.address || ''}","${p.notes || ''}","${p.createdAt?.toISOString() || ''}","${p.lastVisit?.toISOString() || ''}"`
       ).join("\n");
@@ -243,6 +243,67 @@ export function registerRoutes(app: Express): Server {
       res.send(csvHeader + csvData);
     } catch (error) {
       res.status(500).json({ message: "Failed to export data" });
+    }
+  });
+
+  // Visit history reports
+  app.get("/api/reports/visits", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { dateFrom, dateTo, patientName, doctorId, visitType, status } = req.query;
+      const visits = await storage.getVisitsReport(req.user!.id, {
+        dateFrom: dateFrom as string,
+        dateTo: dateTo as string,
+        patientName: patientName as string,
+        doctorId: doctorId ? parseInt(doctorId as string) : undefined,
+        visitType: visitType as string,
+        status: status as string
+      });
+      res.json(visits);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch visit reports" });
+    }
+  });
+
+  app.get("/api/reports/visits/stats", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const stats = await storage.getVisitStats(req.user!.id);
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch visit stats" });
+    }
+  });
+
+  app.get("/api/reports/visits/export", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { dateFrom, dateTo, patientName, doctorId, visitType, status } = req.query;
+      const visits = await storage.getVisitsReport(req.user!.id, {
+        dateFrom: dateFrom as string,
+        dateTo: dateTo as string,
+        patientName: patientName as string,
+        doctorId: doctorId ? parseInt(doctorId as string) : undefined,
+        visitType: visitType as string,
+        status: status as string
+      });
+      
+      const csvHeader = "Date,Patient,Doctor,Visit Type,Status,Chief Complaint,Diagnosis,Treatment,Medications\n";
+      const csvData = visits.map(v => {
+        const diagnosis = v.clinicalNotes?.[0]?.diagnosis || '';
+        const treatment = v.clinicalNotes?.[0]?.treatmentGiven || '';
+        const medications = v.clinicalNotes?.[0]?.medications || '';
+        return `"${new Date(v.visitDate).toLocaleDateString()}","${v.patient.name}","Dr. ${v.doctor.name}","${v.visitType}","${v.status}","${v.chiefComplaint || ''}","${diagnosis}","${treatment}","${medications}"`;
+      }).join("\n");
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="visits-report.csv"');
+      res.send(csvHeader + csvData);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to export visit data" });
     }
   });
 
