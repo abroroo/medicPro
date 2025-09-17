@@ -128,10 +128,42 @@ export function registerRoutes(app: Express): Server {
   // Queue routes
   app.get("/api/queue", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     try {
       const queueItems = await storage.getTodayQueue(req.user!.id);
-      res.json(queueItems);
+
+      // Implement hospital-standard queue ordering
+      // Priority order: serving -> waiting (by queue number) -> completed/cancelled/skipped (by completion time)
+      const sortedQueue = queueItems.sort((a, b) => {
+        // 1. Currently serving patients always at the top
+        if (a.status === 'serving' && b.status !== 'serving') return -1;
+        if (b.status === 'serving' && a.status !== 'serving') return 1;
+
+        // 2. Both serving: maintain queue number order
+        if (a.status === 'serving' && b.status === 'serving') {
+          return a.queueNumber - b.queueNumber;
+        }
+
+        // 3. Waiting patients: order by queue number (earliest first)
+        if (a.status === 'waiting' && b.status === 'waiting') {
+          return a.queueNumber - b.queueNumber;
+        }
+
+        // 4. Waiting patients come before completed ones
+        if (a.status === 'waiting' && ['completed', 'cancelled', 'skipped'].includes(b.status)) return -1;
+        if (b.status === 'waiting' && ['completed', 'cancelled', 'skipped'].includes(a.status)) return 1;
+
+        // 5. Completed/cancelled/skipped: order by creation time (most recent first)
+        if (['completed', 'cancelled', 'skipped'].includes(a.status) &&
+            ['completed', 'cancelled', 'skipped'].includes(b.status)) {
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        }
+
+        // 6. Default fallback: maintain queue number order
+        return a.queueNumber - b.queueNumber;
+      });
+
+      res.json(sortedQueue);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch queue" });
     }
@@ -444,9 +476,19 @@ export function registerRoutes(app: Express): Server {
   // Visit routes
   app.get("/api/visits", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     try {
-      const visits = await storage.getVisits(req.user!.id);
+      const patientId = req.query.patientId ? parseInt(req.query.patientId as string) : undefined;
+      let visits = await storage.getVisits(req.user!.id);
+
+      // Filter by patient if patientId is provided
+      if (patientId) {
+        visits = visits.filter(visit => visit.patientId === patientId);
+      }
+
+      // Server-side sorting: most recent first (by creation date)
+      visits.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
       res.json(visits);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch visits" });

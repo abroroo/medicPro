@@ -251,7 +251,9 @@ export default function PatientDetail() {
       if (!res.ok) {
         throw new Error(`${res.status}: ${res.statusText}`);
       }
-      return res.json();
+      const data = await res.json();
+      // Sort visits by creation date (most recently created first)
+      return data.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     },
     enabled: !!patientId,
   });

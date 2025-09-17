@@ -56,6 +56,10 @@ export default function Queue() {
   const nextInLine = queue.find(item => item.status === 'waiting');
   const waitingCount = queue.filter(item => item.status === 'waiting').length;
 
+  // Group queue items for better visual separation
+  const activeQueue = queue.filter(item => ['serving', 'waiting'].includes(item.status));
+  const completedQueue = queue.filter(item => ['completed', 'cancelled', 'skipped'].includes(item.status));
+
   const handleCallNext = () => {
     if (currentServing) {
       // Mark current as completed and call next
@@ -200,130 +204,193 @@ export default function Queue() {
                 No patients in queue today.
               </div>
             ) : (
-              <div className="space-y-4">
-                {queue.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className={`${isMobile ? 'flex flex-col space-y-3' : 'flex items-center justify-between'} p-4 border border-border rounded-lg hover:bg-accent transition-colors`}
-                    data-testid={`queue-item-${item.id}`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-12 h-12 ${
-                        item.status === 'serving' ? 'bg-primary' : 
-                        item.status === 'waiting' ? 'bg-secondary' : 'bg-muted'
-                      } text-white rounded-full flex items-center justify-center font-bold text-lg`}>
-                        <span data-testid={`queue-number-${item.id}`}>
-                          {item.queueNumber}
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground" data-testid={`patient-name-${item.id}`}>
-                          {item.patient.name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Added at {new Date(item.createdAt).toLocaleTimeString()}
-                        </p>
-                      </div>
-                      {!isMobile && (
-                        <div className="flex items-center space-x-2">
-                          <Badge 
-                            variant={getStatusBadgeVariant(item.status)}
-                            data-testid={`status-${item.id}`}
-                          >
-                            {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                          </Badge>
-                          
-                          {item.status === 'serving' && (
-                            <>
-                              <Button
-                                size="sm"
-                                onClick={() => handleMarkComplete(item.id)}
-                                disabled={updateQueueMutation.isPending}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                                data-testid={`button-complete-${item.id}`}
+              <div className="space-y-6">
+                {/* Active Queue Section */}
+                {activeQueue.length > 0 && (
+                  <div>
+                    <div className="flex items-center mb-4">
+                      <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                      <h3 className="text-lg font-semibold text-foreground">Active Queue</h3>
+                      <div className="flex-1 border-b border-border ml-4"></div>
+                    </div>
+                    <div className="space-y-3">
+                      {activeQueue.map((item) => (
+                        <div
+                          key={item.id}
+                          className={`${isMobile ? 'flex flex-col space-y-3' : 'flex items-center justify-between'} p-4 border border-border rounded-lg hover:bg-accent transition-colors`}
+                          data-testid={`queue-item-${item.id}`}
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className={`w-12 h-12 ${
+                              item.status === 'serving' ? 'bg-primary' :
+                              item.status === 'waiting' ? 'bg-secondary' : 'bg-muted'
+                            } text-white rounded-full flex items-center justify-center font-bold text-lg`}>
+                              <span data-testid={`queue-number-${item.id}`}>
+                                {item.queueNumber}
+                              </span>
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-foreground" data-testid={`patient-name-${item.id}`}>
+                                {item.patient.name}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Added at {new Date(item.createdAt).toLocaleTimeString()}
+                              </p>
+                            </div>
+                            {!isMobile && (
+                              <div className="flex items-center space-x-2">
+                                <Badge
+                                  variant={getStatusBadgeVariant(item.status)}
+                                  data-testid={`status-${item.id}`}
+                                >
+                                  {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                                </Badge>
+
+                                {item.status === 'serving' && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleMarkComplete(item.id)}
+                                      disabled={updateQueueMutation.isPending}
+                                      className="bg-green-600 hover:bg-green-700 text-white"
+                                      data-testid={`button-complete-${item.id}`}
+                                    >
+                                      <Check className="w-4 h-4 mr-1" />
+                                      Complete
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      onClick={() => handleSkipPatient(item.id)}
+                                      disabled={updateQueueMutation.isPending}
+                                      className="bg-orange-600 hover:bg-orange-700 text-white"
+                                      data-testid={`button-skip-${item.id}`}
+                                    >
+                                      <SkipForward className="w-4 h-4 mr-1" />
+                                      Skip
+                                    </Button>
+                                  </>
+                                )}
+
+                                {(item.status === 'waiting' || item.status === 'serving') && (
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleCancelPatient(item.id)}
+                                    disabled={updateQueueMutation.isPending}
+                                    className="bg-red-600 hover:bg-red-700 text-white"
+                                    data-testid={`button-cancel-${item.id}`}
+                                  >
+                                    <X className="w-4 h-4 mr-1" />
+                                    Cancel
+                                  </Button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {isMobile && (
+                            <div className="flex items-center justify-between w-full">
+                              <Badge
+                                variant={getStatusBadgeVariant(item.status)}
+                                data-testid={`status-${item.id}`}
                               >
-                                <Check className="w-4 h-4 mr-1" />
-                                Complete
-                              </Button>
-                              <Button
-                                size="sm"
-                                onClick={() => handleSkipPatient(item.id)}
-                                disabled={updateQueueMutation.isPending}
-                                className="bg-orange-600 hover:bg-orange-700 text-white"
-                                data-testid={`button-skip-${item.id}`}
-                              >
-                                <SkipForward className="w-4 h-4 mr-1" />
-                                Skip
-                              </Button>
-                            </>
-                          )}
-                          
-                          {(item.status === 'waiting' || item.status === 'serving') && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleCancelPatient(item.id)}
-                              disabled={updateQueueMutation.isPending}
-                              className="bg-red-600 hover:bg-red-700 text-white"
-                              data-testid={`button-cancel-${item.id}`}
-                            >
-                              <X className="w-4 h-4 mr-1" />
-                              Cancel
-                            </Button>
+                                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                              </Badge>
+
+                              {item.status === 'serving' && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleMarkComplete(item.id)}
+                                    disabled={updateQueueMutation.isPending}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                    data-testid={`button-complete-${item.id}`}
+                                  >
+                                    <Check className="w-4 h-4 mr-1" />
+                                    Complete
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => handleSkipPatient(item.id)}
+                                    disabled={updateQueueMutation.isPending}
+                                    className="bg-orange-600 hover:bg-orange-700 text-white"
+                                    data-testid={`button-skip-${item.id}`}
+                                  >
+                                    <SkipForward className="w-4 h-4 mr-1" />
+                                    Skip
+                                  </Button>
+                                </div>
+                              )}
+
+                              {(item.status === 'waiting' || item.status === 'serving') && (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleCancelPatient(item.id)}
+                                  disabled={updateQueueMutation.isPending}
+                                  className="bg-red-600 hover:bg-red-700 text-white"
+                                  data-testid={`button-cancel-${item.id}`}
+                                >
+                                  <X className="w-4 h-4 mr-1" />
+                                  Cancel
+                                </Button>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
+                      ))}
                     </div>
-                    
-                    {isMobile && (
-                      <div className="flex items-center justify-between w-full">
-                        <Badge 
-                          variant={getStatusBadgeVariant(item.status)}
-                          data-testid={`status-${item.id}`}
-                        >
-                          {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                        </Badge>
-                        
-                        {item.status === 'serving' && (
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleMarkComplete(item.id)}
-                              disabled={updateQueueMutation.isPending}
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                              data-testid={`button-complete-${item.id}`}
-                            >
-                              <Check className="w-4 h-4 mr-1" />
-                              Complete
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleSkipPatient(item.id)}
-                              disabled={updateQueueMutation.isPending}
-                              className="bg-orange-600 hover:bg-orange-700 text-white"
-                              data-testid={`button-skip-${item.id}`}
-                            >
-                              <SkipForward className="w-4 h-4 mr-1" />
-                              Skip
-                            </Button>
-                          </div>
-                        )}
-                        
-                        {(item.status === 'waiting' || item.status === 'serving') && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleCancelPatient(item.id)}
-                            disabled={updateQueueMutation.isPending}
-                            className="bg-red-600 hover:bg-red-700 text-white"
-                            data-testid={`button-cancel-${item.id}`}
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Cancel
-                          </Button>
-                        )}
-                      </div>
-                    )}
                   </div>
-                ))}
+                )}
+
+                {/* Completed Queue Section */}
+                {completedQueue.length > 0 && (
+                  <div>
+                    <div className="flex items-center mb-4">
+                      <div className="w-3 h-3 bg-gray-400 rounded-full mr-3"></div>
+                      <h3 className="text-lg font-semibold text-muted-foreground">Completed Today</h3>
+                      <div className="flex-1 border-b border-border ml-4"></div>
+                    </div>
+                    <div className="space-y-3">
+                      {completedQueue.map((item) => (
+                        <div
+                          key={item.id}
+                          className={`${isMobile ? 'flex flex-col space-y-3' : 'flex items-center justify-between'} p-4 border border-border rounded-lg bg-muted/30 opacity-75`}
+                          data-testid={`queue-item-${item.id}`}
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-muted text-muted-foreground rounded-full flex items-center justify-center font-bold text-lg">
+                              <span data-testid={`queue-number-${item.id}`}>
+                                {item.queueNumber}
+                              </span>
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-muted-foreground" data-testid={`patient-name-${item.id}`}>
+                                {item.patient.name}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                Added at {new Date(item.createdAt).toLocaleTimeString()}
+                              </p>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Badge
+                                variant={getStatusBadgeVariant(item.status)}
+                                data-testid={`status-${item.id}`}
+                              >
+                                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {activeQueue.length === 0 && completedQueue.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No patients in queue today.
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
