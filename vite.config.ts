@@ -33,7 +33,7 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    port: 3000, // Client dev server port
+    port: 3000, // Client dev server port (will auto-increment if busy)
     host: "localhost",
     fs: {
       strict: true,
@@ -45,6 +45,15 @@ export default defineConfig({
         target: "http://localhost:5001",
         changeOrigin: true,
         secure: false,
+        // Forward cookies and credentials
+        configure: (proxy, options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            // Forward all headers including cookies
+            if (req.headers.cookie) {
+              proxyReq.setHeader('cookie', req.headers.cookie);
+            }
+          });
+        },
       },
     },
   },

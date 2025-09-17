@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useParams, useLocation } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -68,7 +68,7 @@ const escapeHTML = (text: string): string => {
 };
 
 export default function PatientDetail() {
-  const params = useParams<{ id: string }>();
+  const [match, params] = useRoute("/patients/:id");
   const [location, setLocation] = useLocation();
   const isMobile = useIsMobile();
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
@@ -214,17 +214,31 @@ export default function PatientDetail() {
     }
   };
   
-  const patientId = parseInt(params.id || '0');
+  const patientId = parseInt(params?.id || '0');
+
+  // Debug logging
+  console.log('Patient Detail Debug:', {
+    match,
+    params,
+    rawParamId: params?.id,
+    parsedPatientId: patientId,
+    isValidId: !!patientId,
+    currentLocation: location
+  });
 
   // Fetch patient details
-  const { data: patient, isLoading: patientLoading } = useQuery<Patient>({
+  const { data: patient, isLoading: patientLoading, error } = useQuery<Patient>({
     queryKey: ["/api/patients", patientId],
     queryFn: async () => {
+      console.log(`Fetching patient data for ID: ${patientId}`);
       const res = await fetch(`/api/patients/${patientId}`, { credentials: "include" });
+      console.log(`API Response status: ${res.status}`);
       if (!res.ok) {
         throw new Error(`${res.status}: ${res.statusText}`);
       }
-      return res.json();
+      const data = await res.json();
+      console.log('Patient data received:', data);
+      return data;
     },
     enabled: !!patientId,
   });
@@ -273,12 +287,35 @@ export default function PatientDetail() {
     setIsVisitModalOpen(true);
   };
 
+  // Debug logging for state
+  console.log('Patient Detail State:', {
+    patientLoading,
+    patient,
+    error: error?.message,
+    patientId
+  });
+
   if (patientLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="max-w-7xl mx-auto p-4">
           <div className="text-center py-8">Loading patient details...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="max-w-7xl mx-auto p-4">
+          <div className="text-center py-8">
+            <h2 className="text-xl font-semibold mb-2">Error loading patient</h2>
+            <p className="text-red-600 mb-4">Error: {error.message}</p>
+            <Button onClick={handleBack}>Back to Patients</Button>
+          </div>
         </div>
       </div>
     );
@@ -291,6 +328,7 @@ export default function PatientDetail() {
         <div className="max-w-7xl mx-auto p-4">
           <div className="text-center py-8">
             <h2 className="text-xl font-semibold mb-2">Patient not found</h2>
+            <p className="text-muted-foreground mb-4">No patient data received from API</p>
             <Button onClick={handleBack}>Back to Patients</Button>
           </div>
         </div>
@@ -484,100 +522,127 @@ export default function PatientDetail() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {visits.map((visit) => {
                     const visitNotes = allClinicalNotes.filter(note => note.visitId === visit.id);
-                    
+
+                    // Status color mapping
+                    const getStatusVariant = (status: string) => {
+                      switch (status?.toLowerCase()) {
+                        case 'completed':
+                          return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
+                        case 'scheduled':
+                          return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+                        case 'cancelled':
+                        case 'canceled':
+                          return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+                        case 'rescheduled':
+                          return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
+                        case 'no-show':
+                          return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+                        default:
+                          return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
+                      }
+                    };
+
+                    const getStatusIcon = (status: string) => {
+                      switch (status?.toLowerCase()) {
+                        case 'completed':
+                          return 'w-2 h-2 rounded-full bg-green-500';
+                        case 'scheduled':
+                          return 'w-2 h-2 rounded-full bg-blue-500';
+                        case 'cancelled':
+                        case 'canceled':
+                          return 'w-2 h-2 rounded-full bg-red-500';
+                        case 'rescheduled':
+                          return 'w-2 h-2 rounded-full bg-orange-500';
+                        case 'no-show':
+                          return 'w-2 h-2 rounded-full bg-gray-500';
+                        default:
+                          return 'w-2 h-2 rounded-full bg-gray-500';
+                      }
+                    };
+
                     return (
-                      <div key={visit.id} className="border rounded-lg p-4 space-y-3" data-testid={`visit-${visit.id}`}>
-                        {/* Visit Header */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-3 h-3 rounded-full bg-primary" />
-                            <div>
-                              <p className="font-medium" data-testid={`visit-type-${visit.id}`}>
-                                {visit.visitType}
-                              </p>
-                              <p className="text-sm text-muted-foreground flex items-center">
-                                <Calendar className="w-4 h-4 mr-1" />
-                                {new Date(visit.visitDate).toLocaleDateString()}
-                                <Stethoscope className="w-4 h-4 ml-3 mr-1" />
-                                Dr. {visit.doctor.name}
-                              </p>
+                      <div key={visit.id} className="border rounded-lg p-4 hover:bg-muted/30 transition-colors" data-testid={`visit-${visit.id}`}>
+                        {/* Visit Header - More Compact */}
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-start space-x-3 flex-1">
+                            <div className={getStatusIcon(visit.status)} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mb-1">
+                                <h3 className="font-semibold text-base" data-testid={`visit-type-${visit.id}`}>
+                                  {visit.visitType}
+                                </h3>
+                                <div className="flex items-center text-sm text-muted-foreground">
+                                  <Calendar className="w-3 h-3 mr-1" />
+                                  {new Date(visit.visitDate).toLocaleDateString()}
+                                </div>
+                                <div className="flex items-center text-sm text-muted-foreground">
+                                  <Stethoscope className="w-3 h-3 mr-1" />
+                                  Dr. {visit.doctor.name}
+                                </div>
+                                {/* Chief Complaint - Right in the header */}
+                                {visit.chiefComplaint && (
+                                  <div className="flex items-center text-sm text-muted-foreground">
+                                    <span className="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400 px-2 py-0.5 rounded-full font-medium">
+                                      {visit.chiefComplaint}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Clinical Summary - Compact */}
+                              {visitNotes.length > 0 && (
+                                <div className="space-y-1">
+                                  {visitNotes.map((note) => (
+                                    <div key={note.id} className="text-sm space-y-1" data-testid={`clinical-note-${note.id}`}>
+                                      {note.diagnosis && (
+                                        <div className="flex flex-wrap items-start gap-x-2">
+                                          <span className="font-medium text-muted-foreground min-w-fit">Diagnosis:</span>
+                                          <span className="text-foreground">{note.diagnosis}</span>
+                                        </div>
+                                      )}
+                                      {note.symptoms && (
+                                        <div className="flex flex-wrap items-start gap-x-2">
+                                          <span className="font-medium text-muted-foreground min-w-fit">Symptoms:</span>
+                                          <span className="text-muted-foreground">{note.symptoms}</span>
+                                        </div>
+                                      )}
+                                      {note.treatmentGiven && (
+                                        <div className="flex flex-wrap items-start gap-x-2">
+                                          <span className="font-medium text-muted-foreground min-w-fit">Treatment:</span>
+                                          <span className="text-muted-foreground">{note.treatmentGiven}</span>
+                                        </div>
+                                      )}
+                                      {note.medications && (
+                                        <div className="flex flex-wrap items-start gap-x-2">
+                                          <span className="font-medium text-muted-foreground min-w-fit">Medications:</span>
+                                          <span className="text-muted-foreground">{note.medications}</span>
+                                        </div>
+                                      )}
+                                      {note.followUpNeeded && note.followUpDate && (
+                                        <div className="flex items-center text-sm text-amber-600 dark:text-amber-400 mt-1">
+                                          <Clock className="w-3 h-3 mr-1" />
+                                          <span className="font-medium">Follow-up:</span>
+                                          <span className="ml-1">{new Date(note.followUpDate).toLocaleDateString()}</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditVisit(visit)}
-                              data-testid={`button-edit-visit-${visit.id}`}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Badge 
-                              variant={visit.status === 'Completed' ? 'default' : 'secondary'}
-                              data-testid={`visit-status-${visit.id}`}
-                            >
+
+                          {/* Status Badge - Soft Colors */}
+                          <div className="flex items-center space-x-2 ml-4">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusVariant(visit.status)}`}
+                                  data-testid={`visit-status-${visit.id}`}>
                               {visit.status}
-                            </Badge>
+                            </span>
                           </div>
                         </div>
-
-                        {/* Chief Complaint */}
-                        {visit.chiefComplaint && (
-                          <div>
-                            <p className="text-sm font-medium text-muted-foreground">Chief Complaint</p>
-                            <p className="text-sm" data-testid={`visit-complaint-${visit.id}`}>
-                              {visit.chiefComplaint}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Clinical Notes */}
-                        {visitNotes.length > 0 && (
-                          <div className="space-y-2">
-                            <p className="text-sm font-medium text-muted-foreground">Clinical Notes</p>
-                            {visitNotes.map((note) => (
-                              <div key={note.id} className="bg-muted/50 p-3 rounded border-l-4 border-primary space-y-2"
-                                   data-testid={`clinical-note-${note.id}`}>
-                                {note.symptoms && (
-                                  <div>
-                                    <p className="text-xs font-medium text-muted-foreground">Symptoms</p>
-                                    <p className="text-sm">{note.symptoms}</p>
-                                  </div>
-                                )}
-                                {note.diagnosis && (
-                                  <div>
-                                    <p className="text-xs font-medium text-muted-foreground">Diagnosis</p>
-                                    <p className="text-sm font-medium">{note.diagnosis}</p>
-                                  </div>
-                                )}
-                                {note.treatmentGiven && (
-                                  <div>
-                                    <p className="text-xs font-medium text-muted-foreground">Treatment</p>
-                                    <p className="text-sm">{note.treatmentGiven}</p>
-                                  </div>
-                                )}
-                                {note.medications && (
-                                  <div>
-                                    <p className="text-xs font-medium text-muted-foreground">Medications</p>
-                                    <p className="text-sm">{note.medications}</p>
-                                  </div>
-                                )}
-                                {note.followUpNeeded && note.followUpDate && (
-                                  <div className="flex items-center text-sm text-orange-600 dark:text-orange-400">
-                                    <Clock className="w-4 h-4 mr-1" />
-                                    Follow-up: {new Date(note.followUpDate).toLocaleDateString()}
-                                  </div>
-                                )}
-                                <p className="text-xs text-muted-foreground">
-                                  {new Date(note.createdAt).toLocaleString()}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     );
                   })}

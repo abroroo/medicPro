@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PatientFormModal } from "@/components/patient-form-modal";
-import { AddToQueueModal } from "@/components/add-to-queue-modal";
+import { VisitFormModal } from "@/components/visit-form-modal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { 
@@ -24,7 +24,8 @@ export default function Patients() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
-  const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
+  const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
+  const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const { toast } = useToast();
 
   const { data: patients = [], isLoading } = useQuery<Patient[]>({
@@ -45,13 +46,9 @@ export default function Patients() {
   // No need for client-side filtering since API handles search
   const filteredPatients = patients;
 
-  const handleEditPatient = (patient: Patient) => {
-    setEditingPatient(patient);
-    setIsModalOpen(true);
-  };
-
-  const handleAddToQueue = () => {
-    setIsQueueModalOpen(true);
+  const handleNewVisit = (patientId: number) => {
+    setSelectedPatientId(patientId);
+    setIsVisitModalOpen(true);
   };
 
   const handlePatientClick = (patientId: number, event: React.MouseEvent) => {
@@ -133,16 +130,8 @@ export default function Patients() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEditPatient(patient)}
-                        data-testid={`button-edit-${patient.id}`}
-                      >
-                        <Edit className="w-4 h-4 text-primary" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleAddToQueue}
-                        data-testid={`button-add-to-queue-${patient.id}`}
+                        onClick={() => handleNewVisit(patient.id)}
+                        data-testid={`button-new-visit-${patient.id}`}
                       >
                         <PlusCircle className="w-4 h-4 text-green-600" />
                       </Button>
@@ -205,16 +194,8 @@ export default function Patients() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleEditPatient(patient)}
-                            data-testid={`button-edit-${patient.id}`}
-                          >
-                            <Edit className="w-4 h-4 text-primary" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleAddToQueue}
-                            data-testid={`button-add-to-queue-${patient.id}`}
+                            onClick={() => handleNewVisit(patient.id)}
+                            data-testid={`button-new-visit-${patient.id}`}
                           >
                             <PlusCircle className="w-4 h-4 text-green-600" />
                           </Button>
@@ -240,10 +221,16 @@ export default function Patients() {
           patient={editingPatient}
         />
 
-        {/* Add To Queue Modal */}
-        <AddToQueueModal
-          open={isQueueModalOpen}
-          onOpenChange={setIsQueueModalOpen}
+        {/* Visit Form Modal */}
+        <VisitFormModal
+          open={isVisitModalOpen}
+          onOpenChange={(open) => {
+            setIsVisitModalOpen(open);
+            if (!open) {
+              setSelectedPatientId(null);
+            }
+          }}
+          preSelectedPatientId={selectedPatientId}
         />
       </div>
     </div>

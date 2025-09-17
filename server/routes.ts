@@ -28,6 +28,30 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get individual patient by ID
+  app.get("/api/patients/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const patientId = parseInt(req.params.id);
+
+      if (isNaN(patientId)) {
+        return res.status(400).json({ message: "Invalid patient ID" });
+      }
+
+      const patient = await storage.getPatient(patientId, req.user!.id);
+
+      if (!patient) {
+        return res.status(404).json({ message: "Patient not found" });
+      }
+
+      res.json(patient);
+    } catch (error) {
+      console.error("Failed to fetch patient:", error);
+      res.status(500).json({ message: "Failed to fetch patient" });
+    }
+  });
+
   app.post("/api/patients", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
