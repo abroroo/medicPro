@@ -47,7 +47,7 @@ export function VisitFormModal({
     defaultValues: {
       patientId: preSelectedPatientId || undefined,
       doctorId: undefined,
-      visitDate: "",
+      visitDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
       visitType: "",
       chiefComplaint: "",
       status: "Scheduled",
@@ -60,7 +60,7 @@ export function VisitFormModal({
       const formData = {
         patientId: preSelectedPatientId || visit?.patientId || undefined,
         doctorId: visit?.doctorId || undefined,
-        visitDate: visit?.visitDate || "",
+        visitDate: visit?.visitDate || new Date().toISOString().split('T')[0], // Default to today
         visitType: visit?.visitType || "",
         chiefComplaint: visit?.chiefComplaint || "",
         status: visit?.status || "Scheduled",
@@ -89,12 +89,14 @@ export function VisitFormModal({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/visits"] });
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/queue"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/queue/stats"] });
       if (preSelectedPatientId) {
         queryClient.invalidateQueries({ queryKey: ["/api/visits", { patientId: preSelectedPatientId }] });
       }
       toast({
         title: "Success",
-        description: "Visit scheduled successfully",
+        description: "Visit scheduled and added to queue successfully",
       });
       onOpenChange(false);
       form.reset();
@@ -246,24 +248,15 @@ export function VisitFormModal({
             )}
           </div>
 
-          {/* Visit Status */}
+          {/* Visit Status - Read Only (managed by queue) */}
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
-            <Select
-              value={form.watch("status") || "Scheduled"}
-              onValueChange={(value) => form.setValue("status", value)}
-            >
-              <SelectTrigger data-testid="select-visit-status">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {visitStatuses.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="px-3 py-2 bg-muted rounded-md text-sm text-muted-foreground">
+              {form.watch("status") || "Scheduled"} (managed automatically)
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Visit status is automatically updated based on queue actions
+            </p>
           </div>
 
           {/* Chief Complaint */}

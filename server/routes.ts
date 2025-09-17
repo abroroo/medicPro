@@ -5,6 +5,23 @@ import { storage } from "./storage";
 import { insertPatientSchema, insertDoctorSchema, insertVisitSchema, insertClinicalNotesSchema, insertQueueSchema } from "@shared/schema";
 import { z } from "zod";
 
+// Helper function to map queue status to visit status
+function mapQueueStatusToVisitStatus(queueStatus: string): string {
+  switch (queueStatus) {
+    case 'waiting':
+      return 'Scheduled';
+    case 'serving':
+      return 'In-Progress';
+    case 'completed':
+      return 'Completed';
+    case 'skipped':
+    case 'cancelled':
+      return 'Cancelled';
+    default:
+      return 'Scheduled';
+  }
+}
+
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
@@ -173,25 +190,33 @@ export function registerRoutes(app: Express): Server {
 
   app.put("/api/queue/:id", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
-      
+
       // Validate status
       const validStatuses = ['waiting', 'serving', 'completed', 'skipped', 'cancelled'];
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ message: "Invalid queue status" });
       }
-      
+
+      // Update queue status
       const queueItem = await storage.updateQueueStatus(id, status, req.user!.id);
-      
+
       if (!queueItem) {
         return res.status(404).json({ message: "Queue item not found" });
       }
-      
+
+      // Automatically sync visit status based on queue status
+      if (queueItem.visitId) {
+        const visitStatus = mapQueueStatusToVisitStatus(status);
+        await storage.updateVisit(queueItem.visitId, { status: visitStatus }, req.user!.id);
+      }
+
       res.json(queueItem);
     } catch (error) {
+      console.error("Error updating queue status:", error);
       res.status(500).json({ message: "Failed to update queue status" });
     }
   });
@@ -447,14 +472,32 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/visits", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     try {
       const validatedData = insertVisitSchema.parse(req.body);
+
+      // First create the visit
       const visit = await storage.createVisit({
         ...validatedData,
         clinicId: req.user!.id
       });
-      res.status(201).json(visit);
+
+      // Then automatically add to queue (since visit and queue are 1:1)
+      const queueNumber = await storage.getNextQueueNumber(req.user!.id);
+      const queueItem = await storage.addToQueue({
+        clinicId: req.user!.id,
+        patientId: validatedData.patientId,
+        doctorId: validatedData.doctorId,
+        visitId: visit.id,
+        visitType: validatedData.visitType,
+        queueNumber,
+        status: "waiting"
+      }, req.user!.id);
+
+      res.status(201).json({
+        visit,
+        queueItem
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid visit data", errors: error.errors });
