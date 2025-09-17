@@ -5,3 +5,8 @@ server/public
 vite.config.ts.*
 *.tar.gz
 .claude-agents
+
+# Environment Variables
+.env.local
+.env
+.env.example

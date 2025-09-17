@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     runtimeErrorOverlay(),
+    // Keep Replit plugins when running on Replit
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [
@@ -32,9 +33,19 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    port: 3000, // Client dev server port
+    host: "localhost",
     fs: {
       strict: true,
       deny: ["**/.*"],
+    },
+    // Proxy API requests to the Express server
+    proxy: {
+      "/api": {
+        target: "http://localhost:5001",
+        changeOrigin: true,
+        secure: false,
+      },
     },
   },
 });
