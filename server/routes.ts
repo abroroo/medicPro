@@ -335,7 +335,6 @@ export function registerRoutes(app: Express): Server {
 
     try {
       const { dateFrom, dateTo, patientName, doctorId, visitType, status } = req.query;
-      console.log('DEBUG: Visit reports request with filters:', { dateFrom, dateTo, patientName, doctorId, visitType, status });
       const visits = await storage.getVisitsReport(req.user!.id, {
         dateFrom: dateFrom as string,
         dateTo: dateTo as string,
@@ -344,7 +343,6 @@ export function registerRoutes(app: Express): Server {
         visitType: visitType as string,
         status: status as string
       });
-      console.log('DEBUG: Visit reports result:', visits);
       res.json(visits);
     } catch (error) {
       console.error('Error in /api/reports/visits:', error);

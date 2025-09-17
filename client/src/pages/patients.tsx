@@ -108,12 +108,12 @@ export default function Patients() {
                 {searchQuery ? "No patients found matching your search." : "No patients registered yet."}
               </div>
             ) : isMobile ? (
-              // Mobile Compact List Layout
-              <div className="space-y-1">
+              // Mobile Compact List Layout with Scrolling
+              <div className="max-h-[60vh] overflow-y-auto space-y-1 pr-2">
                 {filteredPatients.map((patient) => (
                   <div
                     key={patient.id}
-                    className="flex items-center justify-between p-3 hover:bg-accent transition-colors border-b border-border cursor-pointer"
+                    className="flex items-center justify-between p-3 hover:bg-accent transition-colors border-b border-border cursor-pointer flex-shrink-0"
                     data-testid={`patient-row-${patient.id}`}
                     onClick={(e) => handlePatientClick(patient.id, e)}
                   >
@@ -142,8 +142,8 @@ export default function Patients() {
                 ))}
               </div>
             ) : (
-              // Desktop Table Layout
-              <div className="overflow-x-auto">
+              // Desktop Table Layout with Scrolling
+              <div className="max-h-[70vh] overflow-auto border rounded-md">
                 <table className="min-w-full divide-y divide-border">
                   <thead className="bg-muted">
                     <tr>

@@ -529,10 +529,10 @@ export default function Reports() {
                         No patients found matching the current filters.
                       </div>
                     ) : isMobile ? (
-                      // Mobile Card Layout
-                      <div className="space-y-3">
+                      // Mobile Card Layout with Scrolling
+                      <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">
                         {patients.map((patient) => (
-                          <Card key={patient.id} className="p-4" data-testid={`report-patient-${patient.id}`}>
+                          <Card key={patient.id} className="p-4 flex-shrink-0" data-testid={`report-patient-${patient.id}`}>
                             <div className="space-y-2">
                               <h3 className="font-semibold text-foreground">{patient.name}</h3>
                               <div className="text-sm text-muted-foreground space-y-1">
@@ -548,8 +548,8 @@ export default function Reports() {
                         ))}
                       </div>
                     ) : (
-                      // Desktop Table Layout
-                      <div className="overflow-x-auto">
+                      // Desktop Table Layout with Scrolling
+                      <div className="max-h-[70vh] overflow-auto border rounded-md">
                         <table className="min-w-full divide-y divide-border">
                           <thead className="bg-muted">
                             <tr>
@@ -622,10 +622,10 @@ export default function Reports() {
                         No visits found matching the current filters.
                       </div>
                     ) : isMobile ? (
-                      // Mobile Card Layout
-                      <div className="space-y-3">
+                      // Mobile Card Layout with Scrolling
+                      <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">
                         {visits.map((visit) => (
-                          <Card key={visit.id} className="p-4" data-testid={`report-visit-${visit.id}`}>
+                          <Card key={visit.id} className="p-4 flex-shrink-0" data-testid={`report-visit-${visit.id}`}>
                             <div className="space-y-3">
                               <div className="flex justify-between items-start">
                                 <h3 className="font-semibold text-foreground">{visit.patient.name}</h3>
@@ -647,8 +647,8 @@ export default function Reports() {
                         ))}
                       </div>
                     ) : (
-                      // Desktop Table Layout
-                      <div className="overflow-x-auto">
+                      // Desktop Table Layout with Scrolling
+                      <div className="max-h-[70vh] overflow-auto border rounded-md">
                         <table className="min-w-full divide-y divide-border">
                           <thead className="bg-muted">
                             <tr>

@@ -213,7 +213,7 @@ export default function Queue() {
                       <h3 className="text-lg font-semibold text-foreground">Active Queue</h3>
                       <div className="flex-1 border-b border-border ml-4"></div>
                     </div>
-                    <div className="space-y-3">
+                    <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">
                       {activeQueue.map((item) => (
                         <div
                           key={item.id}
@@ -349,7 +349,7 @@ export default function Queue() {
                       <h3 className="text-lg font-semibold text-muted-foreground">Completed Today</h3>
                       <div className="flex-1 border-b border-border ml-4"></div>
                     </div>
-                    <div className="space-y-3">
+                    <div className="max-h-[50vh] overflow-y-auto space-y-3 pr-2">
                       {completedQueue.map((item) => (
                         <div
                           key={item.id}

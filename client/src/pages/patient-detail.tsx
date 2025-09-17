@@ -524,7 +524,7 @@ export default function PatientDetail() {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">
                   {visits.map((visit) => {
                     const visitNotes = allClinicalNotes.filter(note => note.visitId === visit.id);
 
