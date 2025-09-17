@@ -332,9 +332,10 @@ export function registerRoutes(app: Express): Server {
   // Visit history reports
   app.get("/api/reports/visits", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     try {
       const { dateFrom, dateTo, patientName, doctorId, visitType, status } = req.query;
+      console.log('DEBUG: Visit reports request with filters:', { dateFrom, dateTo, patientName, doctorId, visitType, status });
       const visits = await storage.getVisitsReport(req.user!.id, {
         dateFrom: dateFrom as string,
         dateTo: dateTo as string,
@@ -343,8 +344,10 @@ export function registerRoutes(app: Express): Server {
         visitType: visitType as string,
         status: status as string
       });
+      console.log('DEBUG: Visit reports result:', visits);
       res.json(visits);
     } catch (error) {
+      console.error('Error in /api/reports/visits:', error);
       res.status(500).json({ message: "Failed to fetch visit reports" });
     }
   });

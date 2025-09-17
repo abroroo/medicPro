@@ -479,7 +479,7 @@ export class DatabaseStorage implements IStorage {
         doctor: {
           id: doctors.id,
           name: doctors.name,
-          specialty: doctors.specialty,
+          specialization: doctors.specialization,
         },
       })
       .from(visits)
