@@ -28,19 +28,21 @@ export function registerRoutes(app: Express): Server {
   // Patient routes
   app.get("/api/patients", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+
     try {
       const search = req.query.search as string;
       let patients;
-      
+
       if (search) {
         patients = await storage.searchPatients(search, req.user!.id);
       } else {
         patients = await storage.getPatients(req.user!.id);
       }
-      
+
+
       res.json(patients);
     } catch (error) {
+      console.error('Error fetching patients:', error);
       res.status(500).json({ message: "Failed to fetch patients" });
     }
   });
@@ -474,6 +476,8 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Visit routes
+
+
   app.get("/api/visits", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
 

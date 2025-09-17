@@ -91,12 +91,40 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Patient methods
-  async getPatients(clinicId: number): Promise<Patient[]> {
-    return await db
+  async getPatients(clinicId: number): Promise<(Patient & { lastVisitType?: string })[]> {
+    // First get all patients
+    const allPatients = await db
       .select()
       .from(patients)
       .where(eq(patients.clinicId, clinicId))
       .orderBy(desc(patients.lastVisit));
+
+    // For each patient, get their most recent visit type
+    const patientsWithVisitType = await Promise.all(
+      allPatients.map(async (patient) => {
+        if (!patient.lastVisit) {
+          return { ...patient, lastVisitType: undefined };
+        }
+
+        // Get the most recent visit for this patient
+        const [latestVisit] = await db
+          .select({ visitType: visits.visitType })
+          .from(visits)
+          .where(and(
+            eq(visits.patientId, patient.id),
+            eq(visits.clinicId, clinicId)
+          ))
+          .orderBy(desc(visits.createdAt))
+          .limit(1);
+
+        return {
+          ...patient,
+          lastVisitType: latestVisit?.visitType || undefined
+        };
+      })
+    );
+
+    return patientsWithVisitType;
   }
 
   async getPatient(id: number, clinicId: number): Promise<Patient | undefined> {
@@ -107,8 +135,9 @@ export class DatabaseStorage implements IStorage {
     return patient || undefined;
   }
 
-  async searchPatients(query: string, clinicId: number): Promise<Patient[]> {
-    return await db
+  async searchPatients(query: string, clinicId: number): Promise<(Patient & { lastVisitType?: string })[]> {
+    // First get matching patients
+    const matchingPatients = await db
       .select()
       .from(patients)
       .where(
@@ -121,6 +150,33 @@ export class DatabaseStorage implements IStorage {
         )
       )
       .orderBy(desc(patients.lastVisit));
+
+    // For each patient, get their most recent visit type
+    const patientsWithVisitType = await Promise.all(
+      matchingPatients.map(async (patient) => {
+        if (!patient.lastVisit) {
+          return { ...patient, lastVisitType: undefined };
+        }
+
+        // Get the most recent visit for this patient
+        const [latestVisit] = await db
+          .select({ visitType: visits.visitType })
+          .from(visits)
+          .where(and(
+            eq(visits.patientId, patient.id),
+            eq(visits.clinicId, clinicId)
+          ))
+          .orderBy(desc(visits.createdAt))
+          .limit(1);
+
+        return {
+          ...patient,
+          lastVisitType: latestVisit?.visitType || undefined
+        };
+      })
+    );
+
+    return patientsWithVisitType;
   }
 
   async createPatient(patient: InsertPatient & { clinicId: number }): Promise<Patient> {
@@ -619,7 +675,40 @@ export class DatabaseStorage implements IStorage {
       .insert(visits)
       .values(secureVisit)
       .returning();
+
+    // Update patient's lastVisit field
+    await db
+      .update(patients)
+      .set({ lastVisit: new Date(newVisit.visitDate) })
+      .where(and(eq(patients.id, visit.patientId), eq(patients.clinicId, visit.clinicId)));
+
     return newVisit;
+  }
+
+  // Utility function to update all patients' lastVisit field
+  async updatePatientsLastVisit(clinicId: number): Promise<void> {
+    // Get all patients for this clinic
+    const allPatients = await db
+      .select({ id: patients.id })
+      .from(patients)
+      .where(eq(patients.clinicId, clinicId));
+
+    // For each patient, find their most recent visit and update their lastVisit field
+    for (const patient of allPatients) {
+      const [latestVisit] = await db
+        .select({ visitDate: visits.visitDate, createdAt: visits.createdAt })
+        .from(visits)
+        .where(and(eq(visits.patientId, patient.id), eq(visits.clinicId, clinicId)))
+        .orderBy(desc(visits.createdAt))
+        .limit(1);
+
+      if (latestVisit) {
+        await db
+          .update(patients)
+          .set({ lastVisit: new Date(latestVisit.visitDate) })
+          .where(and(eq(patients.id, patient.id), eq(patients.clinicId, clinicId)));
+      }
+    }
   }
 
   async updateVisit(id: number, visit: Partial<InsertVisit>, clinicId: number): Promise<Visit | undefined> {

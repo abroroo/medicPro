@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { Patient } from "@shared/schema";
 
+type PatientWithVisitType = Patient & { lastVisitType?: string };
+
 export default function Patients() {
   const isMobile = useIsMobile();
   const [location, setLocation] = useLocation();
@@ -28,7 +30,7 @@ export default function Patients() {
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const { toast } = useToast();
 
-  const { data: patients = [], isLoading } = useQuery<Patient[]>({
+  const { data: patients = [], isLoading } = useQuery<PatientWithVisitType[]>({
     queryKey: ["/api/patients", { search: searchQuery || undefined }],
     queryFn: async () => {
       const url = searchQuery 
@@ -122,7 +124,7 @@ export default function Patients() {
                           {patient.name}
                         </p>
                         <p className="text-xs text-muted-foreground" data-testid={`patient-phone-${patient.id}`}>
-                          {patient.phone} • Age: {patient.age || 'N/A'} • Last: {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}
+                          {patient.phone} • Age: {patient.age || 'N/A'} • Last: {patient.lastVisit ? `${new Date(patient.lastVisit).toLocaleDateString()}${patient.lastVisitType ? ` (${patient.lastVisitType})` : ''}` : 'Never'}
                         </p>
                       </div>
                     </div>
@@ -187,7 +189,16 @@ export default function Patients() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-muted-foreground">
-                            {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}
+                            {patient.lastVisit ? (
+                              <div>
+                                <div>{new Date(patient.lastVisit).toLocaleDateString()}</div>
+                                {patient.lastVisitType && (
+                                  <div className="text-xs text-muted-foreground/70">
+                                    {patient.lastVisitType}
+                                  </div>
+                                )}
+                              </div>
+                            ) : 'Never'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
