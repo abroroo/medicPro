@@ -63,8 +63,9 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
-  } else if (!ENV.API_ONLY) {
+  } else if (!ENV.API_ONLY && ENV.PORT !== 10000) {
     // Only serve static files if not in API-only mode
+    // Skip static files on Render (port 10000) even if API_ONLY isn't set
     serveStatic(app);
   }
 
