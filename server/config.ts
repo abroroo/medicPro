@@ -15,6 +15,7 @@ export const ENV = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: parseInt(process.env.PORT || '5000', 10),
   IS_REPLIT: process.env.REPL_ID !== undefined,
+  CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
 };
 
 // Validation with helpful error messages
