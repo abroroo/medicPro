@@ -7,8 +7,9 @@ import { z } from "zod";
 export const clinics = pgTable("clinics", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  contactPhone: text("contact_phone"),
+  address: text("address"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -195,8 +196,9 @@ export const queueRelations = relations(queue, ({ one }) => ({
 // Zod schemas
 export const insertClinicSchema = createInsertSchema(clinics).pick({
   name: true,
-  email: true,
-  password: true,
+  contactEmail: true,
+  contactPhone: true,
+  address: true,
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({

@@ -695,23 +695,20 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/clinics", requireAdmin, async (req, res) => {
     try {
-      const { name, email, password } = req.body;
+      const { name, contactEmail, contactPhone, address } = req.body;
 
-      if (!name || !email || !password) {
-        return res.status(400).json({ message: "Name, email, and password are required" });
+      if (!name || !contactEmail) {
+        return res.status(400).json({ message: "Name and contact email are required" });
       }
-
-      const hashedPassword = await hashPassword(password);
 
       const clinic = await storage.createClinic({
         name,
-        email,
-        password: hashedPassword,
+        contactEmail,
+        contactPhone,
+        address,
       });
 
-      // Remove password from response for security
-      const { password: _, ...clinicResponse } = clinic;
-      res.status(201).json(clinicResponse);
+      res.status(201).json(clinic);
     } catch (error) {
       console.error('Error creating clinic:', error);
       res.status(500).json({ message: "Failed to create clinic" });
@@ -790,9 +787,9 @@ export function registerRoutes(app: Express): Server {
         if (clinic.id === 1) continue;
 
         // Check if admin user already exists for this clinic
-        const existingAdmin = await storage.getUserByEmail(clinic.email);
+        const existingAdmin = await storage.getUserByEmail(clinic.contactEmail);
         if (existingAdmin) {
-          console.log(`Admin already exists for clinic ${clinic.id}: ${clinic.email}`);
+          console.log(`Admin already exists for clinic ${clinic.id}: ${clinic.contactEmail}`);
           continue;
         }
 
@@ -803,8 +800,8 @@ export function registerRoutes(app: Express): Server {
 
         // Create admin user for this clinic
         const newUser = await storage.db.insert(storage.schema.users).values({
-          email: clinic.email,
-          password: clinic.password, // Keep existing hashed password
+          email: clinic.contactEmail,
+          password: 'temp_password', // Temporary password since clinic no longer has password
           firstName: firstName,
           lastName: lastName,
           clinicId: clinic.id,
@@ -815,7 +812,7 @@ export function registerRoutes(app: Express): Server {
         }).returning();
 
         migratedUsers.push(newUser[0]);
-        console.log(`Created admin user for clinic ${clinic.id}: ${clinic.email}`);
+        console.log(`Created admin user for clinic ${clinic.id}: ${clinic.contactEmail}`);
       }
 
       res.json({
