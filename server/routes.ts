@@ -690,13 +690,17 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Name, email, and password are required" });
       }
 
+      const hashedPassword = await hashPassword(password);
+
       const clinic = await storage.createClinic({
         name,
         email,
-        password,
+        password: hashedPassword,
       });
 
-      res.status(201).json(clinic);
+      // Remove password from response for security
+      const { password: _, ...clinicResponse } = clinic;
+      res.status(201).json(clinicResponse);
     } catch (error) {
       console.error('Error creating clinic:', error);
       res.status(500).json({ message: "Failed to create clinic" });
@@ -723,9 +727,11 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Email, password, firstName, lastName, clinicId, and role are required" });
       }
 
+      const hashedPassword = await hashPassword(password);
+
       const newUser = await storage.createUserForClinic({
         email,
-        password,
+        password: hashedPassword,
         firstName,
         lastName,
         clinicId,
@@ -733,7 +739,9 @@ export function registerRoutes(app: Express): Server {
         isActive: isActive !== undefined ? isActive : true,
       });
 
-      res.status(201).json(newUser);
+      // Remove password from response for security
+      const { password: _, ...userResponse } = newUser;
+      res.status(201).json(userResponse);
     } catch (error) {
       console.error('Error creating user:', error);
       res.status(500).json({ message: "Failed to create user" });

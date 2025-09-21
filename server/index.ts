@@ -8,11 +8,32 @@ import { ENV } from "./config";
 
 const app = express();
 
-// CORS configuration for production
+// CORS configuration for production and development
+const allowedOrigins = [
+  ENV.CORS_ORIGIN,
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://medic-pro.vercel.app',
+  'https://medicpro-50xk.onrender.com'
+].filter(Boolean);
+
 app.use(cors({
-  origin: ENV.CORS_ORIGIN,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, postman, etc.)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.warn(`🚫 CORS blocked origin: ${origin}`);
+    const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+    return callback(new Error(msg), false);
+  },
   credentials: true,
 }));
+
+console.log('🌐 CORS Origins:', allowedOrigins);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
