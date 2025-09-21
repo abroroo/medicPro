@@ -50,10 +50,12 @@ export function setupAuth(app: Express) {
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
-      const user = await storage.getUserByUsername(username);
+      const user = await storage.getUserByEmail(username);
       if (!user || !(await comparePasswords(password, user.password))) {
         return done(null, false);
       } else {
+        // Update last login time
+        await storage.updateUserLastLogin(user.id);
         return done(null, user);
       }
     }),
@@ -61,7 +63,7 @@ export function setupAuth(app: Express) {
 
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
-    const user = await storage.getUser(id);
+    const user = await storage.getUserById(id);
     done(null, user);
   });
 
@@ -76,13 +78,14 @@ export function setupAuth(app: Express) {
         });
       }
 
-      const existingUser = await storage.getUserByUsername(validation.data.email);
+      const existingUser = await storage.getUserByEmail(validation.data.email);
       if (existingUser) {
         return res.status(409).json({ error: "Email already in use" });
       }
 
       const user = await storage.createUser({
-        ...validation.data,
+        username: validation.data.email, // Map email to username for backward compatibility
+        email: validation.data.email,
         password: await hashPassword(validation.data.password),
       });
 

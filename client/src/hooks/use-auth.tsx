@@ -4,7 +4,7 @@ import {
   useMutation,
   UseMutationResult,
 } from "@tanstack/react-query";
-import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
+import { insertUserSchema, User as SelectUser, InsertUser, UserRole } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,9 +15,27 @@ type AuthContextType = {
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
+  hasRole: (requiredRole: UserRole) => boolean;
+  isAdmin: boolean;
+  isDoctor: boolean;
+  isReceptionist: boolean;
+  isUser: boolean;
 };
 
-type LoginData = Pick<InsertUser, "username" | "password">;
+type LoginData = Pick<InsertUser, "email" | "password">;
+
+// Role hierarchy - higher roles inherit permissions from lower roles
+const roleHierarchy: Record<UserRole, number> = {
+  'user': 1,
+  'receptionist': 2,
+  'doctor': 3,
+  'admin': 4,
+};
+
+// Check if user has required role or higher
+function hasRolePermission(userRole: UserRole, requiredRole: UserRole): boolean {
+  return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
+}
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -81,6 +99,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // Role checking functions
+  const hasRole = (requiredRole: UserRole): boolean => {
+    if (!user) return false;
+    return hasRolePermission(user.role, requiredRole);
+  };
+
+  const isAdmin = user?.role === 'admin';
+  const isDoctor = user?.role === 'doctor' || isAdmin;
+  const isReceptionist = user?.role === 'receptionist' || isDoctor || isAdmin;
+  const isUser = !!user; // Any authenticated user
+
   return (
     <AuthContext.Provider
       value={{
@@ -90,6 +119,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        hasRole,
+        isAdmin,
+        isDoctor,
+        isReceptionist,
+        isUser,
       }}
     >
       {children}

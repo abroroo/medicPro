@@ -48,7 +48,7 @@ export default function AuthPage() {
   });
 
   const handleLogin = (data: LoginData) => {
-    loginMutation.mutate({ username: data.email, password: data.password });
+    loginMutation.mutate({ email: data.email, password: data.password });
   };
 
   const handleRegister = (data: RegisterData) => {

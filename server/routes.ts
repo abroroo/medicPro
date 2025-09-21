@@ -2,8 +2,19 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertPatientSchema, insertDoctorSchema, insertVisitSchema, insertClinicalNotesSchema, insertQueueSchema } from "@shared/schema";
+import { insertPatientSchema, insertDoctorSchema, insertVisitSchema, insertClinicalNotesSchema, insertQueueSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
+import { requireAuth, requireReceptionist, requireDoctor, requireAdmin } from "./middleware/rbac";
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 // Helper function to map queue status to visit status
 function mapQueueStatusToVisitStatus(queueStatus: string): string {
@@ -26,17 +37,15 @@ export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
   // Patient routes
-  app.get("/api/patients", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-
+  app.get("/api/patients", requireAuth, async (req, res) => {
     try {
       const search = req.query.search as string;
       let patients;
 
       if (search) {
-        patients = await storage.searchPatients(search, req.user!.id);
+        patients = await storage.searchPatients(search, req.user!.clinicId);
       } else {
-        patients = await storage.getPatients(req.user!.id);
+        patients = await storage.getPatients(req.user!.clinicId);
       }
 
 
@@ -48,8 +57,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Get individual patient by ID
-  app.get("/api/patients/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/patients/:id", requireAuth, async (req, res) => {
 
     try {
       const patientId = parseInt(req.params.id);
@@ -58,7 +66,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Invalid patient ID" });
       }
 
-      const patient = await storage.getPatient(patientId, req.user!.id);
+      const patient = await storage.getPatient(patientId, req.user!.clinicId);
 
       if (!patient) {
         return res.status(404).json({ message: "Patient not found" });
@@ -71,14 +79,13 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/patients", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.post("/api/patients", requireReceptionist, async (req, res) => {
     
     try {
       const validatedData = insertPatientSchema.parse(req.body);
       const patient = await storage.createPatient({
         ...validatedData,
-        clinicId: req.user!.id
+        clinicId: req.user!.clinicId
       });
       res.status(201).json(patient);
     } catch (error) {
@@ -89,13 +96,12 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/patients/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.put("/api/patients/:id", requireReceptionist, async (req, res) => {
     
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertPatientSchema.partial().parse(req.body);
-      const patient = await storage.updatePatient(id, validatedData, req.user!.id);
+      const patient = await storage.updatePatient(id, validatedData, req.user!.clinicId);
       
       if (!patient) {
         return res.status(404).json({ message: "Patient not found" });
@@ -110,12 +116,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/patients/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.delete("/api/patients/:id", requireAdmin, async (req, res) => {
     
     try {
       const id = parseInt(req.params.id);
-      const success = await storage.deletePatient(id, req.user!.id);
+      const success = await storage.deletePatient(id, req.user!.clinicId);
       
       if (!success) {
         return res.status(404).json({ message: "Patient not found" });
@@ -128,11 +133,10 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Queue routes
-  app.get("/api/queue", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/queue", requireAuth, async (req, res) => {
 
     try {
-      const queueItems = await storage.getTodayQueue(req.user!.id);
+      const queueItems = await storage.getTodayQueue(req.user!.clinicId);
 
       // Implement hospital-standard queue ordering
       // Priority order: serving -> waiting (by queue number) -> completed/cancelled/skipped (by completion time)
@@ -171,8 +175,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/queue", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.post("/api/queue", requireReceptionist, async (req, res) => {
     
     try {
       // Extract visit data from request body
@@ -185,7 +188,7 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      const queueNumber = await storage.getNextQueueNumber(req.user!.id);
+      const queueNumber = await storage.getNextQueueNumber(req.user!.clinicId);
       
       // First create the visit
       const visit = await storage.createVisit({
@@ -195,19 +198,19 @@ export function registerRoutes(app: Express): Server {
         visitType,
         chiefComplaint: chiefComplaint || null,
         status: "Scheduled",
-        clinicId: req.user!.id
+        clinicId: req.user!.clinicId
       });
 
       // Then add to queue with visit ID
       const queueItem = await storage.addToQueue({
-        clinicId: req.user!.id,
+        clinicId: req.user!.clinicId,
         patientId,
         doctorId,
         visitId: visit.id,
         visitType,
         queueNumber,
         status: "waiting"
-      }, req.user!.id);
+      }, req.user!.clinicId);
       
       res.status(201).json({ 
         queueItem,
@@ -222,8 +225,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/queue/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.put("/api/queue/:id", requireReceptionist, async (req, res) => {
 
     try {
       const id = parseInt(req.params.id);
@@ -236,7 +238,7 @@ export function registerRoutes(app: Express): Server {
       }
 
       // Update queue status
-      const queueItem = await storage.updateQueueStatus(id, status, req.user!.id);
+      const queueItem = await storage.updateQueueStatus(id, status, req.user!.clinicId);
 
       if (!queueItem) {
         return res.status(404).json({ message: "Queue item not found" });
@@ -245,7 +247,7 @@ export function registerRoutes(app: Express): Server {
       // Automatically sync visit status based on queue status
       if (queueItem.visitId) {
         const visitStatus = mapQueueStatusToVisitStatus(status);
-        await storage.updateVisit(queueItem.visitId, { status: visitStatus }, req.user!.id);
+        await storage.updateVisit(queueItem.visitId, { status: visitStatus }, req.user!.clinicId);
       }
 
       res.json(queueItem);
@@ -255,22 +257,20 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/queue/stats", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/queue/stats", requireAuth, async (req, res) => {
     
     try {
-      const stats = await storage.getQueueStats(req.user!.id);
+      const stats = await storage.getQueueStats(req.user!.clinicId);
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch queue stats" });
     }
   });
 
-  app.get("/api/queue/current", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/queue/current", requireAuth, async (req, res) => {
     
     try {
-      const current = await storage.getCurrentServing(req.user!.id);
+      const current = await storage.getCurrentServing(req.user!.clinicId);
       res.json(current || null);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch current serving" });
@@ -278,12 +278,11 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Reports routes
-  app.get("/api/reports/patients", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/reports/patients", requireAuth, async (req, res) => {
     
     try {
       const { dateFrom, dateTo, patientName } = req.query;
-      const patients = await storage.getPatientsReport(req.user!.id, {
+      const patients = await storage.getPatientsReport(req.user!.clinicId, {
         dateFrom: dateFrom as string,
         dateTo: dateTo as string,
         patientName: patientName as string
@@ -294,23 +293,21 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/reports/stats", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/reports/stats", requireAuth, async (req, res) => {
     
     try {
-      const stats = await storage.getPatientStats(req.user!.id);
+      const stats = await storage.getPatientStats(req.user!.clinicId);
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch patient stats" });
     }
   });
 
-  app.get("/api/reports/export", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/reports/export", requireAuth, async (req, res) => {
     
     try {
       const { dateFrom, dateTo, patientName } = req.query;
-      const patients = await storage.getPatientsReport(req.user!.id, {
+      const patients = await storage.getPatientsReport(req.user!.clinicId, {
         dateFrom: dateFrom as string,
         dateTo: dateTo as string,
         patientName: patientName as string
@@ -330,12 +327,11 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Visit history reports
-  app.get("/api/reports/visits", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/reports/visits", requireAuth, async (req, res) => {
 
     try {
       const { dateFrom, dateTo, patientName, doctorId, visitType, status } = req.query;
-      const visits = await storage.getVisitsReport(req.user!.id, {
+      const visits = await storage.getVisitsReport(req.user!.clinicId, {
         dateFrom: dateFrom as string,
         dateTo: dateTo as string,
         patientName: patientName as string,
@@ -350,23 +346,21 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/reports/visits/stats", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/reports/visits/stats", requireAuth, async (req, res) => {
     
     try {
-      const stats = await storage.getVisitStats(req.user!.id);
+      const stats = await storage.getVisitStats(req.user!.clinicId);
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch visit stats" });
     }
   });
 
-  app.get("/api/reports/visits/export", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/reports/visits/export", requireAuth, async (req, res) => {
     
     try {
       const { dateFrom, dateTo, patientName, doctorId, visitType, status } = req.query;
-      const visits = await storage.getVisitsReport(req.user!.id, {
+      const visits = await storage.getVisitsReport(req.user!.clinicId, {
         dateFrom: dateFrom as string,
         dateTo: dateTo as string,
         patientName: patientName as string,
@@ -392,23 +386,21 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Doctor routes
-  app.get("/api/doctors", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/doctors", requireAuth, async (req, res) => {
     
     try {
-      const doctors = await storage.getDoctors(req.user!.id);
+      const doctors = await storage.getDoctors(req.user!.clinicId);
       res.json(doctors);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch doctors" });
     }
   });
 
-  app.get("/api/doctors/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/doctors/:id", requireAuth, async (req, res) => {
     
     try {
       const id = parseInt(req.params.id);
-      const doctor = await storage.getDoctor(id, req.user!.id);
+      const doctor = await storage.getDoctor(id, req.user!.clinicId);
       
       if (!doctor) {
         return res.status(404).json({ message: "Doctor not found" });
@@ -420,14 +412,13 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/doctors", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.post("/api/doctors", requireAdmin, async (req, res) => {
     
     try {
       const validatedData = insertDoctorSchema.parse(req.body);
       const doctor = await storage.createDoctor({
         ...validatedData,
-        clinicId: req.user!.id
+        clinicId: req.user!.clinicId
       });
       res.status(201).json(doctor);
     } catch (error) {
@@ -438,13 +429,12 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/doctors/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.put("/api/doctors/:id", requireAdmin, async (req, res) => {
     
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertDoctorSchema.partial().parse(req.body);
-      const doctor = await storage.updateDoctor(id, validatedData, req.user!.id);
+      const doctor = await storage.updateDoctor(id, validatedData, req.user!.clinicId);
       
       if (!doctor) {
         return res.status(404).json({ message: "Doctor not found" });
@@ -459,12 +449,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/doctors/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.delete("/api/doctors/:id", requireAdmin, async (req, res) => {
     
     try {
       const id = parseInt(req.params.id);
-      const success = await storage.deleteDoctor(id, req.user!.id);
+      const success = await storage.deleteDoctor(id, req.user!.clinicId);
       
       if (!success) {
         return res.status(404).json({ message: "Doctor not found" });
@@ -479,12 +468,11 @@ export function registerRoutes(app: Express): Server {
   // Visit routes
 
 
-  app.get("/api/visits", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/visits", requireAuth, async (req, res) => {
 
     try {
       const patientId = req.query.patientId ? parseInt(req.query.patientId as string) : undefined;
-      let visits = await storage.getVisits(req.user!.id);
+      let visits = await storage.getVisits(req.user!.clinicId);
 
       // Filter by patient if patientId is provided
       if (patientId) {
@@ -500,12 +488,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/visits/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/visits/:id", requireAuth, async (req, res) => {
     
     try {
       const id = parseInt(req.params.id);
-      const visit = await storage.getVisit(id, req.user!.id);
+      const visit = await storage.getVisit(id, req.user!.clinicId);
       
       if (!visit) {
         return res.status(404).json({ message: "Visit not found" });
@@ -517,8 +504,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/visits", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.post("/api/visits", requireReceptionist, async (req, res) => {
 
     try {
       const validatedData = insertVisitSchema.parse(req.body);
@@ -526,20 +512,20 @@ export function registerRoutes(app: Express): Server {
       // First create the visit
       const visit = await storage.createVisit({
         ...validatedData,
-        clinicId: req.user!.id
+        clinicId: req.user!.clinicId
       });
 
       // Then automatically add to queue (since visit and queue are 1:1)
-      const queueNumber = await storage.getNextQueueNumber(req.user!.id);
+      const queueNumber = await storage.getNextQueueNumber(req.user!.clinicId);
       const queueItem = await storage.addToQueue({
-        clinicId: req.user!.id,
+        clinicId: req.user!.clinicId,
         patientId: validatedData.patientId,
         doctorId: validatedData.doctorId,
         visitId: visit.id,
         visitType: validatedData.visitType,
         queueNumber,
         status: "waiting"
-      }, req.user!.id);
+      }, req.user!.clinicId);
 
       res.status(201).json({
         visit,
@@ -556,13 +542,12 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/visits/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.put("/api/visits/:id", requireReceptionist, async (req, res) => {
     
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertVisitSchema.partial().parse(req.body);
-      const visit = await storage.updateVisit(id, validatedData, req.user!.id);
+      const visit = await storage.updateVisit(id, validatedData, req.user!.clinicId);
       
       if (!visit) {
         return res.status(404).json({ message: "Visit not found" });
@@ -580,12 +565,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/visits/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.delete("/api/visits/:id", requireAdmin, async (req, res) => {
     
     try {
       const id = parseInt(req.params.id);
-      const success = await storage.deleteVisit(id, req.user!.id);
+      const success = await storage.deleteVisit(id, req.user!.clinicId);
       
       if (!success) {
         return res.status(404).json({ message: "Visit not found" });
@@ -598,12 +582,11 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Clinical Notes routes
-  app.get("/api/visits/:visitId/clinical-notes", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/visits/:visitId/clinical-notes", requireAuth, async (req, res) => {
     
     try {
       const visitId = parseInt(req.params.visitId);
-      const clinicalNotes = await storage.getClinicalNotes(visitId, req.user!.id);
+      const clinicalNotes = await storage.getClinicalNotes(visitId, req.user!.clinicId);
       res.json(clinicalNotes);
     } catch (error) {
       if (error instanceof Error && error.message.includes('Visit not found')) {
@@ -613,12 +596,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/clinical-notes/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.get("/api/clinical-notes/:id", requireAuth, async (req, res) => {
     
     try {
       const id = parseInt(req.params.id);
-      const clinicalNote = await storage.getClinicalNote(id, req.user!.id);
+      const clinicalNote = await storage.getClinicalNote(id, req.user!.clinicId);
       
       if (!clinicalNote) {
         return res.status(404).json({ message: "Clinical note not found" });
@@ -630,12 +612,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/clinical-notes", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.post("/api/clinical-notes", requireDoctor, async (req, res) => {
     
     try {
       const validatedData = insertClinicalNotesSchema.parse(req.body);
-      const clinicalNote = await storage.createClinicalNote(validatedData, req.user!.id);
+      const clinicalNote = await storage.createClinicalNote(validatedData, req.user!.clinicId);
       res.status(201).json(clinicalNote);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -648,13 +629,12 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.put("/api/clinical-notes/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.put("/api/clinical-notes/:id", requireDoctor, async (req, res) => {
     
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertClinicalNotesSchema.partial().parse(req.body);
-      const clinicalNote = await storage.updateClinicalNote(id, validatedData, req.user!.id);
+      const clinicalNote = await storage.updateClinicalNote(id, validatedData, req.user!.clinicId);
       
       if (!clinicalNote) {
         return res.status(404).json({ message: "Clinical note not found" });
@@ -672,12 +652,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/clinical-notes/:id", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  app.delete("/api/clinical-notes/:id", requireDoctor, async (req, res) => {
     
     try {
       const id = parseInt(req.params.id);
-      const success = await storage.deleteClinicalNote(id, req.user!.id);
+      const success = await storage.deleteClinicalNote(id, req.user!.clinicId);
       
       if (!success) {
         return res.status(404).json({ message: "Clinical note not found" });
@@ -689,6 +668,62 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ message: error.message });
       }
       res.status(500).json({ message: "Failed to delete clinical note" });
+    }
+  });
+
+  // User management routes (admin only)
+  app.get("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getClinicUsers(req.user!.clinicId);
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.get("/api/users/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const user = await storage.getUserWithClinic(id);
+
+      if (!user || user.clinicId !== req.user!.clinicId) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  app.post("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const validation = insertUserSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json({
+          error: "Invalid input",
+          details: validation.error.errors
+        });
+      }
+
+      const existingUser = await storage.getUserByEmail(validation.data.email);
+      if (existingUser) {
+        return res.status(409).json({ error: "Email already in use" });
+      }
+
+      const hashedPassword = await hashPassword(validation.data.password);
+      const newUser = await storage.createUser({
+        username: validation.data.email,
+        email: validation.data.email,
+        password: hashedPassword,
+      });
+
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error('Error creating user:', error);
+      res.status(500).json({ message: "Failed to create user" });
     }
   });
 

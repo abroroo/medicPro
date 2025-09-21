@@ -1,4 +1,4 @@
-import { clinics, patients, doctors, visits, clinicalNotes, queue, type Clinic, type InsertClinic, type Patient, type InsertPatient, type Doctor, type InsertDoctor, type Visit, type InsertVisit, type ClinicalNotes, type InsertClinicalNotes, type Queue, type InsertQueue, type User, type InsertUser } from "@shared/schema";
+import { clinics, users, patients, doctors, visits, clinicalNotes, queue, type Clinic, type InsertClinic, type User, type InsertUser, type UserWithClinic, type Patient, type InsertPatient, type Doctor, type InsertDoctor, type Visit, type InsertVisit, type ClinicalNotes, type InsertClinicalNotes, type Queue, type InsertQueue } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ilike, or, max, gte, lt, isNull } from "drizzle-orm";
 import session from "express-session";
@@ -8,10 +8,17 @@ import { pool } from "./db";
 const PostgresSessionStore = connectPg(session);
 
 export interface IStorage {
-  // Auth methods (clinic = user)
+  // Auth methods (NEW: user-based auth)
+  getUserById(id: number): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserWithClinic(id: number): Promise<UserWithClinic | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  getClinicUsers(clinicId: number): Promise<User[]>;
+  updateUserLastLogin(id: number): Promise<void>;
+
+  // Legacy auth methods (clinic-based, for backward compatibility)
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
   
   // Patient methods
   getPatients(clinicId: number): Promise<Patient[]>;
@@ -88,6 +95,67 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  // User methods
+  async getUserById(id: number): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserWithClinic(id: number): Promise<UserWithClinic | undefined> {
+    const [userWithClinic] = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        password: users.password,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        clinicId: users.clinicId,
+        role: users.role,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+        lastLogin: users.lastLogin,
+        clinic: {
+          id: clinics.id,
+          name: clinics.name,
+          email: clinics.email,
+          password: clinics.password,
+          createdAt: clinics.createdAt,
+        }
+      })
+      .from(users)
+      .innerJoin(clinics, eq(users.clinicId, clinics.id))
+      .where(eq(users.id, id));
+
+    return userWithClinic as UserWithClinic;
+  }
+
+  async getClinicUsers(clinicId: number): Promise<User[]> {
+    const allUsers = await db
+      .select()
+      .from(users)
+      .where(eq(users.clinicId, clinicId))
+      .orderBy(users.createdAt);
+    return allUsers;
+  }
+
+  async updateUserLastLogin(id: number): Promise<void> {
+    await db
+      .update(users)
+      .set({ lastLogin: new Date() })
+      .where(eq(users.id, id));
   }
 
   // Patient methods
