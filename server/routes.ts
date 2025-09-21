@@ -33,11 +33,22 @@ function mapQueueStatusToVisitStatus(queueStatus: string): string {
   }
 }
 
+// Helper function to add no-cache headers
+function addNoCacheHeaders(res: any) {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Surrogate-Control': 'no-store'
+  });
+}
+
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
   // Patient routes
   app.get("/api/patients", requireAuth, async (req, res) => {
+    addNoCacheHeaders(res);
     try {
       const search = req.query.search as string;
       let patients;
@@ -134,7 +145,7 @@ export function registerRoutes(app: Express): Server {
 
   // Queue routes
   app.get("/api/queue", requireAuth, async (req, res) => {
-
+    addNoCacheHeaders(res);
     try {
       const queueItems = await storage.getTodayQueue(req.user!.clinicId);
 
@@ -279,7 +290,7 @@ export function registerRoutes(app: Express): Server {
 
   // Reports routes
   app.get("/api/reports/patients", requireAuth, async (req, res) => {
-    
+    addNoCacheHeaders(res);
     try {
       const { dateFrom, dateTo, patientName } = req.query;
       const patients = await storage.getPatientsReport(req.user!.clinicId, {
@@ -387,7 +398,7 @@ export function registerRoutes(app: Express): Server {
 
   // Doctor routes
   app.get("/api/doctors", requireAuth, async (req, res) => {
-    
+    addNoCacheHeaders(res);
     try {
       const doctors = await storage.getDoctors(req.user!.clinicId);
       res.json(doctors);
@@ -469,7 +480,7 @@ export function registerRoutes(app: Express): Server {
 
 
   app.get("/api/visits", requireAuth, async (req, res) => {
-
+    addNoCacheHeaders(res);
     try {
       const patientId = req.query.patientId ? parseInt(req.query.patientId as string) : undefined;
       let visits = await storage.getVisits(req.user!.clinicId);
