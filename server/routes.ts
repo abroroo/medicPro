@@ -715,6 +715,31 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.post("/api/users", requireAdmin, async (req, res) => {
+    try {
+      const { email, password, firstName, lastName, clinicId, role, isActive } = req.body;
+
+      if (!email || !password || !firstName || !lastName || !clinicId || !role) {
+        return res.status(400).json({ message: "Email, password, firstName, lastName, clinicId, and role are required" });
+      }
+
+      const newUser = await storage.createUserForClinic({
+        email,
+        password,
+        firstName,
+        lastName,
+        clinicId,
+        role,
+        isActive: isActive !== undefined ? isActive : true,
+      });
+
+      res.status(201).json(newUser);
+    } catch (error) {
+      console.error('Error creating user:', error);
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
   app.get("/api/users/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -731,34 +756,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/users", requireAdmin, async (req, res) => {
-    try {
-      const validation = insertUserSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({
-          error: "Invalid input",
-          details: validation.error.errors
-        });
-      }
-
-      const existingUser = await storage.getUserByEmail(validation.data.email);
-      if (existingUser) {
-        return res.status(409).json({ error: "Email already in use" });
-      }
-
-      const hashedPassword = await hashPassword(validation.data.password);
-      const newUser = await storage.createUser({
-        username: validation.data.email,
-        email: validation.data.email,
-        password: hashedPassword,
-      });
-
-      res.status(201).json(newUser);
-    } catch (error) {
-      console.error('Error creating user:', error);
-      res.status(500).json({ message: "Failed to create user" });
-    }
-  });
 
   // Migration route (temporary - for migrating remaining clinics)
   app.post("/api/migrate-clinics", requireAdmin, async (req, res) => {

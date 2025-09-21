@@ -23,6 +23,7 @@ export interface IStorage {
   getAllUsers(): Promise<(User & { clinicName: string })[]>;
   getAllClinics(): Promise<Clinic[]>;
   createClinic(clinic: InsertClinic): Promise<Clinic>;
+  createUserForClinic(user: InsertUser): Promise<User>;
 
   // Legacy auth methods (clinic-based, for backward compatibility)
   getUser(id: number): Promise<User | undefined>;
@@ -227,6 +228,14 @@ export class DatabaseStorage implements IStorage {
       .values(clinic)
       .returning();
     return newClinic;
+  }
+
+  async createUserForClinic(user: InsertUser): Promise<User> {
+    const [newUser] = await db
+      .insert(users)
+      .values(user)
+      .returning();
+    return newUser;
   }
 
   // Patient methods
