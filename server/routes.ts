@@ -269,7 +269,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/queue/stats", requireAuth, async (req, res) => {
-    
+    addNoCacheHeaders(res);
     try {
       const stats = await storage.getQueueStats(req.user!.clinicId);
       res.json(stats);
@@ -279,7 +279,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/queue/current", requireAuth, async (req, res) => {
-    
+    addNoCacheHeaders(res);
     try {
       const current = await storage.getCurrentServing(req.user!.clinicId);
       res.json(current || null);
@@ -305,7 +305,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/reports/stats", requireAuth, async (req, res) => {
-    
+    addNoCacheHeaders(res);
     try {
       const stats = await storage.getPatientStats(req.user!.clinicId);
       res.json(stats);
