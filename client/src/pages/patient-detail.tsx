@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
+import { getApiUrl } from "@/lib/queryClient";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -231,7 +232,7 @@ export default function PatientDetail() {
     queryKey: ["/api/patients", patientId],
     queryFn: async () => {
       console.log(`Fetching patient data for ID: ${patientId}`);
-      const res = await fetch(`/api/patients/${patientId}`, { credentials: "include" });
+      const res = await fetch(getApiUrl(`/api/patients/${patientId}`), { credentials: "include" });
       console.log(`API Response status: ${res.status}`);
       if (!res.ok) {
         throw new Error(`${res.status}: ${res.statusText}`);
@@ -247,7 +248,7 @@ export default function PatientDetail() {
   const { data: visits = [], isLoading: visitsLoading } = useQuery<VisitWithRelations[]>({
     queryKey: ["/api/visits", { patientId }],
     queryFn: async () => {
-      const res = await fetch(`/api/visits?patientId=${patientId}`, { credentials: "include" });
+      const res = await fetch(getApiUrl(`/api/visits?patientId=${patientId}`), { credentials: "include" });
       if (!res.ok) {
         throw new Error(`${res.status}: ${res.statusText}`);
       }
@@ -264,7 +265,7 @@ export default function PatientDetail() {
     queryFn: async () => {
       const notes: ClinicalNotes[] = [];
       for (const visit of visits) {
-        const res = await fetch(`/api/visits/${visit.id}/clinical-notes`, { credentials: "include" });
+        const res = await fetch(getApiUrl(`/api/visits/${visit.id}/clinical-notes`), { credentials: "include" });
         if (res.ok) {
           const visitNotes = await res.json();
           notes.push(...visitNotes);

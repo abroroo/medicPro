@@ -9,6 +9,11 @@ async function throwIfResNotOk(res: Response) {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
+// Helper function to get full API URL
+export function getApiUrl(path: string): string {
+  return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
