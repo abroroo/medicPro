@@ -21,6 +21,8 @@ export interface IStorage {
   getAdminByEmail(email: string): Promise<Admin | undefined>;
   updateAdminLastLogin(id: number): Promise<void>;
   getAllUsers(): Promise<(User & { clinicName: string })[]>;
+  getAllClinics(): Promise<Clinic[]>;
+  createClinic(clinic: InsertClinic): Promise<Clinic>;
 
   // Legacy auth methods (clinic-based, for backward compatibility)
   getUser(id: number): Promise<User | undefined>;
@@ -209,6 +211,22 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(clinics, eq(users.clinicId, clinics.id))
       .orderBy(users.createdAt);
     return allUsers;
+  }
+
+  async getAllClinics(): Promise<Clinic[]> {
+    const allClinics = await db
+      .select()
+      .from(clinics)
+      .orderBy(clinics.createdAt);
+    return allClinics;
+  }
+
+  async createClinic(clinic: InsertClinic): Promise<Clinic> {
+    const [newClinic] = await db
+      .insert(clinics)
+      .values(clinic)
+      .returning();
+    return newClinic;
   }
 
   // Patient methods

@@ -674,7 +674,7 @@ export function registerRoutes(app: Express): Server {
   // Clinic management routes (admin only)
   app.get("/api/clinics", requireAdmin, async (req, res) => {
     try {
-      const clinics = await storage.db.select().from(storage.schema.clinics);
+      const clinics = await storage.getAllClinics();
       res.json(clinics);
     } catch (error) {
       console.error('Error fetching clinics:', error);
@@ -684,18 +684,17 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/clinics", requireAdmin, async (req, res) => {
     try {
-      const { name, contactEmail, contactPhone, address } = req.body;
+      const { name, email, password } = req.body;
 
-      if (!name || !contactEmail || !contactPhone || !address) {
-        return res.status(400).json({ message: "All fields are required" });
+      if (!name || !email || !password) {
+        return res.status(400).json({ message: "Name, email, and password are required" });
       }
 
-      const [clinic] = await storage.db.insert(storage.schema.clinics).values({
+      const clinic = await storage.createClinic({
         name,
-        contactEmail,
-        contactPhone,
-        address,
-      }).returning();
+        email,
+        password,
+      });
 
       res.status(201).json(clinic);
     } catch (error) {
