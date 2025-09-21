@@ -14,6 +14,7 @@ import Doctors from "@/pages/doctors";
 import Queue from "@/pages/queue";
 import WaitingDisplay from "@/pages/waiting-display";
 import Reports from "@/pages/reports";
+import UsersPage from "@/pages/users-page";
 
 function Router() {
   return (
@@ -25,6 +26,7 @@ function Router() {
       <ProtectedRoute path="/queue" component={Queue} />
       <ProtectedRoute path="/display" component={WaitingDisplay} />
       <ProtectedRoute path="/reports" component={Reports} />
+      <ProtectedRoute path="/users" component={UsersPage} />
       <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>

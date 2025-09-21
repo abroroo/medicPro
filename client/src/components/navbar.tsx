@@ -3,20 +3,21 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "wouter";
-import { 
-  BarChart3, 
-  Users, 
-  Clock, 
-  Monitor, 
-  FileText, 
-  LogOut, 
+import {
+  BarChart3,
+  Users,
+  Clock,
+  Monitor,
+  FileText,
+  LogOut,
   Stethoscope,
-  Menu
+  Menu,
+  UserCog
 } from "lucide-react";
 import { useState } from "react";
 
 export function Navbar() {
-  const { user, logoutMutation } = useAuth();
+  const { user, logoutMutation, isAdmin } = useAuth();
   const [location, setLocation] = useLocation();
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
@@ -28,6 +29,7 @@ export function Navbar() {
     { path: "/queue", label: "Queue", icon: Clock },
     { path: "/display", label: "Display", icon: Monitor },
     { path: "/reports", label: "Reports", icon: FileText },
+    ...(isAdmin ? [{ path: "/users", label: "Users", icon: UserCog }] : []),
   ];
 
   const handleLogout = () => {

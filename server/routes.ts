@@ -671,11 +671,59 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Clinic management routes (admin only)
+  app.get("/api/clinics", requireAdmin, async (req, res) => {
+    try {
+      const clinics = await storage.db.select().from(storage.schema.clinics);
+      res.json(clinics);
+    } catch (error) {
+      console.error('Error fetching clinics:', error);
+      res.status(500).json({ message: "Failed to fetch clinics" });
+    }
+  });
+
+  app.post("/api/clinics", requireAdmin, async (req, res) => {
+    try {
+      const { name, contactEmail, contactPhone, address } = req.body;
+
+      if (!name || !contactEmail || !contactPhone || !address) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+
+      const [clinic] = await storage.db.insert(storage.schema.clinics).values({
+        name,
+        contactEmail,
+        contactPhone,
+        address,
+      }).returning();
+
+      res.status(201).json(clinic);
+    } catch (error) {
+      console.error('Error creating clinic:', error);
+      res.status(500).json({ message: "Failed to create clinic" });
+    }
+  });
+
   // User management routes (admin only)
   app.get("/api/users", requireAdmin, async (req, res) => {
     try {
-      const users = await storage.getClinicUsers(req.user!.clinicId);
-      res.json(users);
+      // Admin can see all users from all clinics
+      const allUsers = await storage.db.select({
+        id: storage.schema.users.id,
+        email: storage.schema.users.email,
+        firstName: storage.schema.users.firstName,
+        lastName: storage.schema.users.lastName,
+        clinicId: storage.schema.users.clinicId,
+        role: storage.schema.users.role,
+        isActive: storage.schema.users.isActive,
+        createdAt: storage.schema.users.createdAt,
+        lastLogin: storage.schema.users.lastLogin,
+        clinicName: storage.schema.clinics.name,
+      })
+      .from(storage.schema.users)
+      .innerJoin(storage.schema.clinics, storage.eq(storage.schema.users.clinicId, storage.schema.clinics.id));
+
+      res.json(allUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       res.status(500).json({ message: "Failed to fetch users" });
@@ -724,6 +772,62 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Error creating user:', error);
       res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  // Migration route (temporary - for migrating remaining clinics)
+  app.post("/api/migrate-clinics", requireAdmin, async (req, res) => {
+    try {
+      // First, let's see what clinics exist
+      const clinics = await storage.db.select().from(storage.schema.clinics);
+      console.log('Found clinics:', clinics);
+
+      const migratedUsers = [];
+
+      for (const clinic of clinics) {
+        // Skip clinic_id = 1 as it's already migrated
+        if (clinic.id === 1) continue;
+
+        // Check if admin user already exists for this clinic
+        const existingAdmin = await storage.getUserByEmail(clinic.email);
+        if (existingAdmin) {
+          console.log(`Admin already exists for clinic ${clinic.id}: ${clinic.email}`);
+          continue;
+        }
+
+        // Extract first and last name from clinic name
+        const nameParts = clinic.name.split(' ');
+        const firstName = nameParts[0] || clinic.name;
+        const lastName = nameParts[1] || 'Admin';
+
+        // Create admin user for this clinic
+        const newUser = await storage.db.insert(storage.schema.users).values({
+          email: clinic.email,
+          password: clinic.password, // Keep existing hashed password
+          firstName: firstName,
+          lastName: lastName,
+          clinicId: clinic.id,
+          role: 'admin',
+          isActive: true,
+          createdAt: clinic.createdAt,
+          lastLogin: null,
+        }).returning();
+
+        migratedUsers.push(newUser[0]);
+        console.log(`Created admin user for clinic ${clinic.id}: ${clinic.email}`);
+      }
+
+      res.json({
+        message: `Successfully migrated ${migratedUsers.length} clinics to users`,
+        migratedUsers: migratedUsers
+      });
+
+    } catch (error) {
+      console.error('Migration error:', error);
+      res.status(500).json({
+        message: "Migration failed",
+        error: error.message
+      });
     }
   });
 
