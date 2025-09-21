@@ -33,13 +33,10 @@ export default function Patients() {
   const { data: patients = [], isLoading } = useQuery<PatientWithVisitType[]>({
     queryKey: ["/api/patients", { search: searchQuery || undefined }],
     queryFn: async () => {
-      const url = searchQuery 
+      const url = searchQuery
         ? `/api/patients?search=${encodeURIComponent(searchQuery)}`
         : '/api/patients';
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) {
-        throw new Error(`${res.status}: ${res.statusText}`);
-      }
+      const res = await apiRequest("GET", url);
       return res.json();
     },
   });

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -96,10 +97,7 @@ export default function Reports() {
       if (filters.patientName) params.append('patientName', filters.patientName);
       
       const url = `/api/reports/patients${params.toString() ? '?' + params.toString() : ''}`;
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) {
-        throw new Error(`${res.status}: ${res.statusText}`);
-      }
+      const res = await apiRequest("GET", url);
       return res.json();
     },
     enabled: activeTab === "patients",
@@ -117,10 +115,7 @@ export default function Reports() {
       if (visitFilters.status && visitFilters.status !== "all") params.append('status', visitFilters.status);
       
       const url = `/api/reports/visits${params.toString() ? '?' + params.toString() : ''}`;
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) {
-        throw new Error(`${res.status}: ${res.statusText}`);
-      }
+      const res = await apiRequest("GET", url);
       return res.json();
     },
     enabled: activeTab === "visits",

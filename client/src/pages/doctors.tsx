@@ -32,10 +32,7 @@ export default function Doctors() {
       const url = searchQuery 
         ? `/api/doctors?search=${encodeURIComponent(searchQuery)}`
         : '/api/doctors';
-      const res = await fetch(url, { credentials: "include" });
-      if (!res.ok) {
-        throw new Error(`${res.status}: ${res.statusText}`);
-      }
+      const res = await apiRequest("GET", url);
       return res.json();
     },
   });
