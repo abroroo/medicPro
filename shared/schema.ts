@@ -21,8 +21,12 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   clinicId: integer("clinic_id").references(() => clinics.id).notNull(),
-  role: text("role").notNull().default("user"), // 'doctor', 'receptionist', 'user'
+  role: text("role").notNull().default("user"), // 'doctor', 'receptionist', 'user', 'head_doctor'
   isActive: boolean("is_active").default(true).notNull(),
+  // Doctor-specific fields (only used when role is 'doctor' or 'head_doctor')
+  specialization: text("specialization"),
+  cabinetNumber: text("cabinet_number"),
+  phone: text("phone"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastLogin: timestamp("last_login"),
 });
@@ -56,23 +60,12 @@ export const patients = pgTable("patients", {
   lastVisit: timestamp("last_visit"),
 });
 
-export const doctors = pgTable("doctors", {
-  id: serial("id").primaryKey(),
-  clinicId: integer("clinic_id").references(() => clinics.id).notNull(),
-  name: text("name").notNull(),
-  specialization: text("specialization").notNull(),
-  cabinetNumber: text("cabinet_number"),
-  phone: text("phone"),
-  email: text("email"),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
 
 export const visits = pgTable("visits", {
   id: serial("id").primaryKey(),
   clinicId: integer("clinic_id").references(() => clinics.id).notNull(),
   patientId: integer("patient_id").references(() => patients.id).notNull(),
-  doctorId: integer("doctor_id").references(() => doctors.id).notNull(),
+  doctorId: integer("doctor_id").references(() => users.id).notNull(),
   visitDate: date("visit_date").notNull(),
   visitType: text("visit_type").notNull(), // Consultation, Dental, Gynecology, Follow-up, Emergency
   chiefComplaint: text("chief_complaint"),
@@ -83,7 +76,7 @@ export const visits = pgTable("visits", {
 export const clinicalNotes = pgTable("clinical_notes", {
   id: serial("id").primaryKey(),
   visitId: integer("visit_id").references(() => visits.id).notNull(),
-  doctorId: integer("doctor_id").references(() => doctors.id).notNull(),
+  doctorId: integer("doctor_id").references(() => users.id).notNull(),
   symptoms: text("symptoms"),
   clinicalExamination: text("clinical_examination"),
   diagnosis: text("diagnosis"),
@@ -100,7 +93,7 @@ export const queue = pgTable("queue", {
   id: serial("id").primaryKey(),
   clinicId: integer("clinic_id").references(() => clinics.id).notNull(),
   patientId: integer("patient_id").references(() => patients.id).notNull(),
-  doctorId: integer("doctor_id").references(() => doctors.id),
+  doctorId: integer("doctor_id").references(() => users.id),
   visitId: integer("visit_id").references(() => visits.id),
   queueNumber: integer("queue_number").notNull(),
   visitType: text("visit_type"),
@@ -111,7 +104,6 @@ export const queue = pgTable("queue", {
 // Relations
 export const clinicsRelations = relations(clinics, ({ many }) => ({
   patients: many(patients),
-  doctors: many(doctors),
   visits: many(visits),
   queue: many(queue),
   users: many(users),
@@ -133,15 +125,6 @@ export const patientsRelations = relations(patients, ({ one, many }) => ({
   queueEntries: many(queue),
 }));
 
-export const doctorsRelations = relations(doctors, ({ one, many }) => ({
-  clinic: one(clinics, {
-    fields: [doctors.clinicId],
-    references: [clinics.id],
-  }),
-  visits: many(visits),
-  clinicalNotes: many(clinicalNotes),
-  queueEntries: many(queue),
-}));
 
 export const visitsRelations = relations(visits, ({ one, many }) => ({
   clinic: one(clinics, {
@@ -152,9 +135,9 @@ export const visitsRelations = relations(visits, ({ one, many }) => ({
     fields: [visits.patientId],
     references: [patients.id],
   }),
-  doctor: one(doctors, {
+  doctor: one(users, {
     fields: [visits.doctorId],
-    references: [doctors.id],
+    references: [users.id],
   }),
   clinicalNotes: many(clinicalNotes),
   queueEntry: one(queue, {
@@ -168,9 +151,9 @@ export const clinicalNotesRelations = relations(clinicalNotes, ({ one }) => ({
     fields: [clinicalNotes.visitId],
     references: [visits.id],
   }),
-  doctor: one(doctors, {
+  doctor: one(users, {
     fields: [clinicalNotes.doctorId],
-    references: [doctors.id],
+    references: [users.id],
   }),
 }));
 
@@ -183,9 +166,9 @@ export const queueRelations = relations(queue, ({ one }) => ({
     fields: [queue.patientId],
     references: [patients.id],
   }),
-  doctor: one(doctors, {
+  doctor: one(users, {
     fields: [queue.doctorId],
-    references: [doctors.id],
+    references: [users.id],
   }),
   visit: one(visits, {
     fields: [queue.visitId],
@@ -207,6 +190,15 @@ export const insertUserSchema = createInsertSchema(users).omit({
   lastLogin: true,
 });
 
+// Schema for creating doctor users (includes doctor-specific fields)
+export const insertDoctorUserSchema = insertUserSchema.extend({
+  specialization: z.string().min(1, "Specialization is required"),
+  cabinetNumber: z.string().optional(),
+  phone: z.string().optional(),
+}).refine(data => data.role === 'doctor' || data.role === 'head_doctor', {
+  message: "Doctor-specific fields are only for doctor roles",
+});
+
 export const insertPatientSchema = createInsertSchema(patients).omit({
   id: true,
   clinicId: true,
@@ -214,12 +206,6 @@ export const insertPatientSchema = createInsertSchema(patients).omit({
   lastVisit: true,
 });
 
-export const insertDoctorSchema = createInsertSchema(doctors).omit({
-  id: true,
-  clinicId: true,
-  createdAt: true,
-  isActive: true,
-});
 
 export const insertVisitSchema = createInsertSchema(visits).omit({
   id: true,
@@ -241,13 +227,14 @@ export const insertQueueSchema = createInsertSchema(queue).omit({
 export const visitTypeEnum = z.enum(['Consultation', 'Dental', 'Gynecology', 'Follow-up', 'Emergency']);
 export const visitStatusEnum = z.enum(['Scheduled', 'In-Progress', 'Completed', 'Cancelled']);
 export const queueStatusEnum = z.enum(['waiting', 'serving', 'completed', 'skipped', 'cancelled']);
-export const userRoleEnum = z.enum(['admin', 'doctor', 'receptionist', 'user']);
+export const userRoleEnum = z.enum(['admin', 'head_doctor', 'doctor', 'receptionist', 'user']);
 
 // Types
 export type InsertClinic = z.infer<typeof insertClinicSchema>;
 export type Clinic = typeof clinics.$inferSelect;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type InsertDoctorUser = z.infer<typeof insertDoctorUserSchema>;
 export type User = typeof users.$inferSelect;
 export type UserWithClinic = User & { clinic: Clinic };
 export type Admin = typeof admins.$inferSelect;
@@ -255,8 +242,6 @@ export type Admin = typeof admins.$inferSelect;
 export type InsertPatient = z.infer<typeof insertPatientSchema>;
 export type Patient = typeof patients.$inferSelect;
 
-export type InsertDoctor = z.infer<typeof insertDoctorSchema>;
-export type Doctor = typeof doctors.$inferSelect;
 
 export type InsertVisit = z.infer<typeof insertVisitSchema>;
 export type Visit = typeof visits.$inferSelect;

@@ -17,33 +17,34 @@ import {
   Badge,
   Stethoscope
 } from "lucide-react";
-import { Doctor } from "@shared/schema";
+import { User } from "@shared/schema";
 
 export default function Doctors() {
   const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
+  const [editingDoctor, setEditingDoctor] = useState<User | null>(null);
   const { toast } = useToast();
 
-  const { data: doctors = [], isLoading } = useQuery<Doctor[]>({
-    queryKey: ["/api/doctors", { search: searchQuery || undefined }],
+  const { data: doctors = [], isLoading } = useQuery<User[]>({
+    queryKey: ["/api/users", { role: "doctor", search: searchQuery || undefined }],
     queryFn: async () => {
-      const url = searchQuery 
-        ? `/api/doctors?search=${encodeURIComponent(searchQuery)}`
-        : '/api/doctors';
-      const res = await apiRequest("GET", url);
+      const params = new URLSearchParams({ role: "doctor" });
+      if (searchQuery) {
+        params.append("search", searchQuery);
+      }
+      const res = await apiRequest("GET", `/api/users?${params}`);
       return res.json();
     },
   });
 
   const deleteDocMutation = useMutation({
     mutationFn: async (doctorId: number) => {
-      const res = await apiRequest("DELETE", `/api/doctors/${doctorId}`);
+      const res = await apiRequest("DELETE", `/api/users/${doctorId}`);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
         title: "Success",
         description: "Doctor deleted successfully",
@@ -61,7 +62,7 @@ export default function Doctors() {
   // No need for client-side filtering since API handles search
   const filteredDoctors = doctors;
 
-  const handleEditDoctor = (doctor: Doctor) => {
+  const handleEditDoctor = (doctor: User) => {
     setEditingDoctor(doctor);
     setIsModalOpen(true);
   };
@@ -160,7 +161,7 @@ export default function Doctors() {
                   <CardTitle className="text-lg flex items-center">
                     <Stethoscope className="w-5 h-5 mr-2 text-primary" />
                     <span data-testid={`text-doctor-name-${doctor.id}`}>
-                      Dr. {doctor.name}
+                      Dr. {doctor.firstName} {doctor.lastName}
                     </span>
                   </CardTitle>
                   <p className="text-sm text-primary font-medium" data-testid={`text-doctor-specialty-${doctor.id}`}>

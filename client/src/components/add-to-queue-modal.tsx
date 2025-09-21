@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Search } from "lucide-react";
-import { Patient, Doctor } from "@shared/schema";
+import { Patient, User } from "@shared/schema";
 
 const visitTypes = [
   "Consultation",
@@ -71,8 +71,12 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
   });
 
   // Fetch doctors for visit assignment
-  const { data: doctors = [] } = useQuery<Doctor[]>({
-    queryKey: ["/api/doctors"],
+  const { data: doctors = [] } = useQuery<User[]>({
+    queryKey: ["/api/users", { role: "doctor" }],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/users?role=doctor");
+      return res.json();
+    },
     enabled: open,
   });
 
@@ -206,7 +210,7 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
                   <SelectContent>
                     {doctors.map((doctor) => (
                       <SelectItem key={doctor.id} value={doctor.id.toString()}>
-                        Dr. {doctor.name} - {doctor.specialization}
+                        Dr. {doctor.firstName} {doctor.lastName} - {doctor.specialization}
                       </SelectItem>
                     ))}
                   </SelectContent>

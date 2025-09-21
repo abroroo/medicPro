@@ -396,85 +396,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Doctor routes
-  app.get("/api/doctors", requireAuth, async (req, res) => {
-    addNoCacheHeaders(res);
-    try {
-      const doctors = await storage.getDoctors(req.user!.clinicId);
-      res.json(doctors);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch doctors" });
-    }
-  });
-
-  app.get("/api/doctors/:id", requireAuth, async (req, res) => {
-    
-    try {
-      const id = parseInt(req.params.id);
-      const doctor = await storage.getDoctor(id, req.user!.clinicId);
-      
-      if (!doctor) {
-        return res.status(404).json({ message: "Doctor not found" });
-      }
-      
-      res.json(doctor);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to fetch doctor" });
-    }
-  });
-
-  app.post("/api/doctors", requireAdmin, async (req, res) => {
-    
-    try {
-      const validatedData = insertDoctorSchema.parse(req.body);
-      const doctor = await storage.createDoctor({
-        ...validatedData,
-        clinicId: req.user!.clinicId
-      });
-      res.status(201).json(doctor);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid doctor data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create doctor" });
-    }
-  });
-
-  app.put("/api/doctors/:id", requireAdmin, async (req, res) => {
-    
-    try {
-      const id = parseInt(req.params.id);
-      const validatedData = insertDoctorSchema.partial().parse(req.body);
-      const doctor = await storage.updateDoctor(id, validatedData, req.user!.clinicId);
-      
-      if (!doctor) {
-        return res.status(404).json({ message: "Doctor not found" });
-      }
-      
-      res.json(doctor);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid doctor data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to update doctor" });
-    }
-  });
-
-  app.delete("/api/doctors/:id", requireAdmin, async (req, res) => {
-    
-    try {
-      const id = parseInt(req.params.id);
-      const success = await storage.deleteDoctor(id, req.user!.clinicId);
-      
-      if (!success) {
-        return res.status(404).json({ message: "Doctor not found" });
-      }
-      
-      res.sendStatus(204);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to delete doctor" });
-    }
-  });
 
   // Visit routes
 
@@ -716,11 +637,36 @@ export function registerRoutes(app: Express): Server {
   });
 
   // User management routes (admin only)
-  app.get("/api/users", requireAdmin, async (req, res) => {
+  app.get("/api/users", requireAuth, async (req, res) => {
     try {
-      // Admin can see all users from all clinics
-      const allUsers = await storage.getAllUsers();
-      res.json(allUsers);
+      const { role } = req.query;
+      const userClinicId = req.user!.clinicId;
+
+      // If role filter is specified, get filtered users from the authenticated user's clinic
+      if (role) {
+        if (role === 'doctor' || role === 'head_doctor') {
+          const doctorUsers = await storage.getDoctorUsers(userClinicId);
+          res.json(doctorUsers);
+          return;
+        }
+
+        // For other roles, get all users from the clinic and filter
+        const clinicUsers = await storage.getClinicUsers(userClinicId);
+        const filteredUsers = clinicUsers.filter(user => user.role === role);
+        res.json(filteredUsers);
+        return;
+      }
+
+      // If no role filter, return different results based on user permissions
+      if (req.user!.role === 'admin') {
+        // Admin can see all users from all clinics
+        const allUsers = await storage.getAllUsers();
+        res.json(allUsers);
+      } else {
+        // Other users can only see users from their clinic
+        const clinicUsers = await storage.getClinicUsers(userClinicId);
+        res.json(clinicUsers);
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
       res.status(500).json({ message: "Failed to fetch users" });
@@ -729,15 +675,32 @@ export function registerRoutes(app: Express): Server {
 
   app.post("/api/users", requireAdmin, async (req, res) => {
     try {
-      const { email, password, firstName, lastName, clinicId, role, isActive } = req.body;
+      const {
+        email,
+        password,
+        firstName,
+        lastName,
+        clinicId,
+        role,
+        isActive,
+        // Doctor-specific fields
+        specialization,
+        cabinetNumber,
+        phone
+      } = req.body;
 
       if (!email || !password || !firstName || !lastName || !clinicId || !role) {
         return res.status(400).json({ message: "Email, password, firstName, lastName, clinicId, and role are required" });
       }
 
+      // Validate doctor-specific fields for doctor roles
+      if ((role === 'doctor' || role === 'head_doctor') && !specialization) {
+        return res.status(400).json({ message: "Specialization is required for doctor roles" });
+      }
+
       const hashedPassword = await hashPassword(password);
 
-      const newUser = await storage.createUserForClinic({
+      const userData = {
         email,
         password: hashedPassword,
         firstName,
@@ -745,7 +708,15 @@ export function registerRoutes(app: Express): Server {
         clinicId,
         role,
         isActive: isActive !== undefined ? isActive : true,
-      });
+        // Include doctor fields only if it's a doctor role
+        ...(role === 'doctor' || role === 'head_doctor' ? {
+          specialization,
+          cabinetNumber: cabinetNumber || null,
+          phone: phone || null,
+        } : {})
+      };
+
+      const newUser = await storage.createUserForClinic(userData);
 
       // Remove password from response for security
       const { password: _, ...userResponse } = newUser;
