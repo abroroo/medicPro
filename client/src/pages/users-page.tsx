@@ -41,13 +41,13 @@ export default function UsersPage() {
   // Fetch users
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Fetch clinics
   const { data: clinics, isLoading: clinicsLoading } = useQuery<Clinic[]>({
     queryKey: ["/api/clinics"],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({ on401: "throw" }),
   });
 
   // Create user mutation
