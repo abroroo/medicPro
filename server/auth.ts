@@ -5,14 +5,21 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser, insertUserSchema } from "@shared/schema";
+import { User as SelectUser, Admin as SelectAdmin, insertUserSchema } from "@shared/schema";
 import { ENV } from "./config";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends SelectUser {
+      userType?: 'user';
+    }
+    interface Admin extends SelectAdmin {
+      userType: 'admin';
+    }
   }
 }
+
+type AuthenticatedUser = (SelectUser & { userType?: 'user' }) | (SelectAdmin & { userType: 'admin' });
 
 const scryptAsync = promisify(scrypt);
 
@@ -53,21 +60,40 @@ export function setupAuth(app: Express) {
       usernameField: 'email',
       passwordField: 'password'
     }, async (email, password, done) => {
-      const user = await storage.getUserByEmail(email);
-      if (!user || !(await comparePasswords(password, user.password))) {
-        return done(null, false);
-      } else {
-        // Update last login time
-        await storage.updateUserLastLogin(user.id);
-        return done(null, user);
+      // First check admins table
+      const admin = await storage.getAdminByEmail(email);
+      if (admin && (await comparePasswords(password, admin.password))) {
+        await storage.updateAdminLastLogin(admin.id);
+        return done(null, { ...admin, userType: 'admin' as const });
       }
+
+      // Then check users table
+      const user = await storage.getUserByEmail(email);
+      if (user && (await comparePasswords(password, user.password))) {
+        await storage.updateUserLastLogin(user.id);
+        return done(null, { ...user, userType: 'user' as const });
+      }
+
+      return done(null, false);
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: number, done) => {
-    const user = await storage.getUserById(id);
-    done(null, user);
+  passport.serializeUser((user: AuthenticatedUser, done) => {
+    done(null, { id: user.id, userType: user.userType });
+  });
+
+  passport.deserializeUser(async (serialized: { id: number, userType: 'user' | 'admin' }, done) => {
+    try {
+      if (serialized.userType === 'admin') {
+        const admin = await storage.getAdminById(serialized.id);
+        done(null, admin ? { ...admin, userType: 'admin' as const } : null);
+      } else {
+        const user = await storage.getUserById(serialized.id);
+        done(null, user ? { ...user, userType: 'user' as const } : null);
+      }
+    } catch (error) {
+      done(error, null);
+    }
   });
 
   app.post("/api/register", async (req, res, next) => {

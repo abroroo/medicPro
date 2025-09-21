@@ -708,21 +708,7 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/users", requireAdmin, async (req, res) => {
     try {
       // Admin can see all users from all clinics
-      const allUsers = await storage.db.select({
-        id: storage.schema.users.id,
-        email: storage.schema.users.email,
-        firstName: storage.schema.users.firstName,
-        lastName: storage.schema.users.lastName,
-        clinicId: storage.schema.users.clinicId,
-        role: storage.schema.users.role,
-        isActive: storage.schema.users.isActive,
-        createdAt: storage.schema.users.createdAt,
-        lastLogin: storage.schema.users.lastLogin,
-        clinicName: storage.schema.clinics.name,
-      })
-      .from(storage.schema.users)
-      .innerJoin(storage.schema.clinics, storage.eq(storage.schema.users.clinicId, storage.schema.clinics.id));
-
+      const allUsers = await storage.getAllUsers();
       res.json(allUsers);
     } catch (error) {
       console.error('Error fetching users:', error);

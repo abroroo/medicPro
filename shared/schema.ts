@@ -20,7 +20,20 @@ export const users = pgTable("users", {
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   clinicId: integer("clinic_id").references(() => clinics.id).notNull(),
-  role: text("role").notNull().default("user"), // 'admin', 'doctor', 'receptionist', 'user'
+  role: text("role").notNull().default("user"), // 'doctor', 'receptionist', 'user'
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastLogin: timestamp("last_login"),
+});
+
+// Separate admins table for system administrators
+export const admins = pgTable("admins", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  role: text("role").notNull().default("admin"),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   lastLogin: timestamp("last_login"),
@@ -235,6 +248,7 @@ export type Clinic = typeof clinics.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type UserWithClinic = User & { clinic: Clinic };
+export type Admin = typeof admins.$inferSelect;
 
 export type InsertPatient = z.infer<typeof insertPatientSchema>;
 export type Patient = typeof patients.$inferSelect;

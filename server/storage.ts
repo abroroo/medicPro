@@ -1,4 +1,4 @@
-import { clinics, users, patients, doctors, visits, clinicalNotes, queue, type Clinic, type InsertClinic, type User, type InsertUser, type UserWithClinic, type Patient, type InsertPatient, type Doctor, type InsertDoctor, type Visit, type InsertVisit, type ClinicalNotes, type InsertClinicalNotes, type Queue, type InsertQueue } from "@shared/schema";
+import { clinics, users, admins, patients, doctors, visits, clinicalNotes, queue, type Clinic, type InsertClinic, type User, type InsertUser, type UserWithClinic, type Admin, type Patient, type InsertPatient, type Doctor, type InsertDoctor, type Visit, type InsertVisit, type ClinicalNotes, type InsertClinicalNotes, type Queue, type InsertQueue } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ilike, or, max, gte, lt, isNull } from "drizzle-orm";
 import session from "express-session";
@@ -15,6 +15,12 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   getClinicUsers(clinicId: number): Promise<User[]>;
   updateUserLastLogin(id: number): Promise<void>;
+
+  // Admin methods
+  getAdminById(id: number): Promise<Admin | undefined>;
+  getAdminByEmail(email: string): Promise<Admin | undefined>;
+  updateAdminLastLogin(id: number): Promise<void>;
+  getAllUsers(): Promise<(User & { clinicName: string })[]>;
 
   // Legacy auth methods (clinic-based, for backward compatibility)
   getUser(id: number): Promise<User | undefined>;
@@ -156,6 +162,53 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ lastLogin: new Date() })
       .where(eq(users.id, id));
+  }
+
+  // Admin methods
+  async getAdminById(id: number): Promise<Admin | undefined> {
+    const result = await db
+      .select()
+      .from(admins)
+      .where(eq(admins.id, id))
+      .limit(1);
+    return result[0];
+  }
+
+  async getAdminByEmail(email: string): Promise<Admin | undefined> {
+    const result = await db
+      .select()
+      .from(admins)
+      .where(eq(admins.email, email))
+      .limit(1);
+    return result[0];
+  }
+
+  async updateAdminLastLogin(id: number): Promise<void> {
+    await db
+      .update(admins)
+      .set({ lastLogin: new Date() })
+      .where(eq(admins.id, id));
+  }
+
+  async getAllUsers(): Promise<(User & { clinicName: string })[]> {
+    const allUsers = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        password: users.password,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        clinicId: users.clinicId,
+        role: users.role,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+        lastLogin: users.lastLogin,
+        clinicName: clinics.name,
+      })
+      .from(users)
+      .innerJoin(clinics, eq(users.clinicId, clinics.id))
+      .orderBy(users.createdAt);
+    return allUsers;
   }
 
   // Patient methods
