@@ -12,6 +12,20 @@ export const clinics = pgTable("clinics", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// New users table for multi-user per clinic support
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  clinicId: integer("clinic_id").references(() => clinics.id).notNull(),
+  role: text("role").notNull().default("user"), // 'admin', 'doctor', 'receptionist', 'user'
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastLogin: timestamp("last_login"),
+});
+
 export const patients = pgTable("patients", {
   id: serial("id").primaryKey(),
   clinicId: integer("clinic_id").references(() => clinics.id).notNull(),
@@ -86,6 +100,14 @@ export const clinicsRelations = relations(clinics, ({ many }) => ({
   doctors: many(doctors),
   visits: many(visits),
   queue: many(queue),
+  users: many(users),
+}));
+
+export const usersRelations = relations(users, ({ one }) => ({
+  clinic: one(clinics, {
+    fields: [users.clinicId],
+    references: [clinics.id],
+  }),
 }));
 
 export const patientsRelations = relations(patients, ({ one, many }) => ({
@@ -164,6 +186,12 @@ export const insertClinicSchema = createInsertSchema(clinics).pick({
   password: true,
 });
 
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  lastLogin: true,
+});
+
 export const insertPatientSchema = createInsertSchema(patients).omit({
   id: true,
   clinicId: true,
@@ -198,10 +226,15 @@ export const insertQueueSchema = createInsertSchema(queue).omit({
 export const visitTypeEnum = z.enum(['Consultation', 'Dental', 'Gynecology', 'Follow-up', 'Emergency']);
 export const visitStatusEnum = z.enum(['Scheduled', 'In-Progress', 'Completed', 'Cancelled']);
 export const queueStatusEnum = z.enum(['waiting', 'serving', 'completed', 'skipped', 'cancelled']);
+export const userRoleEnum = z.enum(['admin', 'doctor', 'receptionist', 'user']);
 
 // Types
 export type InsertClinic = z.infer<typeof insertClinicSchema>;
 export type Clinic = typeof clinics.$inferSelect;
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+export type UserWithClinic = User & { clinic: Clinic };
 
 export type InsertPatient = z.infer<typeof insertPatientSchema>;
 export type Patient = typeof patients.$inferSelect;
@@ -221,14 +254,4 @@ export type Queue = typeof queue.$inferSelect;
 export type VisitType = z.infer<typeof visitTypeEnum>;
 export type VisitStatus = z.infer<typeof visitStatusEnum>;
 export type QueueStatus = z.infer<typeof queueStatusEnum>;
-
-// Legacy user types for auth compatibility
-export const users = clinics;
-export const insertUserSchema = insertClinicSchema.extend({
-  username: z.string().min(1),
-}).omit({ name: true, email: true }).extend({
-  email: z.string().email(),
-});
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = Clinic;
+export type UserRole = z.infer<typeof userRoleEnum>;
