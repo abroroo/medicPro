@@ -14,36 +14,40 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { insertDoctorSchema, type Doctor, type InsertDoctor } from "@shared/schema";
+import { insertUserSchema, type User, type InsertUser } from "@shared/schema";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface DoctorFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  doctor?: Doctor | null;
+  doctor?: User | null;
 }
 
 export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalProps) {
   const { toast } = useToast();
   const isEditing = !!doctor;
 
-  const form = useForm<InsertDoctor>({
-    resolver: zodResolver(insertDoctorSchema),
+  const form = useForm<InsertUser>({
+    resolver: zodResolver(insertUserSchema),
     defaultValues: {
-      name: doctor?.name || "",
+      firstName: doctor?.firstName || "",
+      lastName: doctor?.lastName || "",
+      email: doctor?.email || "",
+      password: "",
+      role: doctor?.role || "doctor",
       specialization: doctor?.specialization || "",
       cabinetNumber: doctor?.cabinetNumber || "",
-      email: doctor?.email || "",
       phone: doctor?.phone || "",
     },
   });
 
   const createDoctorMutation = useMutation({
-    mutationFn: async (data: InsertDoctor) => {
-      const res = await apiRequest("POST", "/api/doctors", data);
+    mutationFn: async (data: InsertUser) => {
+      const res = await apiRequest("POST", "/api/users", data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
         title: "Success",
         description: "Doctor created successfully",
@@ -61,12 +65,12 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
   });
 
   const updateDoctorMutation = useMutation({
-    mutationFn: async (data: InsertDoctor) => {
-      const res = await apiRequest("PUT", `/api/doctors/${doctor!.id}`, data);
+    mutationFn: async (data: InsertUser) => {
+      const res = await apiRequest("PUT", `/api/users/${doctor!.id}`, data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
         title: "Success",
         description: "Doctor updated successfully",
@@ -83,7 +87,7 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
     },
   });
 
-  const handleSubmit = (data: InsertDoctor) => {
+  const handleSubmit = (data: InsertUser) => {
     if (isEditing) {
       updateDoctorMutation.mutate(data);
     } else {
@@ -95,18 +99,24 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
   useEffect(() => {
     if (doctor) {
       form.reset({
-        name: doctor.name,
-        specialization: doctor.specialization,
+        firstName: doctor.firstName,
+        lastName: doctor.lastName,
+        email: doctor.email,
+        password: "",
+        role: doctor.role,
+        specialization: doctor.specialization || "",
         cabinetNumber: doctor.cabinetNumber || "",
-        email: doctor.email || "",
         phone: doctor.phone || "",
       });
     } else {
       form.reset({
-        name: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        password: "",
+        role: "doctor",
         specialization: "",
         cabinetNumber: "",
-        email: "",
         phone: "",
       });
     }
@@ -123,15 +133,29 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
         
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="firstName">First Name *</Label>
             <Input
-              id="name"
-              {...form.register("name")}
-              data-testid="input-doctor-name"
+              id="firstName"
+              {...form.register("firstName")}
+              data-testid="input-doctor-first-name"
             />
-            {form.formState.errors.name && (
+            {form.formState.errors.firstName && (
               <p className="text-sm text-destructive">
-                {form.formState.errors.name.message}
+                {form.formState.errors.firstName.message}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lastName">Last Name *</Label>
+            <Input
+              id="lastName"
+              {...form.register("lastName")}
+              data-testid="input-doctor-last-name"
+            />
+            {form.formState.errors.lastName && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.lastName.message}
               </p>
             )}
           </div>
@@ -162,7 +186,7 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">Email *</Label>
             <Input
               id="email"
               type="email"
@@ -170,6 +194,50 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
               {...form.register("email")}
               data-testid="input-doctor-email"
             />
+            {form.formState.errors.email && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.email.message}
+              </p>
+            )}
+          </div>
+
+          {!isEditing && (
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter password"
+                {...form.register("password")}
+                data-testid="input-doctor-password"
+              />
+              {form.formState.errors.password && (
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="role">Role *</Label>
+            <Select
+              value={form.watch("role") || "doctor"}
+              onValueChange={(value) => form.setValue("role", value as "doctor" | "head_doctor")}
+            >
+              <SelectTrigger data-testid="select-doctor-role">
+                <SelectValue placeholder="Select role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="doctor">Doctor</SelectItem>
+                <SelectItem value="head_doctor">Head Doctor</SelectItem>
+              </SelectContent>
+            </Select>
+            {form.formState.errors.role && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.role.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

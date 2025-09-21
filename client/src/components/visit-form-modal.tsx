@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { insertVisitSchema, InsertVisit, Visit, Patient, Doctor } from "@shared/schema";
+import { insertVisitSchema, InsertVisit, Visit, Patient, User } from "@shared/schema";
 
 interface VisitFormModalProps {
   open: boolean;
@@ -75,9 +75,13 @@ export function VisitFormModal({
     enabled: open && !preSelectedPatientId, // Only fetch if no pre-selected patient
   });
 
-  // Fetch doctors for selection  
-  const { data: doctors = [] } = useQuery<Doctor[]>({
-    queryKey: ["/api/doctors"],
+  // Fetch doctors for selection
+  const { data: doctors = [] } = useQuery<User[]>({
+    queryKey: ["/api/users", { role: "doctor" }],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/users?role=doctor");
+      return res.json();
+    },
     enabled: open,
   });
 
@@ -195,7 +199,7 @@ export function VisitFormModal({
               <SelectContent>
                 {doctors.map((doctor) => (
                   <SelectItem key={doctor.id} value={doctor.id.toString()}>
-                    Dr. {doctor.name} - {doctor.specialization}
+                    Dr. {doctor.firstName} {doctor.lastName} - {doctor.specialization}
                   </SelectItem>
                 ))}
               </SelectContent>

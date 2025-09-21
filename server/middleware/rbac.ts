@@ -21,11 +21,13 @@ declare global {
 }
 
 // Role hierarchy - higher roles inherit permissions from lower roles
+// user < receptionist < doctor < head_doctor < admin
 const roleHierarchy: Record<UserRole, number> = {
   'user': 1,
   'receptionist': 2,
   'doctor': 3,
-  'admin': 4,
+  'head_doctor': 4,
+  'admin': 5,
 };
 
 // Check if user has required role or higher
@@ -98,4 +100,5 @@ export function requireAdminOrSelf(req: Request, res: Response, next: NextFuncti
 export const requireUser = requireAuth;
 export const requireReceptionist = [requireAuth, requireRole('receptionist')];
 export const requireDoctor = [requireAuth, requireRole('doctor')];
+export const requireHeadDoctor = [requireAuth, requireRole('head_doctor')];
 export const requireAdmin = [requireAuth, requireRole('admin')];

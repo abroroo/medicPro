@@ -22,7 +22,7 @@ import {
   Stethoscope,
   FileText
 } from "lucide-react";
-import { Patient, Doctor } from "@shared/schema";
+import { Patient, User } from "@shared/schema";
 
 interface ReportFilters {
   dateFrom: string;
@@ -84,8 +84,12 @@ export default function Reports() {
     queryKey: ["/api/reports/visits/stats"],
   });
 
-  const { data: doctors = [] } = useQuery<Doctor[]>({
-    queryKey: ["/api/doctors"],
+  const { data: doctors = [] } = useQuery<User[]>({
+    queryKey: ["/api/users", { role: "doctor" }],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/users?role=doctor");
+      return res.json();
+    },
   });
 
   const { data: patients = [] } = useQuery<Patient[]>({
@@ -630,7 +634,7 @@ export default function Reports() {
                               </div>
                               <div className="text-sm text-muted-foreground space-y-1">
                                 <p><span className="font-medium">Date:</span> {new Date(visit.visitDate).toLocaleDateString()}</p>
-                                <p><span className="font-medium">Doctor:</span> {visit.doctor.name} ({visit.doctor.specialization})</p>
+                                <p><span className="font-medium">Doctor:</span> {visit.doctor.firstName} {visit.doctor.lastName} ({visit.doctor.specialization})</p>
                                 <p><span className="font-medium">Type:</span> {visit.visitType}</p>
                                 <p><span className="font-medium">Phone:</span> {visit.patient.phone}</p>
                                 {visit.chiefComplaint && (
