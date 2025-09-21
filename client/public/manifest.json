@@ -1,6 +1,6 @@
 {
-  "name": "DentalQueue Pro",
-  "short_name": "DentalQueue",
+  "name": "MedicPro - Dental Clinic Management",
+  "short_name": "MedicPro",
   "description": "Complete dental clinic management system with patient database, queue management, and waiting room display",
   "start_url": "/",
   "display": "standalone",
