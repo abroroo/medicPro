@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/use-auth";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,19 +9,21 @@ import { Input } from "@/components/ui/input";
 import { DoctorFormModal } from "@/components/doctor-form-modal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Search, 
-  UserPlus, 
-  Edit, 
+import {
+  Search,
+  UserPlus,
+  Edit,
   Mail,
   Phone,
   Badge,
-  Stethoscope
+  Stethoscope,
+  Settings
 } from "lucide-react";
 import { User } from "@shared/schema";
 
 export default function Doctors() {
   const isMobile = useIsMobile();
+  const { isAdmin } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<User | null>(null);
@@ -88,15 +91,32 @@ export default function Doctors() {
             <h1 className="text-2xl font-bold text-foreground">Doctors</h1>
             <p className="text-muted-foreground">Manage your clinic's medical staff</p>
           </div>
-          <Button 
-            onClick={handleAddDoctor}
-            size={isMobile ? "sm" : "default"}
-            className="w-full sm:w-auto"
-            data-testid="button-add-doctor"
-          >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Add Doctor
-          </Button>
+          {isAdmin ? (
+            <Button
+              onClick={handleAddDoctor}
+              size={isMobile ? "sm" : "default"}
+              className="w-full sm:w-auto"
+              data-testid="button-add-doctor"
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Add Doctor
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size={isMobile ? "sm" : "default"}
+              className="w-full sm:w-auto"
+              onClick={() => toast({
+                title: "Admin Required",
+                description: "Contact your administrator to add new doctors",
+                variant: "destructive"
+              })}
+              data-testid="button-admin-required"
+            >
+              <Settings className="w-4 h-4 mr-2" />
+              Admin Required
+            </Button>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4">
@@ -142,14 +162,19 @@ export default function Doctors() {
                   : "Add your first doctor to get started with medical staff management."
                 }
               </p>
-              {!searchQuery && (
-                <Button 
+              {!searchQuery && isAdmin && (
+                <Button
                   onClick={handleAddDoctor}
                   data-testid="button-add-first-doctor"
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
                   Add First Doctor
                 </Button>
+              )}
+              {!searchQuery && !isAdmin && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Contact your administrator to add doctors.
+                </p>
               )}
             </CardContent>
           </Card>
@@ -197,25 +222,44 @@ export default function Doctors() {
                   </div>
                   
                   <div className="flex gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditDoctor(doctor)}
-                      className="flex-1"
-                      data-testid={`button-edit-doctor-${doctor.id}`}
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteDoctor(doctor.id)}
-                      className="flex-1 text-destructive hover:text-destructive"
-                      data-testid={`button-delete-doctor-${doctor.id}`}
-                    >
-                      Delete
-                    </Button>
+                    {isAdmin ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditDoctor(doctor)}
+                          className="flex-1"
+                          data-testid={`button-edit-doctor-${doctor.id}`}
+                        >
+                          <Edit className="w-4 h-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteDoctor(doctor.id)}
+                          className="flex-1 text-destructive hover:text-destructive"
+                          data-testid={`button-delete-doctor-${doctor.id}`}
+                        >
+                          Delete
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toast({
+                          title: "Admin Required",
+                          description: "Contact your administrator to modify doctor information",
+                          variant: "destructive"
+                        })}
+                        className="flex-1"
+                        data-testid={`button-admin-required-${doctor.id}`}
+                      >
+                        <Settings className="w-4 h-4 mr-1" />
+                        Admin Required
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
