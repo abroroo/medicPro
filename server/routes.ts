@@ -4,7 +4,7 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertPatientSchema, insertDoctorSchema, insertVisitSchema, insertClinicalNotesSchema, insertQueueSchema, insertUserSchema } from "@shared/schema";
 import { z } from "zod";
-import { requireAuth, requireReceptionist, requireDoctor, requireAdmin } from "./middleware/rbac";
+import { requireAuth, requireReceptionist, requireDoctor, requireAdmin, requireHeadDoctor } from "./middleware/rbac";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 
@@ -673,7 +673,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/users", requireAdmin, async (req, res) => {
+  app.post("/api/users", requireHeadDoctor, async (req, res) => {
     try {
       const {
         email,
@@ -727,7 +727,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.get("/api/users/:id", requireAdmin, async (req, res) => {
+  app.get("/api/users/:id", requireHeadDoctor, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const user = await storage.getUserWithClinic(id);

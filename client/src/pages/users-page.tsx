@@ -15,15 +15,15 @@ import { User, UserRole, Clinic } from "@shared/schema";
 import { Users, Plus, Shield, UserCheck, UserX, Building2 } from "lucide-react";
 
 export default function UsersPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isHeadDoctor } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [isCreateClinicModalOpen, setIsCreateClinicModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole | "">();
 
-  // Redirect if not admin
-  if (!isAdmin) {
+  // Redirect if not head doctor or admin
+  if (!isHeadDoctor) {
     return (
       <div className="container mx-auto p-6">
         <Card>
@@ -31,7 +31,7 @@ export default function UsersPage() {
             <Shield className="h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">Access Restricted</h2>
             <p className="text-muted-foreground text-center">
-              Only administrators can access user management.
+              Only head doctors and administrators can access user management.
             </p>
           </CardContent>
         </Card>

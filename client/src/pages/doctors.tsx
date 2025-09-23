@@ -23,7 +23,7 @@ import { User } from "@shared/schema";
 
 export default function Doctors() {
   const isMobile = useIsMobile();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isHeadDoctor } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<User | null>(null);
@@ -91,7 +91,7 @@ export default function Doctors() {
             <h1 className="text-2xl font-bold text-foreground">Doctors</h1>
             <p className="text-muted-foreground">Manage your clinic's medical staff</p>
           </div>
-          {isAdmin ? (
+          {isHeadDoctor ? (
             <Button
               onClick={handleAddDoctor}
               size={isMobile ? "sm" : "default"}
@@ -171,7 +171,7 @@ export default function Doctors() {
                   Add First Doctor
                 </Button>
               )}
-              {!searchQuery && !isAdmin && (
+              {!searchQuery && !isHeadDoctor && (
                 <p className="text-sm text-muted-foreground mt-2">
                   Contact your administrator to add doctors.
                 </p>
@@ -222,7 +222,7 @@ export default function Doctors() {
                   </div>
                   
                   <div className="flex gap-2 pt-2">
-                    {isAdmin ? (
+                    {isHeadDoctor ? (
                       <>
                         <Button
                           variant="outline"

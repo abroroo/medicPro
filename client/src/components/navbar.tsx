@@ -17,7 +17,7 @@ import {
 import { useState } from "react";
 
 export function Navbar() {
-  const { user, logoutMutation, isAdmin } = useAuth();
+  const { user, logoutMutation, isAdmin, isHeadDoctor } = useAuth();
   const [location, setLocation] = useLocation();
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
@@ -29,7 +29,7 @@ export function Navbar() {
     { path: "/queue", label: "Queue", icon: Clock },
     { path: "/display", label: "Display", icon: Monitor },
     { path: "/reports", label: "Reports", icon: FileText },
-    ...(isAdmin ? [{ path: "/users", label: "Users", icon: UserCog }] : []),
+    ...(isHeadDoctor ? [{ path: "/users", label: "Users", icon: UserCog }] : []),
   ];
 
   const handleLogout = () => {
