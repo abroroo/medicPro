@@ -30,7 +30,8 @@ const roleHierarchy: Record<UserRole, number> = {
   'user': 1,
   'receptionist': 2,
   'doctor': 3,
-  'admin': 4,
+  'head_doctor': 4,
+  'admin': 5,
 };
 
 // Check if user has required role or higher
