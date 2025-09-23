@@ -195,14 +195,17 @@ export default function Doctors() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="space-y-2 text-sm">
-                    {doctor.cabinetNumber && (
-                      <div className="flex items-center text-muted-foreground">
-                        <Badge className="w-4 h-4 mr-2" />
-                        <span data-testid={`text-doctor-cabinet-${doctor.id}`}>
-                          Cabinet: {doctor.cabinetNumber}
-                        </span>
-                      </div>
-                    )}
+                    {/* Role Badge */}
+                    <div className="flex items-center">
+                      <Badge
+                        variant={doctor.role === 'head_doctor' ? 'default' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {doctor.role === 'head_doctor' ? 'Head Doctor' : 'Doctor'}
+                      </Badge>
+                    </div>
+
+                    {/* Contact Information */}
                     {doctor.email && (
                       <div className="flex items-center text-muted-foreground">
                         <Mail className="w-4 h-4 mr-2" />
@@ -219,48 +222,57 @@ export default function Doctors() {
                         </span>
                       </div>
                     )}
+
+                    {/* Office Information */}
+                    {doctor.cabinetNumber && (
+                      <div className="flex items-center text-muted-foreground">
+                        <Badge className="w-4 h-4 mr-2" />
+                        <span data-testid={`text-doctor-cabinet-${doctor.id}`}>
+                          Cabinet: {doctor.cabinetNumber}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Account Status */}
+                    <div className="flex items-center text-muted-foreground">
+                      <div className={`w-2 h-2 rounded-full mr-2 ${doctor.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+                      <span className="text-xs">
+                        {doctor.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+
+                    {/* Join Date */}
+                    {doctor.createdAt && (
+                      <div className="text-xs text-muted-foreground">
+                        Joined: {new Date(doctor.createdAt).toLocaleDateString()}
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="flex gap-2 pt-2">
-                    {isHeadDoctor ? (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEditDoctor(doctor)}
-                          className="flex-1"
-                          data-testid={`button-edit-doctor-${doctor.id}`}
-                        >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteDoctor(doctor.id)}
-                          className="flex-1 text-destructive hover:text-destructive"
-                          data-testid={`button-delete-doctor-${doctor.id}`}
-                        >
-                          Delete
-                        </Button>
-                      </>
-                    ) : (
+
+                  {/* Management Buttons - Only for Head Doctors and Admins */}
+                  {isHeadDoctor && (
+                    <div className="flex gap-2 pt-2 border-t">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => toast({
-                          title: "Admin Required",
-                          description: "Contact your administrator to modify doctor information",
-                          variant: "destructive"
-                        })}
+                        onClick={() => handleEditDoctor(doctor)}
                         className="flex-1"
-                        data-testid={`button-admin-required-${doctor.id}`}
+                        data-testid={`button-edit-doctor-${doctor.id}`}
                       >
-                        <Settings className="w-4 h-4 mr-1" />
-                        Admin Required
+                        <Edit className="w-4 h-4 mr-1" />
+                        Edit
                       </Button>
-                    )}
-                  </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteDoctor(doctor.id)}
+                        className="flex-1 text-destructive hover:text-destructive"
+                        data-testid={`button-delete-doctor-${doctor.id}`}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
