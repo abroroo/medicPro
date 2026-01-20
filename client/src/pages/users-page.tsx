@@ -15,14 +15,15 @@ import { User, UserRole, Clinic } from "@shared/schema";
 import { Users, Plus, Shield, UserCheck, UserX, Building2 } from "lucide-react";
 
 export default function UsersPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isHeadDoctor } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [isCreateClinicModalOpen, setIsCreateClinicModalOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<UserRole | "">();
 
-  // Redirect if not admin
-  if (!isAdmin) {
+  // Redirect if not head doctor or admin
+  if (!isHeadDoctor) {
     return (
       <div className="container mx-auto p-6">
         <Card>
@@ -30,7 +31,7 @@ export default function UsersPage() {
             <Shield className="h-12 w-12 text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold mb-2">Access Restricted</h2>
             <p className="text-muted-foreground text-center">
-              Only administrators can access user management.
+              Only head doctors and administrators can access user management.
             </p>
           </CardContent>
         </Card>
@@ -52,13 +53,14 @@ export default function UsersPage() {
 
   // Create user mutation
   const createUserMutation = useMutation({
-    mutationFn: async (userData: { email: string; password: string; firstName: string; lastName: string; role: UserRole; clinicId: number }) => {
+    mutationFn: async (userData: { email: string; password: string; firstName: string; lastName: string; role: UserRole; clinicId: number; specialization?: string; cabinetNumber?: string; phone?: string }) => {
       const res = await apiRequest("POST", "/api/users", userData);
       return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       setIsCreateUserModalOpen(false);
+      setSelectedRole("");
       toast({
         title: "Success",
         description: "User created successfully",
@@ -101,14 +103,24 @@ export default function UsersPage() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
 
-    createUserMutation.mutate({
+    const userData: any = {
       email: formData.get("email") as string,
       password: formData.get("password") as string,
       firstName: formData.get("firstName") as string,
       lastName: formData.get("lastName") as string,
       role: formData.get("role") as UserRole,
       clinicId: parseInt(formData.get("clinicId") as string),
-    });
+    };
+
+    // Add doctor-specific fields if role is doctor or head_doctor
+    const role = formData.get("role") as UserRole;
+    if (role === 'doctor' || role === 'head_doctor') {
+      userData.specialization = formData.get("specialization") as string;
+      userData.cabinetNumber = formData.get("cabinetNumber") as string;
+      userData.phone = formData.get("phone") as string;
+    }
+
+    createUserMutation.mutate(userData);
   };
 
   const handleCreateClinic = (event: React.FormEvent<HTMLFormElement>) => {
@@ -126,6 +138,7 @@ export default function UsersPage() {
   const getRoleBadgeVariant = (role: UserRole) => {
     switch (role) {
       case 'admin': return 'destructive';
+      case 'head_doctor': return 'default';
       case 'doctor': return 'default';
       case 'receptionist': return 'secondary';
       case 'user': return 'outline';
@@ -241,7 +254,7 @@ export default function UsersPage() {
                 </div>
                 <div>
                   <Label htmlFor="role">Role</Label>
-                  <Select name="role" required>
+                  <Select name="role" required onValueChange={(value) => setSelectedRole(value as UserRole)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
@@ -249,9 +262,41 @@ export default function UsersPage() {
                       <SelectItem value="user">User</SelectItem>
                       <SelectItem value="receptionist">Receptionist</SelectItem>
                       <SelectItem value="doctor">Doctor</SelectItem>
+                      <SelectItem value="head_doctor">Head Doctor</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+                {/* Doctor-specific fields */}
+                {(selectedRole === 'doctor' || selectedRole === 'head_doctor') && (
+                  <>
+                    <div>
+                      <Label htmlFor="specialization">Specialization *</Label>
+                      <Input
+                        id="specialization"
+                        name="specialization"
+                        placeholder="e.g., General Dentistry, Orthodontics"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cabinetNumber">Cabinet Number</Label>
+                      <Input
+                        id="cabinetNumber"
+                        name="cabinetNumber"
+                        placeholder="Office/cabinet number"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        placeholder="Contact phone number"
+                      />
+                    </div>
+                  </>
+                )}
                 <Button
                   type="submit"
                   className="w-full"

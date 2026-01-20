@@ -1,6 +1,6 @@
 import { clinics, users, admins, patients, visits, clinicalNotes, queue, type Clinic, type InsertClinic, type User, type InsertUser, type UserWithClinic, type Admin, type Patient, type InsertPatient, type Visit, type InsertVisit, type ClinicalNotes, type InsertClinicalNotes, type Queue, type InsertQueue } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, ilike, or, max, gte, lt, isNull } from "drizzle-orm";
+import { eq, desc, and, ilike, or, max, gte, lt, isNull, count, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -25,6 +25,9 @@ export interface IStorage {
   createClinic(clinic: InsertClinic): Promise<Clinic>;
   createUserForClinic(user: InsertUser): Promise<User>;
   createDoctorUser(user: InsertUser): Promise<User>;
+  deleteUser(id: number, clinicId: number): Promise<boolean>;
+  hasUserVisitHistory(userId: number): Promise<boolean>;
+  deactivateUser(id: number, clinicId: number): Promise<boolean>;
 
   // Legacy auth methods (clinic-based, for backward compatibility)
   getUser(id: number): Promise<User | undefined>;
@@ -241,6 +244,29 @@ export class DatabaseStorage implements IStorage {
     return newUser;
   }
 
+  async hasUserVisitHistory(userId: number): Promise<boolean> {
+    const result = await db
+      .select({ count: count() })
+      .from(visits)
+      .where(eq(visits.doctorId, userId));
+    return (result[0]?.count || 0) > 0;
+  }
+
+  async deactivateUser(id: number, clinicId: number): Promise<boolean> {
+    const result = await db
+      .update(users)
+      .set({ isActive: false })
+      .where(and(eq(users.id, id), eq(users.clinicId, clinicId)));
+    return (result.rowCount || 0) > 0;
+  }
+
+  async deleteUser(id: number, clinicId: number): Promise<boolean> {
+    const result = await db
+      .delete(users)
+      .where(and(eq(users.id, id), eq(users.clinicId, clinicId)));
+    return (result.rowCount || 0) > 0;
+  }
+
   // Patient methods
   async getPatients(clinicId: number): Promise<(Patient & { lastVisitType?: string })[]> {
     // First get all patients
@@ -426,16 +452,61 @@ export class DatabaseStorage implements IStorage {
       }
     }
 
-    // CRITICAL: Enforce clinic ID invariant - always use the authenticated clinic ID
-    const secureQueueItem = {
-      ...queueItem,
-      clinicId: clinicId // Override any client-provided clinicId with authenticated clinic
-    };
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
-    const [newQueueItem] = await db
-      .insert(queue)
-      .values(secureQueueItem)
-      .returning();
+    // Use transaction for atomic operation
+    const [newQueueItem] = await db.transaction(async (tx) => {
+      // Check for duplicate (same patient + same doctor + same day)
+      // Build the where condition, handling null doctorId properly
+      const doctorCondition = queueItem.doctorId
+        ? eq(queue.doctorId, queueItem.doctorId)
+        : isNull(queue.doctorId);
+
+      const existingEntry = await tx
+        .select()
+        .from(queue)
+        .where(
+          and(
+            eq(queue.clinicId, clinicId),
+            eq(queue.patientId, queueItem.patientId),
+            doctorCondition,
+            gte(queue.createdAt, startOfDay),
+            lt(queue.createdAt, endOfDay),
+            or(eq(queue.status, 'waiting'), eq(queue.status, 'serving'))
+          )
+        )
+        .limit(1);
+
+      if (existingEntry.length > 0) {
+        throw new Error('Patient already has an active queue entry with this doctor for today');
+      }
+
+      // Get next queue number within transaction
+      const maxResult = await tx
+        .select({ maxNumber: max(queue.queueNumber) })
+        .from(queue)
+        .where(
+          and(
+            eq(queue.clinicId, clinicId),
+            gte(queue.createdAt, startOfDay),
+            lt(queue.createdAt, endOfDay)
+          )
+        );
+
+      const nextNumber = (maxResult[0]?.maxNumber || 0) + 1;
+
+      return await tx
+        .insert(queue)
+        .values({
+          ...queueItem,
+          clinicId: clinicId,
+          queueNumber: nextNumber
+        })
+        .returning();
+    });
+
     return newQueueItem;
   }
 

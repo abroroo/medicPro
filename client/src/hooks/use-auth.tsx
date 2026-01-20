@@ -17,6 +17,7 @@ type AuthContextType = {
   registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
   hasRole: (requiredRole: UserRole) => boolean;
   isAdmin: boolean;
+  isHeadDoctor: boolean;
   isDoctor: boolean;
   isReceptionist: boolean;
   isUser: boolean;
@@ -29,7 +30,8 @@ const roleHierarchy: Record<UserRole, number> = {
   'user': 1,
   'receptionist': 2,
   'doctor': 3,
-  'admin': 4,
+  'head_doctor': 4,
+  'admin': 5,
 };
 
 // Check if user has required role or higher
@@ -106,8 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const isAdmin = user?.role === 'admin';
-  const isDoctor = user?.role === 'doctor' || isAdmin;
-  const isReceptionist = user?.role === 'receptionist' || isDoctor || isAdmin;
+  const isHeadDoctor = user?.role === 'head_doctor' || isAdmin;
+  const isDoctor = user?.role === 'doctor' || isHeadDoctor;
+  const isReceptionist = user?.role === 'receptionist' || isDoctor;
   const isUser = !!user; // Any authenticated user
 
   return (
@@ -121,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         registerMutation,
         hasRole,
         isAdmin,
+        isHeadDoctor,
         isDoctor,
         isReceptionist,
         isUser,

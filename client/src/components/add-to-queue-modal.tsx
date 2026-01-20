@@ -35,7 +35,12 @@ const queueVisitSchema = z.object({
   patientId: z.number(),
   doctorId: z.number(),
   visitType: z.string().min(1, "Visit type is required"),
-  visitDate: z.string().min(1, "Visit date is required"),
+  visitDate: z.string().min(1, "Visit date is required").refine((date) => {
+    const visitDate = new Date(date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return visitDate >= today;
+  }, "Visit date cannot be in the past"),
   chiefComplaint: z.string().optional(),
 });
 
