@@ -126,7 +126,7 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm w-[calc(100vw-2rem)] mx-4 max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl w-[calc(100vw-2rem)] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? t('doctors:form.editTitle') : t('doctors:form.addTitle')}

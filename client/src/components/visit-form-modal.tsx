@@ -147,7 +147,7 @@ export function VisitFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-xl w-[calc(100vw-2rem)] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle data-testid="visit-form-title">
             {visit ? t('visits:form.editTitle') : t('visits:form.scheduleTitle')}
