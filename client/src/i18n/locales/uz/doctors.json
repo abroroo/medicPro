@@ -1,0 +1,44 @@
+{
+  "title": "Shifokorlar",
+  "subtitle": "Klinika tibbiy xodimlarini boshqaring",
+  "searchPlaceholder": "Shifokorlarni ism, mutaxassislik yoki litsenziya bo'yicha qidiring...",
+  "adminRequired": "Administrator kerak",
+  "adminRequiredDesc": "Shifokor qo'shish uchun administrator bilan bog'laning",
+  "empty": {
+    "noDoctors": "Shifokorlar hali qo'shilmagan",
+    "noDoctorsDesc": "Tibbiy xodimlarni boshqarishni boshlash uchun birinchi shifokorni qo'shing.",
+    "noResults": "Shifokorlar topilmadi",
+    "noResultsDesc": "\"{{query}}\" so'rovi bo'yicha shifokorlar topilmadi. Boshqa so'rov sinab ko'ring.",
+    "contactAdmin": "Shifokor qo'shish uchun administrator bilan bog'laning.",
+    "addFirstDoctor": "Birinchi shifokorni qo'shish"
+  },
+  "card": {
+    "cabinet": "Kabinet: {{number}}",
+    "joined": "Qo'shilgan: {{date}}",
+    "active": "Faol",
+    "inactive": "Nofaol"
+  },
+  "form": {
+    "addTitle": "Yangi shifokor qo'shish",
+    "editTitle": "Shifokorni tahrirlash",
+    "firstName": "Ism",
+    "lastName": "Familiya",
+    "email": "Elektron pochta",
+    "emailPlaceholder": "doctor@example.com",
+    "password": "Parol",
+    "passwordPlaceholder": "Parolni kiriting",
+    "specialization": "Mutaxassislik",
+    "specializationPlaceholder": "masalan, Terapevt, Ortodont, Jarroh",
+    "cabinetNumber": "Kabinet raqami",
+    "cabinetNumberPlaceholder": "Kabinet/ofis raqami",
+    "phone": "Telefon",
+    "phonePlaceholder": "Aloqa telefon raqami",
+    "role": "Rol",
+    "selectRole": "Rolni tanlang"
+  },
+  "toast": {
+    "created": "Shifokor muvaffaqiyatli yaratildi",
+    "updated": "Shifokor muvaffaqiyatli yangilandi",
+    "deleted": "Shifokor muvaffaqiyatli o'chirildi"
+  }
+}

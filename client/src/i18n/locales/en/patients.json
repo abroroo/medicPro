@@ -1,0 +1,62 @@
+{
+  "title": "Patient Management",
+  "subtitle": "Manage your clinic's patient database",
+  "searchPlaceholder": "Search patients by name or phone...",
+  "patientCount": "Patients ({{count}})",
+  "table": {
+    "name": "Name",
+    "phone": "Phone",
+    "age": "Age",
+    "lastVisit": "Last Visit",
+    "actions": "Actions"
+  },
+  "empty": {
+    "noPatients": "No patients registered yet.",
+    "noResults": "No patients found matching your search."
+  },
+  "loading": "Loading patients...",
+  "form": {
+    "addTitle": "Add New Patient",
+    "editTitle": "Edit Patient",
+    "name": "Name",
+    "namePlaceholder": "Patient full name",
+    "phone": "Phone",
+    "phonePlaceholder": "Phone number",
+    "age": "Age",
+    "agePlaceholder": "Age in years",
+    "address": "Address",
+    "addressPlaceholder": "Full address",
+    "dateOfBirth": "Date of Birth",
+    "bloodType": "Blood Type",
+    "bloodTypePlaceholder": "e.g., A+, B-, O+, AB-",
+    "allergies": "Allergies",
+    "allergiesPlaceholder": "List any allergies to medications, foods, or environmental factors",
+    "chronicConditions": "Chronic Conditions",
+    "chronicConditionsPlaceholder": "List any chronic medical conditions (diabetes, hypertension, etc.)",
+    "notes": "Notes",
+    "notesPlaceholder": "Additional notes"
+  },
+  "detail": {
+    "title": "Medical Record",
+    "backToPatients": "Back to Patients",
+    "editPatient": "Edit Patient",
+    "patientInfo": "Patient Information",
+    "medicalInfo": "Medical Information",
+    "medicalTimeline": "Medical Timeline",
+    "yearsOld": "{{age}} years old",
+    "noVisits": "No visits recorded",
+    "noVisitsDesc": "This patient hasn't had any visits yet.",
+    "scheduleFirstVisit": "Schedule First Visit",
+    "loadingDetails": "Loading patient details...",
+    "loadingHistory": "Loading medical history...",
+    "errorLoading": "Error loading patient",
+    "patientNotFound": "Patient not found",
+    "noDataReceived": "No patient data received from API"
+  },
+  "toast": {
+    "created": "Patient created successfully",
+    "updated": "Patient updated successfully",
+    "deleted": "Patient deleted successfully"
+  },
+  "never": "Never"
+}

@@ -1,0 +1,44 @@
+{
+  "title": "Врачи",
+  "subtitle": "Управление медицинским персоналом клиники",
+  "searchPlaceholder": "Поиск врачей по имени, специальности или лицензии...",
+  "adminRequired": "Требуется администратор",
+  "adminRequiredDesc": "Свяжитесь с администратором для добавления врачей",
+  "empty": {
+    "noDoctors": "Врачи ещё не добавлены",
+    "noDoctorsDesc": "Добавьте первого врача для начала управления медицинским персоналом.",
+    "noResults": "Врачи не найдены",
+    "noResultsDesc": "Врачи по запросу \"{{query}}\" не найдены. Попробуйте другой запрос.",
+    "contactAdmin": "Свяжитесь с администратором для добавления врачей.",
+    "addFirstDoctor": "Добавить первого врача"
+  },
+  "card": {
+    "cabinet": "Кабинет: {{number}}",
+    "joined": "Добавлен: {{date}}",
+    "active": "Активен",
+    "inactive": "Неактивен"
+  },
+  "form": {
+    "addTitle": "Добавить врача",
+    "editTitle": "Редактировать врача",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "email": "Эл. почта",
+    "emailPlaceholder": "doctor@example.com",
+    "password": "Пароль",
+    "passwordPlaceholder": "Введите пароль",
+    "specialization": "Специализация",
+    "specializationPlaceholder": "напр., Терапевт, Ортодонт, Хирург",
+    "cabinetNumber": "Номер кабинета",
+    "cabinetNumberPlaceholder": "Номер кабинета/офиса",
+    "phone": "Телефон",
+    "phonePlaceholder": "Контактный номер телефона",
+    "role": "Роль",
+    "selectRole": "Выберите роль"
+  },
+  "toast": {
+    "created": "Врач успешно создан",
+    "updated": "Врач успешно обновлён",
+    "deleted": "Врач успешно удалён"
+  }
+}

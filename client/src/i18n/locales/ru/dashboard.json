@@ -1,0 +1,37 @@
+{
+  "title": "Панель управления",
+  "welcome": "С возвращением{{name}}! Вот что происходит в вашей клинике.",
+  "stats": {
+    "todaysPatients": "Пациентов сегодня",
+    "inQueue": "В очереди",
+    "completedToday": "Завершено сегодня",
+    "totalPatients": "Всего пациентов"
+  },
+  "charts": {
+    "visitTrends": "Динамика визитов",
+    "visitStatus": "Распределение по статусам",
+    "doctorPerformance": "Показатели врачей",
+    "visitTypes": "Распределение по типам визитов"
+  },
+  "quickActions": {
+    "title": "Быстрые действия",
+    "addNewPatient": "Добавить пациента",
+    "addNewPatientDesc": "Зарегистрировать нового пациента в системе",
+    "addToQueue": "В очередь",
+    "addToQueueDesc": "Добавить пациента в очередь на сегодня",
+    "waitingRoomDisplay": "Дисплей зала ожидания",
+    "waitingRoomDisplayDesc": "Показать статус очереди на экране в зале ожидания"
+  },
+  "recentActivity": {
+    "title": "Последняя активность",
+    "noActivity": "Нет активности",
+    "activityAppears": "Активность появится здесь, когда пациенты будут добавлены в очередь",
+    "currentlyServing": "Обслуживается",
+    "waiting": "Ожидает"
+  },
+  "timeRange": {
+    "days7": "7 дней",
+    "days30": "30 дней",
+    "days90": "90 дней"
+  }
+}

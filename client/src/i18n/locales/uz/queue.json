@@ -1,0 +1,47 @@
+{
+  "title": "Navbatni boshqarish",
+  "subtitle": "Bugungi navbatni boshqaring",
+  "display": {
+    "waitMessage": "Iltimos, raqamingiz chaqirilishini kuting",
+    "nowServing": "HOZIR XIZMAT KO'RSATILMOQDA",
+    "thankYouWaiting": "Kutganingiz uchun rahmat",
+    "nextInLine": "KEYINGILAR",
+    "thankYouPatience": "Sabringiz uchun rahmat",
+    "updatesEvery": "Har 10 soniyada yangilanadi"
+  },
+  "currentlyServing": "Hozir xizmat ko'rsatilmoqda",
+  "nextInLine": "Keyingisi",
+  "inQueue": "Navbatda",
+  "noOneServing": "Hech kim xizmat olmayapti",
+  "noOneWaiting": "Kutayotgan yo'q",
+  "patientsWaiting": "Bemorlar kutmoqda",
+  "todaysQueue": "Bugungi navbat",
+  "activeQueue": "Faol navbat",
+  "completedToday": "Bugun bajarilgan",
+  "empty": {
+    "noPatients": "Bugun navbatda bemor yo'q."
+  },
+  "loading": "Navbat yuklanmoqda...",
+  "addedAt": "{{time}} da qo'shildi",
+  "toast": {
+    "calledNext": "Keyingi bemor chaqirildi",
+    "calledNextDesc": "Bemor #{{number}} - {{name}}",
+    "completed": "Bemor yakunlandi",
+    "completedDesc": "Bemorga xizmat ko'rsatish yakunlangan deb belgilandi",
+    "skipped": "Bemor o'tkazib yuborildi",
+    "skippedDesc": "Bemor o'tkazib yuborildi, tashrif kelmagan deb belgilandi",
+    "cancelled": "Bemor bekor qilindi",
+    "cancelledDesc": "Bemor bekor qilindi, tashrif kelmagan deb belgilandi",
+    "addedToQueue": "Tashrif rejalashtirildi va bemor navbatga qo'shildi"
+  },
+  "addModal": {
+    "title": "Bemorni navbatga qo'shish",
+    "searchExisting": "Mavjud bemorni qidirish",
+    "searchPlaceholder": "Ism yoki telefon bo'yicha qidirish...",
+    "selectedPatient": "Tanlandi - tashrif ma'lumotlarini to'ldiring",
+    "searchHelp": "Navbatga qo'shish uchun mavjud bemorni qidiring",
+    "noPatients": "Bemorlar topilmadi",
+    "tryDifferent": "Boshqa so'rov sinab ko'ring",
+    "scheduleAndQueue": "Tashrif rejalashtirish va navbatga qo'shish"
+  }
+}

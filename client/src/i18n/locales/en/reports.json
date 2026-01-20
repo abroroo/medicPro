@@ -1,0 +1,55 @@
+{
+  "title": "Reports",
+  "subtitle": "View and export patient and visit data",
+  "tabs": {
+    "patients": "Patient Reports",
+    "visits": "Visit History"
+  },
+  "stats": {
+    "total": "Total",
+    "thisMonth": "This Month",
+    "thisWeek": "This Week",
+    "today": "Today"
+  },
+  "datePresets": {
+    "today": "Today",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "last30Days": "Last 30 Days",
+    "last90Days": "Last 90 Days",
+    "allTime": "All Time"
+  },
+  "filters": {
+    "searchPatient": "Search patient name...",
+    "allDoctors": "All doctors",
+    "allTypes": "All types",
+    "allStatuses": "All statuses"
+  },
+  "patientReport": {
+    "title": "Patient Report",
+    "count": "{{count}} patient",
+    "count_plural": "{{count}} patients",
+    "columns": {
+      "name": "Name",
+      "phone": "Phone",
+      "age": "Age",
+      "address": "Address",
+      "lastVisit": "Last Visit"
+    },
+    "empty": "No patients found matching the current filters."
+  },
+  "visitHistory": {
+    "title": "Visit History",
+    "count": "{{count}} visit",
+    "count_plural": "{{count}} visits",
+    "columns": {
+      "date": "Date",
+      "patient": "Patient",
+      "doctor": "Doctor",
+      "type": "Type",
+      "status": "Status",
+      "chiefComplaint": "Chief Complaint"
+    },
+    "empty": "No visits found matching the current filters."
+  }
+}

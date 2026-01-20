@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "dashboard": "Boshqaruv paneli",
+    "patients": "Bemorlar",
+    "doctors": "Shifokorlar",
+    "queue": "Navbat",
+    "display": "Displey",
+    "reports": "Hisobotlar",
+    "users": "Foydalanuvchilar"
+  },
+  "buttons": {
+    "addPatient": "Bemor qo'shish",
+    "addDoctor": "Shifokor qo'shish",
+    "addUser": "Foydalanuvchi qo'shish",
+    "addClinic": "Klinika qo'shish",
+    "addToQueue": "Navbatga qo'shish",
+    "edit": "Tahrirlash",
+    "delete": "O'chirish",
+    "save": "Saqlash",
+    "cancel": "Bekor qilish",
+    "submit": "Yuborish",
+    "search": "Qidirish",
+    "export": "Eksport",
+    "print": "Chop etish",
+    "exportCSV": "CSV eksport",
+    "back": "Orqaga",
+    "logout": "Chiqish",
+    "newVisit": "Yangi tashrif",
+    "scheduleVisit": "Tashrif rejalashtirish",
+    "callNext": "Keyingisini chaqirish",
+    "complete": "Yakunlash",
+    "skip": "O'tkazib yuborish",
+    "update": "Yangilash",
+    "create": "Yaratish",
+    "close": "Yopish"
+  },
+  "status": {
+    "waiting": "Kutmoqda",
+    "serving": "Xizmat ko'rsatilmoqda",
+    "completed": "Bajarildi",
+    "cancelled": "Bekor qilindi",
+    "skipped": "O'tkazib yuborildi",
+    "scheduled": "Rejalashtirilgan",
+    "inProgress": "Jarayonda",
+    "active": "Faol",
+    "inactive": "Nofaol"
+  },
+  "visitTypes": {
+    "consultation": "Konsultatsiya",
+    "dental": "Stomatologiya",
+    "gynecology": "Ginekologiya",
+    "followUp": "Qayta qabul",
+    "emergency": "Shoshilinch"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "headDoctor": "Bosh shifokor",
+    "doctor": "Shifokor",
+    "receptionist": "Registrator",
+    "user": "Foydalanuvchi"
+  },
+  "messages": {
+    "success": "Muvaffaqiyatli",
+    "error": "Xatolik",
+    "loading": "Yuklanmoqda...",
+    "saving": "Saqlanmoqda...",
+    "noData": "Ma'lumot yo'q",
+    "confirmDelete": "Bu elementni o'chirishni xohlaysizmi?",
+    "actionCannotBeUndone": "Bu amalni ortga qaytarib bo'lmaydi."
+  },
+  "fields": {
+    "name": "Ism",
+    "phone": "Telefon",
+    "email": "Elektron pochta",
+    "age": "Yosh",
+    "address": "Manzil",
+    "date": "Sana",
+    "time": "Vaqt",
+    "status": "Holat",
+    "type": "Tur",
+    "notes": "Izohlar",
+    "password": "Parol"
+  },
+  "time": {
+    "today": "Bugun",
+    "thisWeek": "Bu hafta",
+    "thisMonth": "Bu oy",
+    "total": "Jami"
+  },
+  "appName": "MedicPro"
+}

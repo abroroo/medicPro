@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ type LoginData = z.infer<typeof loginSchema>;
 export default function AuthPage() {
   const { user, loginMutation } = useAuth();
   const [, setLocation] = useLocation();
+  const { t } = useTranslation(['auth', 'common']);
 
   useEffect(() => {
     if (user) {
@@ -52,11 +54,10 @@ export default function AuthPage() {
                 <h1 className="text-3xl font-bold text-foreground">MedicPro</h1>
               </div>
               <h2 className="text-4xl font-bold text-foreground leading-tight">
-                Professional Medical Practice Management
+                {t('auth:hero.tagline')}
               </h2>
               <p className="text-xl text-muted-foreground">
-                Streamline patient management, queue operations, and waiting room experience
-                with our comprehensive medical clinic management system.
+                {t('auth:hero.description')}
               </p>
             </div>
 
@@ -66,9 +67,9 @@ export default function AuthPage() {
                   <Users className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Patient Management</h3>
+                  <h3 className="font-semibold text-foreground">{t('auth:features.patientManagement.title')}</h3>
                   <p className="text-muted-foreground">
-                    Complete patient database with search, edit, and detailed patient records.
+                    {t('auth:features.patientManagement.description')}
                   </p>
                 </div>
               </div>
@@ -78,9 +79,9 @@ export default function AuthPage() {
                   <Clock className="w-5 h-5 text-secondary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Digital Queue System</h3>
+                  <h3 className="font-semibold text-foreground">{t('auth:features.digitalQueue.title')}</h3>
                   <p className="text-muted-foreground">
-                    Manage patient queues efficiently with real-time updates and waiting room displays.
+                    {t('auth:features.digitalQueue.description')}
                   </p>
                 </div>
               </div>
@@ -90,9 +91,9 @@ export default function AuthPage() {
                   <Shield className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Secure & Reliable</h3>
+                  <h3 className="font-semibold text-foreground">{t('auth:features.secure.title')}</h3>
                   <p className="text-muted-foreground">
-                    HIPAA compliant with role-based access control and secure data handling.
+                    {t('auth:features.secure.description')}
                   </p>
                 </div>
               </div>
@@ -103,17 +104,17 @@ export default function AuthPage() {
           <Card className="w-full max-w-md mx-auto shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl font-bold text-center">
-                Sign In to Your Clinic
+                {t('auth:login.title')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="login-email">{t('auth:login.email')}</Label>
                   <Input
                     id="login-email"
                     type="email"
-                    placeholder="clinic@example.com"
+                    placeholder={t('auth:login.emailPlaceholder')}
                     {...loginForm.register("email")}
                     data-testid="input-login-email"
                   />
@@ -125,11 +126,11 @@ export default function AuthPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <Label htmlFor="login-password">{t('auth:login.password')}</Label>
                   <Input
                     id="login-password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder={t('auth:login.passwordPlaceholder')}
                     {...loginForm.register("password")}
                     data-testid="input-login-password"
                   />
@@ -146,7 +147,7 @@ export default function AuthPage() {
                   disabled={loginMutation.isPending}
                   data-testid="button-login"
                 >
-                  {loginMutation.isPending ? "Signing In..." : "Sign In"}
+                  {loginMutation.isPending ? t('auth:login.submitting') : t('auth:login.submit')}
                 </Button>
               </form>
             </CardContent>

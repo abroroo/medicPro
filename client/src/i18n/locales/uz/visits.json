@@ -1,0 +1,44 @@
+{
+  "form": {
+    "scheduleTitle": "Yangi tashrif rejalashtirish",
+    "editTitle": "Tashrifni tahrirlash",
+    "patient": "Bemor",
+    "selectPatient": "Bemorni tanlang",
+    "doctor": "Shifokor",
+    "selectDoctor": "Shifokorni tanlang",
+    "visitDate": "Tashrif sanasi",
+    "visitType": "Tashrif turi",
+    "selectVisitType": "Tashrif turini tanlang",
+    "status": "Holat",
+    "statusManaged": "{{status}} (avtomatik boshqariladi)",
+    "statusHint": "Tashrif holati navbat harakatlari asosida avtomatik yangilanadi",
+    "chiefComplaint": "Asosiy shikoyat",
+    "chiefComplaintPlaceholder": "Tashrifning asosiy sababini tasvirlang...",
+    "reasonPlaceholder": "Tashrif sababi..."
+  },
+  "types": {
+    "consultation": "Konsultatsiya",
+    "dental": "Stomatologiya",
+    "gynecology": "Ginekologiya",
+    "followUp": "Qayta qabul",
+    "emergency": "Shoshilinch"
+  },
+  "statuses": {
+    "scheduled": "Rejalashtirilgan",
+    "inProgress": "Jarayonda",
+    "completed": "Bajarildi",
+    "cancelled": "Bekor qilindi"
+  },
+  "toast": {
+    "scheduled": "Tashrif rejalashtirildi va navbatga qo'shildi",
+    "updated": "Tashrif muvaffaqiyatli yangilandi",
+    "error": "Tashrifni rejalashtirishda xatolik"
+  },
+  "clinicalNotes": {
+    "diagnosis": "Tashxis",
+    "symptoms": "Simptomlar",
+    "treatment": "Davolash",
+    "medications": "Dorilar",
+    "followUp": "Qayta qabul"
+  }
+}

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, type ChartConfig } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PieChartIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface VisitStatusChartProps {
   data: { status: string; count: number }[];
@@ -19,6 +20,8 @@ const statusColors: Record<string, string> = {
 };
 
 export function VisitStatusChart({ data, isLoading = false }: VisitStatusChartProps) {
+  const { t } = useTranslation(['dashboard', 'common']);
+
   if (isLoading) {
     return (
       <Card>
@@ -56,9 +59,9 @@ export function VisitStatusChart({ data, isLoading = false }: VisitStatusChartPr
       <CardHeader className="items-center pb-0">
         <div className="flex items-center gap-2">
           <PieChartIcon className="h-5 w-5 text-muted-foreground" />
-          <CardTitle className="text-lg">Visit Status</CardTitle>
+          <CardTitle className="text-lg">{t('dashboard:charts.visitStatus')}</CardTitle>
         </div>
-        <CardDescription>Distribution by status</CardDescription>
+        <CardDescription>{t('common:fields.status')}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -102,7 +105,7 @@ export function VisitStatusChart({ data, isLoading = false }: VisitStatusChartPr
                           y={(viewBox.cy || 0) + 24}
                           className="fill-muted-foreground text-sm"
                         >
-                          Total
+                          {t('common:time.total')}
                         </tspan>
                       </text>
                     );

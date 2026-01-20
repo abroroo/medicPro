@@ -1,0 +1,55 @@
+{
+  "title": "Отчёты",
+  "subtitle": "Просмотр и экспорт данных о пациентах и визитах",
+  "tabs": {
+    "patients": "Отчёты по пациентам",
+    "visits": "История визитов"
+  },
+  "stats": {
+    "total": "Всего",
+    "thisMonth": "В этом месяце",
+    "thisWeek": "На этой неделе",
+    "today": "Сегодня"
+  },
+  "datePresets": {
+    "today": "Сегодня",
+    "thisWeek": "Эта неделя",
+    "thisMonth": "Этот месяц",
+    "last30Days": "Последние 30 дней",
+    "last90Days": "Последние 90 дней",
+    "allTime": "За всё время"
+  },
+  "filters": {
+    "searchPatient": "Поиск по имени пациента...",
+    "allDoctors": "Все врачи",
+    "allTypes": "Все типы",
+    "allStatuses": "Все статусы"
+  },
+  "patientReport": {
+    "title": "Отчёт по пациентам",
+    "count": "{{count}} пациент",
+    "count_plural": "{{count}} пациентов",
+    "columns": {
+      "name": "Имя",
+      "phone": "Телефон",
+      "age": "Возраст",
+      "address": "Адрес",
+      "lastVisit": "Последний визит"
+    },
+    "empty": "Пациенты по текущим фильтрам не найдены."
+  },
+  "visitHistory": {
+    "title": "История визитов",
+    "count": "{{count}} визит",
+    "count_plural": "{{count}} визитов",
+    "columns": {
+      "date": "Дата",
+      "patient": "Пациент",
+      "doctor": "Врач",
+      "type": "Тип",
+      "status": "Статус",
+      "chiefComplaint": "Жалоба"
+    },
+    "empty": "Визиты по текущим фильтрам не найдены."
+  }
+}

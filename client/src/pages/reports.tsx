@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "@/lib/queryClient";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Navbar } from "@/components/navbar";
@@ -73,6 +74,7 @@ interface VisitStats {
 }
 
 export default function Reports() {
+  const { t } = useTranslation(['reports', 'common']);
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("patients");
   const [datePreset, setDatePreset] = useState("all");
@@ -186,7 +188,7 @@ export default function Reports() {
   const patientColumns = useMemo(() => [
     {
       key: "name",
-      label: "Name",
+      label: t('reports:patientReport.columns.name'),
       sortable: true,
       render: (value: unknown) => (
         <span className="font-medium">{String(value)}</span>
@@ -194,42 +196,42 @@ export default function Reports() {
     },
     {
       key: "phone",
-      label: "Phone",
+      label: t('reports:patientReport.columns.phone'),
       sortable: false,
     },
     {
       key: "age",
-      label: "Age",
+      label: t('reports:patientReport.columns.age'),
       sortable: true,
       render: (value: unknown) => value ? String(value) : "N/A",
     },
     {
       key: "address",
-      label: "Address",
+      label: t('reports:patientReport.columns.address'),
       sortable: false,
       className: "max-w-[200px] truncate",
       render: (value: unknown) => value ? String(value) : "N/A",
     },
     {
       key: "lastVisit",
-      label: "Last Visit",
+      label: t('reports:patientReport.columns.lastVisit'),
       sortable: true,
       render: (value: unknown) =>
         value ? new Date(value as string).toLocaleDateString() : "Never",
     },
-  ], []);
+  ], [t]);
 
   // Visit table columns
   const visitColumns = useMemo(() => [
     {
       key: "visitDate",
-      label: "Date",
+      label: t('reports:visitHistory.columns.date'),
       sortable: true,
       render: (value: unknown) => new Date(value as string).toLocaleDateString(),
     },
     {
       key: "patient.name",
-      label: "Patient",
+      label: t('reports:visitHistory.columns.patient'),
       sortable: true,
       render: (_: unknown, row: VisitWithRelations) => (
         <div>
@@ -240,7 +242,7 @@ export default function Reports() {
     },
     {
       key: "doctor.firstName",
-      label: "Doctor",
+      label: t('reports:visitHistory.columns.doctor'),
       sortable: true,
       render: (_: unknown, row: VisitWithRelations) => (
         <div>
@@ -251,12 +253,12 @@ export default function Reports() {
     },
     {
       key: "visitType",
-      label: "Type",
+      label: t('reports:visitHistory.columns.type'),
       sortable: true,
     },
     {
       key: "status",
-      label: "Status",
+      label: t('reports:visitHistory.columns.status'),
       sortable: true,
       render: (value: unknown) => (
         <Badge variant={getStatusBadgeVariant(value as string)}>
@@ -266,12 +268,12 @@ export default function Reports() {
     },
     {
       key: "chiefComplaint",
-      label: "Chief Complaint",
+      label: t('reports:visitHistory.columns.chiefComplaint'),
       sortable: false,
       className: "max-w-[200px] truncate",
       render: (value: unknown) => value ? String(value) : "N/A",
     },
-  ], []);
+  ], [t]);
 
   const currentStats = activeTab === "patients" ? patientStats : visitStats;
   const statsLoading = activeTab === "patients" ? patientStatsLoading : visitStatsLoading;
@@ -284,8 +286,8 @@ export default function Reports() {
         {/* Header */}
         <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-center'} mb-6 no-print`}>
           <div>
-            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>Reports</h2>
-            <p className="text-muted-foreground mt-1">View and export patient and visit data</p>
+            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>{t('reports:title')}</h2>
+            <p className="text-muted-foreground mt-1">{t('reports:subtitle')}</p>
           </div>
           <div className={`${isMobile ? 'flex gap-2' : 'flex space-x-3'}`}>
             <Button
@@ -294,7 +296,7 @@ export default function Reports() {
               data-testid="button-export-csv"
             >
               <Download className="w-4 h-4 mr-2" />
-              Export CSV
+              {t('common:buttons.exportCSV')}
             </Button>
             <Button
               onClick={handlePrint}
@@ -303,7 +305,7 @@ export default function Reports() {
               data-testid="button-print-report"
             >
               <Printer className="w-4 h-4 mr-2" />
-              Print
+              {t('common:buttons.print')}
             </Button>
           </div>
         </div>
@@ -318,7 +320,7 @@ export default function Reports() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{currentStats?.total || 0}</p>
-                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="text-xs text-muted-foreground">{t('reports:stats.total')}</p>
                 </div>
               </div>
             </CardContent>
@@ -331,7 +333,7 @@ export default function Reports() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{currentStats?.thisMonth || 0}</p>
-                  <p className="text-xs text-muted-foreground">This Month</p>
+                  <p className="text-xs text-muted-foreground">{t('reports:stats.thisMonth')}</p>
                 </div>
               </div>
             </CardContent>
@@ -344,7 +346,7 @@ export default function Reports() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{currentStats?.thisWeek || 0}</p>
-                  <p className="text-xs text-muted-foreground">This Week</p>
+                  <p className="text-xs text-muted-foreground">{t('reports:stats.thisWeek')}</p>
                 </div>
               </div>
             </CardContent>
@@ -357,7 +359,7 @@ export default function Reports() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{currentStats?.today || 0}</p>
-                  <p className="text-xs text-muted-foreground">Today</p>
+                  <p className="text-xs text-muted-foreground">{t('reports:stats.today')}</p>
                 </div>
               </div>
             </CardContent>
@@ -378,11 +380,11 @@ export default function Reports() {
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="patients" className="flex items-center gap-2" data-testid="tab-patient-reports">
                 <Users className="w-4 h-4" />
-                Patient Reports
+                {t('reports:tabs.patients')}
               </TabsTrigger>
               <TabsTrigger value="visits" className="flex items-center gap-2" data-testid="tab-visit-history">
                 <Stethoscope className="w-4 h-4" />
-                Visit History
+                {t('reports:tabs.visits')}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -396,7 +398,7 @@ export default function Reports() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="Search patient name..."
+                      placeholder={t('reports:filters.searchPatient')}
                       value={patientSearch}
                       onChange={(e) => setPatientSearch(e.target.value)}
                       className="pl-9"
@@ -413,10 +415,10 @@ export default function Reports() {
                       onValueChange={(value) => handleVisitFilterChange('doctorId', value)}
                     >
                       <SelectTrigger className="w-full md:w-[180px]" data-testid="select-filter-doctor">
-                        <SelectValue placeholder="All doctors" />
+                        <SelectValue placeholder={t('reports:filters.allDoctors')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All doctors</SelectItem>
+                        <SelectItem value="all">{t('reports:filters.allDoctors')}</SelectItem>
                         {doctors.map((doctor) => (
                           <SelectItem key={doctor.id} value={doctor.id.toString()}>
                             {doctor.firstName} {doctor.lastName}
@@ -430,15 +432,15 @@ export default function Reports() {
                       onValueChange={(value) => handleVisitFilterChange('visitType', value)}
                     >
                       <SelectTrigger className="w-full md:w-[150px]" data-testid="select-filter-visit-type">
-                        <SelectValue placeholder="Visit type" />
+                        <SelectValue placeholder={t('reports:filters.allTypes')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All types</SelectItem>
-                        <SelectItem value="Consultation">Consultation</SelectItem>
-                        <SelectItem value="Dental">Dental</SelectItem>
-                        <SelectItem value="Follow-up">Follow-up</SelectItem>
-                        <SelectItem value="Emergency">Emergency</SelectItem>
-                        <SelectItem value="Gynecology">Gynecology</SelectItem>
+                        <SelectItem value="all">{t('reports:filters.allTypes')}</SelectItem>
+                        <SelectItem value="Consultation">{t('common:visitTypes.consultation')}</SelectItem>
+                        <SelectItem value="Dental">{t('common:visitTypes.dental')}</SelectItem>
+                        <SelectItem value="Follow-up">{t('common:visitTypes.followUp')}</SelectItem>
+                        <SelectItem value="Emergency">{t('common:visitTypes.emergency')}</SelectItem>
+                        <SelectItem value="Gynecology">{t('common:visitTypes.gynecology')}</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -447,13 +449,13 @@ export default function Reports() {
                       onValueChange={(value) => handleVisitFilterChange('status', value)}
                     >
                       <SelectTrigger className="w-full md:w-[140px]" data-testid="select-filter-status">
-                        <SelectValue placeholder="Status" />
+                        <SelectValue placeholder={t('reports:filters.allStatuses')} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All statuses</SelectItem>
-                        <SelectItem value="Scheduled">Scheduled</SelectItem>
-                        <SelectItem value="Completed">Completed</SelectItem>
-                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                        <SelectItem value="all">{t('reports:filters.allStatuses')}</SelectItem>
+                        <SelectItem value="Scheduled">{t('common:status.scheduled')}</SelectItem>
+                        <SelectItem value="Completed">{t('common:status.completed')}</SelectItem>
+                        <SelectItem value="Cancelled">{t('common:status.cancelled')}</SelectItem>
                       </SelectContent>
                     </Select>
                   </>
@@ -468,9 +470,9 @@ export default function Reports() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-lg">
                   <FileText className="w-5 h-5 mr-2" />
-                  Patient Report
+                  {t('reports:patientReport.title')}
                   <span className="ml-2 text-sm font-normal text-muted-foreground">
-                    ({patients.length} {patients.length === 1 ? 'patient' : 'patients'})
+                    ({t('reports:patientReport.count', { count: patients.length })})
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -488,17 +490,17 @@ export default function Reports() {
                       ))
                     ) : patients.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
-                        No patients found matching the current filters.
+                        {t('reports:patientReport.empty')}
                       </div>
                     ) : (
                       patients.map((patient) => (
                         <Card key={patient.id} className="p-4" data-testid={`report-patient-${patient.id}`}>
                           <h3 className="font-semibold text-foreground">{patient.name}</h3>
                           <div className="text-sm text-muted-foreground space-y-1 mt-2">
-                            <p>Phone: {patient.phone}</p>
-                            <p>Age: {patient.age || 'N/A'}</p>
-                            {patient.address && <p>Address: {patient.address}</p>}
-                            <p>Last Visit: {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}</p>
+                            <p>{t('reports:patientReport.columns.phone')}: {patient.phone}</p>
+                            <p>{t('reports:patientReport.columns.age')}: {patient.age || 'N/A'}</p>
+                            {patient.address && <p>{t('reports:patientReport.columns.address')}: {patient.address}</p>}
+                            <p>{t('reports:patientReport.columns.lastVisit')}: {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}</p>
                           </div>
                         </Card>
                       ))
@@ -509,7 +511,7 @@ export default function Reports() {
                     columns={patientColumns}
                     data={patients}
                     isLoading={patientsLoading}
-                    emptyMessage="No patients found matching the current filters."
+                    emptyMessage={t('reports:patientReport.empty')}
                     keyExtractor={(patient) => patient.id}
                   />
                 )}
@@ -523,9 +525,9 @@ export default function Reports() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-lg">
                   <Calendar className="w-5 h-5 mr-2" />
-                  Visit History
+                  {t('reports:visitHistory.title')}
                   <span className="ml-2 text-sm font-normal text-muted-foreground">
-                    ({visits.length} {visits.length === 1 ? 'visit' : 'visits'})
+                    ({t('reports:visitHistory.count', { count: visits.length })})
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -543,7 +545,7 @@ export default function Reports() {
                       ))
                     ) : visits.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
-                        No visits found matching the current filters.
+                        {t('reports:visitHistory.empty')}
                       </div>
                     ) : (
                       visits.map((visit) => (
@@ -555,10 +557,10 @@ export default function Reports() {
                             </Badge>
                           </div>
                           <div className="text-sm text-muted-foreground space-y-1">
-                            <p>Date: {new Date(visit.visitDate).toLocaleDateString()}</p>
-                            <p>Doctor: {visit.doctor.firstName} {visit.doctor.lastName}</p>
-                            <p>Type: {visit.visitType}</p>
-                            {visit.chiefComplaint && <p>Complaint: {visit.chiefComplaint}</p>}
+                            <p>{t('reports:visitHistory.columns.date')}: {new Date(visit.visitDate).toLocaleDateString()}</p>
+                            <p>{t('reports:visitHistory.columns.doctor')}: {visit.doctor.firstName} {visit.doctor.lastName}</p>
+                            <p>{t('reports:visitHistory.columns.type')}: {visit.visitType}</p>
+                            {visit.chiefComplaint && <p>{t('reports:visitHistory.columns.chiefComplaint')}: {visit.chiefComplaint}</p>}
                           </div>
                         </Card>
                       ))
@@ -569,7 +571,7 @@ export default function Reports() {
                     columns={visitColumns}
                     data={visits}
                     isLoading={visitsLoading}
-                    emptyMessage="No visits found matching the current filters."
+                    emptyMessage={t('reports:visitHistory.empty')}
                     keyExtractor={(visit) => visit.id}
                   />
                 )}

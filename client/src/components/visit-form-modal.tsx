@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,28 +20,23 @@ interface VisitFormModalProps {
   visit?: Visit; // For edit functionality
 }
 
-const visitTypes = [
-  "Consultation",
-  "Dental", 
-  "Gynecology",
-  "Follow-up",
-  "Emergency"
+// Visit type values (used for form submission) with their translation keys
+const visitTypeConfig = [
+  { value: "Consultation", translationKey: "types.consultation" },
+  { value: "Dental", translationKey: "types.dental" },
+  { value: "Gynecology", translationKey: "types.gynecology" },
+  { value: "Follow-up", translationKey: "types.followUp" },
+  { value: "Emergency", translationKey: "types.emergency" },
 ] as const;
 
-const visitStatuses = [
-  "Scheduled",
-  "In-Progress", 
-  "Completed",
-  "Cancelled"
-] as const;
-
-export function VisitFormModal({ 
-  open, 
-  onOpenChange, 
+export function VisitFormModal({
+  open,
+  onOpenChange,
   preSelectedPatientId,
-  visit 
+  visit
 }: VisitFormModalProps) {
   const { toast } = useToast();
+  const { t } = useTranslation(['visits', 'common']);
   
   const form = useForm<InsertVisit>({
     resolver: zodResolver(insertVisitSchema),
@@ -99,16 +95,16 @@ export function VisitFormModal({
         queryClient.invalidateQueries({ queryKey: ["/api/visits", { patientId: preSelectedPatientId }] });
       }
       toast({
-        title: "Success",
-        description: "Visit scheduled and added to queue successfully",
+        title: t('common:messages.success'),
+        description: t('visits:toast.scheduled'),
       });
       onOpenChange(false);
       form.reset();
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to schedule visit",
+        title: t('common:messages.error'),
+        description: error.message || t('visits:toast.error'),
         variant: "destructive",
       });
     },
@@ -127,15 +123,15 @@ export function VisitFormModal({
         queryClient.invalidateQueries({ queryKey: ["/api/visits", { patientId }] });
       }
       toast({
-        title: "Success", 
-        description: "Visit updated successfully",
+        title: t('common:messages.success'),
+        description: t('visits:toast.updated'),
       });
       onOpenChange(false);
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update visit",
+        title: t('common:messages.error'),
+        description: error.message || t('visits:toast.error'),
         variant: "destructive",
       });
     },
@@ -154,7 +150,7 @@ export function VisitFormModal({
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle data-testid="visit-form-title">
-            {visit ? "Edit Visit" : "Schedule New Visit"}
+            {visit ? t('visits:form.editTitle') : t('visits:form.scheduleTitle')}
           </DialogTitle>
         </DialogHeader>
 
@@ -162,13 +158,13 @@ export function VisitFormModal({
           {/* Patient Selection */}
           {!preSelectedPatientId && (
             <div className="space-y-2">
-              <Label htmlFor="patientId">Patient *</Label>
+              <Label htmlFor="patientId">{t('visits:form.patient')} *</Label>
               <Select
                 value={form.watch("patientId")?.toString() || ""}
                 onValueChange={(value) => form.setValue("patientId", parseInt(value))}
               >
                 <SelectTrigger data-testid="select-patient">
-                  <SelectValue placeholder="Select a patient" />
+                  <SelectValue placeholder={t('visits:form.selectPatient')} />
                 </SelectTrigger>
                 <SelectContent>
                   {patients.map((patient) => (
@@ -188,13 +184,13 @@ export function VisitFormModal({
 
           {/* Doctor Selection */}
           <div className="space-y-2">
-            <Label htmlFor="doctorId">Doctor *</Label>
+            <Label htmlFor="doctorId">{t('visits:form.doctor')} *</Label>
             <Select
               value={form.watch("doctorId")?.toString() || ""}
               onValueChange={(value) => form.setValue("doctorId", parseInt(value))}
             >
               <SelectTrigger data-testid="select-doctor">
-                <SelectValue placeholder="Select a doctor" />
+                <SelectValue placeholder={t('visits:form.selectDoctor')} />
               </SelectTrigger>
               <SelectContent>
                 {doctors.map((doctor) => (
@@ -213,7 +209,7 @@ export function VisitFormModal({
 
           {/* Visit Date */}
           <div className="space-y-2">
-            <Label htmlFor="visitDate">Visit Date *</Label>
+            <Label htmlFor="visitDate">{t('visits:form.visitDate')} *</Label>
             <Input
               id="visitDate"
               type="date"
@@ -229,18 +225,18 @@ export function VisitFormModal({
 
           {/* Visit Type */}
           <div className="space-y-2">
-            <Label htmlFor="visitType">Visit Type *</Label>
+            <Label htmlFor="visitType">{t('visits:form.visitType')} *</Label>
             <Select
               value={form.watch("visitType") || ""}
               onValueChange={(value) => form.setValue("visitType", value)}
             >
               <SelectTrigger data-testid="select-visit-type">
-                <SelectValue placeholder="Select visit type" />
+                <SelectValue placeholder={t('visits:form.selectVisitType')} />
               </SelectTrigger>
               <SelectContent>
-                {visitTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
+                {visitTypeConfig.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {t(`visits:${type.translationKey}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -254,22 +250,22 @@ export function VisitFormModal({
 
           {/* Visit Status - Read Only (managed by queue) */}
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="status">{t('visits:form.status')}</Label>
             <div className="px-3 py-2 bg-muted rounded-md text-sm text-muted-foreground">
-              {form.watch("status") || "Scheduled"} (managed automatically)
+              {t('visits:form.statusManaged', { status: form.watch("status") || t('visits:statuses.scheduled') })}
             </div>
             <p className="text-xs text-muted-foreground">
-              Visit status is automatically updated based on queue actions
+              {t('visits:form.statusHint')}
             </p>
           </div>
 
           {/* Chief Complaint */}
           <div className="space-y-2">
-            <Label htmlFor="chiefComplaint">Chief Complaint</Label>
+            <Label htmlFor="chiefComplaint">{t('visits:form.chiefComplaint')}</Label>
             <Textarea
               id="chiefComplaint"
               rows={3}
-              placeholder="Describe the main reason for this visit..."
+              placeholder={t('visits:form.chiefComplaintPlaceholder')}
               {...form.register("chiefComplaint")}
               data-testid="input-chief-complaint"
             />
@@ -282,22 +278,22 @@ export function VisitFormModal({
 
           {/* Form Actions */}
           <div className="flex justify-end space-x-2 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
               data-testid="button-cancel-visit"
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={createVisitMutation.isPending || updateVisitMutation.isPending}
               data-testid="button-save-visit"
             >
-              {createVisitMutation.isPending || updateVisitMutation.isPending 
-                ? "Saving..." 
-                : (visit ? "Update Visit" : "Schedule Visit")
+              {createVisitMutation.isPending || updateVisitMutation.isPending
+                ? t('common:messages.saving')
+                : (visit ? t('common:buttons.update') : t('common:buttons.scheduleVisit'))
               }
             </Button>
           </div>

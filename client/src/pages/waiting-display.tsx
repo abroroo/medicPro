@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Stethoscope } from "lucide-react";
@@ -8,6 +9,7 @@ import { Queue as QueueItem, Patient } from "@shared/schema";
 type QueueWithPatient = QueueItem & { patient: Patient };
 
 export default function WaitingDisplay() {
+  const { t } = useTranslation(["queue", "common"]);
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -46,7 +48,7 @@ export default function WaitingDisplay() {
           </span>
         </h1>
         <p className={`${isMobile ? "text-lg" : "text-2xl"} opacity-90`}>
-          Please wait for your number to be called
+          {t("queue:display.waitMessage")}
         </p>
         <div
           className={`${isMobile ? "text-base" : "text-xl"} opacity-75 mt-2`}
@@ -65,7 +67,7 @@ export default function WaitingDisplay() {
             <p
               className={`text-white ${isMobile ? "text-2xl" : "text-4xl"} font-medium ${isMobile ? "mb-4" : "mb-8"}`}
             >
-              NOW SERVING
+              {t("queue:display.nowServing")}
             </p>
             <div
               className={`text-white ${isMobile ? "text-6xl" : "text-9xl"} font-bold pulse-gentle`}
@@ -77,7 +79,7 @@ export default function WaitingDisplay() {
               <p
                 className={`text-white ${isMobile ? "text-lg mt-2" : "text-2xl mt-4"} opacity-75`}
               >
-                Thank you for waiting
+                {t("queue:display.thankYouWaiting")}
               </p>
             )}
           </div>
@@ -90,7 +92,7 @@ export default function WaitingDisplay() {
               <p
                 className={`text-white ${isMobile ? "text-lg" : "text-2xl"} font-medium ${isMobile ? "mb-3" : "mb-6"}`}
               >
-                NEXT IN LINE
+                {t("queue:display.nextInLine")}
               </p>
               <div
                 className={`${isMobile ? "grid grid-cols-2 gap-4" : "flex justify-center space-x-8"}`}
@@ -115,10 +117,10 @@ export default function WaitingDisplay() {
         className={`text-center ${isMobile ? "py-4" : "py-8"} text-white/80`}
       >
         <p className={`${isMobile ? "text-base" : "text-xl"}`}>
-          Thank you for your patience
+          {t("queue:display.thankYouPatience")}
         </p>
         <p className={`${isMobile ? "text-sm" : "text-lg"} mt-2`}>
-          Updates every 10 seconds
+          {t("queue:display.updatesEvery")}
         </p>
         {/* Auto-refresh indicator */}
         <div className="mt-4">

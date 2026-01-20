@@ -1,0 +1,55 @@
+{
+  "title": "Hisobotlar",
+  "subtitle": "Bemorlar va tashriflar ma'lumotlarini ko'ring va eksport qiling",
+  "tabs": {
+    "patients": "Bemorlar hisoboti",
+    "visits": "Tashriflar tarixi"
+  },
+  "stats": {
+    "total": "Jami",
+    "thisMonth": "Bu oy",
+    "thisWeek": "Bu hafta",
+    "today": "Bugun"
+  },
+  "datePresets": {
+    "today": "Bugun",
+    "thisWeek": "Bu hafta",
+    "thisMonth": "Bu oy",
+    "last30Days": "Oxirgi 30 kun",
+    "last90Days": "Oxirgi 90 kun",
+    "allTime": "Barcha vaqt"
+  },
+  "filters": {
+    "searchPatient": "Bemor ismini qidirish...",
+    "allDoctors": "Barcha shifokorlar",
+    "allTypes": "Barcha turlar",
+    "allStatuses": "Barcha holatlar"
+  },
+  "patientReport": {
+    "title": "Bemorlar hisoboti",
+    "count": "{{count}} bemor",
+    "count_plural": "{{count}} bemorlar",
+    "columns": {
+      "name": "Ism",
+      "phone": "Telefon",
+      "age": "Yosh",
+      "address": "Manzil",
+      "lastVisit": "Oxirgi tashrif"
+    },
+    "empty": "Joriy filtrlar bo'yicha bemorlar topilmadi."
+  },
+  "visitHistory": {
+    "title": "Tashriflar tarixi",
+    "count": "{{count}} tashrif",
+    "count_plural": "{{count}} tashriflar",
+    "columns": {
+      "date": "Sana",
+      "patient": "Bemor",
+      "doctor": "Shifokor",
+      "type": "Tur",
+      "status": "Holat",
+      "chiefComplaint": "Asosiy shikoyat"
+    },
+    "empty": "Joriy filtrlar bo'yicha tashriflar topilmadi."
+  }
+}

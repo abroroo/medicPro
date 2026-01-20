@@ -1,0 +1,44 @@
+{
+  "form": {
+    "scheduleTitle": "Запланировать визит",
+    "editTitle": "Редактировать визит",
+    "patient": "Пациент",
+    "selectPatient": "Выберите пациента",
+    "doctor": "Врач",
+    "selectDoctor": "Выберите врача",
+    "visitDate": "Дата визита",
+    "visitType": "Тип визита",
+    "selectVisitType": "Выберите тип визита",
+    "status": "Статус",
+    "statusManaged": "{{status}} (управляется автоматически)",
+    "statusHint": "Статус визита обновляется автоматически на основе действий в очереди",
+    "chiefComplaint": "Основная жалоба",
+    "chiefComplaintPlaceholder": "Опишите основную причину визита...",
+    "reasonPlaceholder": "Причина визита..."
+  },
+  "types": {
+    "consultation": "Консультация",
+    "dental": "Стоматология",
+    "gynecology": "Гинекология",
+    "followUp": "Повторный приём",
+    "emergency": "Экстренный"
+  },
+  "statuses": {
+    "scheduled": "Запланирован",
+    "inProgress": "В процессе",
+    "completed": "Завершён",
+    "cancelled": "Отменён"
+  },
+  "toast": {
+    "scheduled": "Визит запланирован и добавлен в очередь",
+    "updated": "Визит успешно обновлён",
+    "error": "Не удалось запланировать визит"
+  },
+  "clinicalNotes": {
+    "diagnosis": "Диагноз",
+    "symptoms": "Симптомы",
+    "treatment": "Лечение",
+    "medications": "Медикаменты",
+    "followUp": "Повторный приём"
+  }
+}

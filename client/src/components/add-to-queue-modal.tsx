@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { 
   Dialog, 
   DialogContent, 
@@ -18,12 +19,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Search } from "lucide-react";
 import { Patient, User } from "@shared/schema";
 
-const visitTypes = [
-  "Consultation",
-  "Dental", 
-  "Gynecology",
-  "Follow-up",
-  "Emergency"
+// Visit type keys mapped to their translation keys in visits.json
+const visitTypeKeys = [
+  { value: "Consultation", translationKey: "consultation" },
+  { value: "Dental", translationKey: "dental" },
+  { value: "Gynecology", translationKey: "gynecology" },
+  { value: "Follow-up", translationKey: "followUp" },
+  { value: "Emergency", translationKey: "emergency" },
 ] as const;
 
 interface AddToQueueModalProps {
@@ -50,6 +52,7 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation(['queue', 'visits', 'common']);
 
   // Form for visit data
   const form = useForm<QueueVisitData>({
@@ -97,15 +100,15 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
       queryClient.invalidateQueries({ queryKey: ["/api/visits"] });
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
       toast({
-        title: "Success",
-        description: "Visit scheduled and patient added to queue",
+        title: t('common:messages.success'),
+        description: t('queue:toast.addedToQueue'),
       });
       onOpenChange(false);
       resetForm();
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: t('common:messages.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -151,17 +154,17 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm w-[calc(100vw-2rem)] mx-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Patient to Queue</DialogTitle>
+          <DialogTitle>{t('queue:addModal.title')}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
           {/* Search Existing Patient */}
           <div>
-            <Label>Search Existing Patient</Label>
+            <Label>{t('queue:addModal.searchExisting')}</Label>
             <div className="relative mt-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Search by name or phone..."
+                placeholder={t('queue:addModal.searchPlaceholder')}
                 className="pl-10"
                 value={searchQuery}
                 onChange={(e) => {
@@ -193,7 +196,7 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
               <div className="mt-2 p-3 bg-accent rounded-md">
                 <div className="font-medium">{selectedPatient.name}</div>
                 <div className="text-sm text-muted-foreground">{selectedPatient.phone}</div>
-                <p className="text-xs text-muted-foreground mt-1">Selected - please fill visit details below</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('queue:addModal.selectedPatient')}</p>
               </div>
             )}
           </div>
@@ -204,13 +207,13 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
               
               {/* Doctor Selection */}
               <div className="space-y-2">
-                <Label htmlFor="doctorId">Doctor *</Label>
+                <Label htmlFor="doctorId">{t('visits:form.doctor')} *</Label>
                 <Select
                   value={form.watch("doctorId")?.toString() || ""}
                   onValueChange={(value) => form.setValue("doctorId", parseInt(value))}
                 >
                   <SelectTrigger data-testid="select-doctor">
-                    <SelectValue placeholder="Select a doctor" />
+                    <SelectValue placeholder={t('visits:form.selectDoctor')} />
                   </SelectTrigger>
                   <SelectContent>
                     {doctors.map((doctor) => (
@@ -229,18 +232,18 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
 
               {/* Visit Type */}
               <div className="space-y-2">
-                <Label htmlFor="visitType">Visit Type *</Label>
+                <Label htmlFor="visitType">{t('visits:form.visitType')} *</Label>
                 <Select
                   value={form.watch("visitType") || ""}
                   onValueChange={(value) => form.setValue("visitType", value)}
                 >
                   <SelectTrigger data-testid="select-visit-type">
-                    <SelectValue placeholder="Select visit type" />
+                    <SelectValue placeholder={t('visits:form.selectVisitType')} />
                   </SelectTrigger>
                   <SelectContent>
-                    {visitTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
+                    {visitTypeKeys.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {t(`visits:types.${type.translationKey}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -254,7 +257,7 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
 
               {/* Visit Date */}
               <div className="space-y-2">
-                <Label htmlFor="visitDate">Visit Date *</Label>
+                <Label htmlFor="visitDate">{t('visits:form.visitDate')} *</Label>
                 <Input
                   id="visitDate"
                   type="date"
@@ -270,10 +273,10 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
 
               {/* Chief Complaint */}
               <div className="space-y-2">
-                <Label htmlFor="chiefComplaint">Chief Complaint</Label>
+                <Label htmlFor="chiefComplaint">{t('visits:form.chiefComplaint')}</Label>
                 <Input
                   id="chiefComplaint"
-                  placeholder="Reason for visit..."
+                  placeholder={t('visits:form.reasonPlaceholder')}
                   {...form.register("chiefComplaint")}
                   data-testid="input-chief-complaint"
                 />
@@ -281,22 +284,22 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
 
               {/* Submit Buttons */}
               <div className="flex space-x-3 pt-4">
-                <Button 
+                <Button
                   type="submit"
                   className="flex-1"
                   disabled={addToQueueMutation.isPending}
                   data-testid="button-schedule-and-queue"
                 >
-                  {addToQueueMutation.isPending ? "Scheduling..." : "Schedule Visit & Add to Queue"}
+                  {addToQueueMutation.isPending ? t('common:messages.saving') : t('queue:addModal.scheduleAndQueue')}
                 </Button>
-                <Button 
+                <Button
                   type="button"
                   variant="secondary"
                   className="flex-1"
                   onClick={() => onOpenChange(false)}
                   data-testid="button-cancel-queue"
                 >
-                  Cancel
+                  {t('common:buttons.cancel')}
                 </Button>
               </div>
             </form>
@@ -305,14 +308,14 @@ export function AddToQueueModal({ open, onOpenChange }: AddToQueueModalProps) {
           {/* No Selection Message */}
           {!selectedPatient && searchQuery.length <= 2 && (
             <div className="text-center p-4 text-muted-foreground">
-              <p className="text-sm">Search for an existing patient to add to queue</p>
+              <p className="text-sm">{t('queue:addModal.searchHelp')}</p>
             </div>
           )}
-          
+
           {searchQuery.length > 2 && filteredPatients.length === 0 && (
             <div className="text-center p-4 text-muted-foreground">
-              <p className="text-sm">No patients found</p>
-              <p className="text-xs mt-1">Try a different search term</p>
+              <p className="text-sm">{t('queue:addModal.noPatients')}</p>
+              <p className="text-xs mt-1">{t('queue:addModal.tryDifferent')}</p>
             </div>
           )}
         </div>

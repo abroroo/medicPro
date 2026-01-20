@@ -1,0 +1,91 @@
+{
+  "nav": {
+    "dashboard": "Панель",
+    "patients": "Пациенты",
+    "doctors": "Врачи",
+    "queue": "Очередь",
+    "display": "Дисплей",
+    "reports": "Отчёты",
+    "users": "Пользователи"
+  },
+  "buttons": {
+    "addPatient": "Добавить пациента",
+    "addDoctor": "Добавить врача",
+    "addUser": "Добавить пользователя",
+    "addClinic": "Добавить клинику",
+    "addToQueue": "В очередь",
+    "edit": "Редактировать",
+    "delete": "Удалить",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "submit": "Отправить",
+    "search": "Поиск",
+    "export": "Экспорт",
+    "print": "Печать",
+    "exportCSV": "Экспорт CSV",
+    "back": "Назад",
+    "logout": "Выход",
+    "newVisit": "Новый визит",
+    "scheduleVisit": "Запланировать визит",
+    "callNext": "Вызвать следующего",
+    "complete": "Завершить",
+    "skip": "Пропустить",
+    "update": "Обновить",
+    "create": "Создать",
+    "close": "Закрыть"
+  },
+  "status": {
+    "waiting": "Ожидает",
+    "serving": "Обслуживается",
+    "completed": "Завершён",
+    "cancelled": "Отменён",
+    "skipped": "Пропущен",
+    "scheduled": "Запланирован",
+    "inProgress": "В процессе",
+    "active": "Активен",
+    "inactive": "Неактивен"
+  },
+  "visitTypes": {
+    "consultation": "Консультация",
+    "dental": "Стоматология",
+    "gynecology": "Гинекология",
+    "followUp": "Повторный приём",
+    "emergency": "Экстренный"
+  },
+  "roles": {
+    "admin": "Администратор",
+    "headDoctor": "Главный врач",
+    "doctor": "Врач",
+    "receptionist": "Регистратор",
+    "user": "Пользователь"
+  },
+  "messages": {
+    "success": "Успешно",
+    "error": "Ошибка",
+    "loading": "Загрузка...",
+    "saving": "Сохранение...",
+    "noData": "Нет данных",
+    "confirmDelete": "Вы уверены, что хотите удалить этот элемент?",
+    "actionCannotBeUndone": "Это действие нельзя отменить."
+  },
+  "fields": {
+    "name": "Имя",
+    "phone": "Телефон",
+    "email": "Эл. почта",
+    "age": "Возраст",
+    "address": "Адрес",
+    "date": "Дата",
+    "time": "Время",
+    "status": "Статус",
+    "type": "Тип",
+    "notes": "Заметки",
+    "password": "Пароль"
+  },
+  "time": {
+    "today": "Сегодня",
+    "thisWeek": "На этой неделе",
+    "thisMonth": "В этом месяце",
+    "total": "Всего"
+  },
+  "appName": "MedicPro"
+}

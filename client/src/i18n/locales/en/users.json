@@ -1,0 +1,58 @@
+{
+  "title": "User Management",
+  "subtitle": "Manage users for {{clinicName}}",
+  "loading": "Loading users...",
+  "tabs": {
+    "users": "Users",
+    "clinics": "Clinics"
+  },
+  "accessRestricted": {
+    "title": "Access Restricted",
+    "message": "Only head doctors and administrators can access user management."
+  },
+  "createUser": {
+    "title": "Create New User",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "password": "Password",
+    "clinic": "Clinic",
+    "selectClinic": "Select clinic",
+    "role": "Role",
+    "selectRole": "Select role",
+    "specialization": "Specialization",
+    "specializationPlaceholder": "e.g., General Dentistry, Orthodontics",
+    "cabinetNumber": "Cabinet Number",
+    "cabinetNumberPlaceholder": "Office/cabinet number",
+    "phone": "Phone",
+    "phonePlaceholder": "Contact phone number"
+  },
+  "createClinic": {
+    "title": "Create New Clinic",
+    "name": "Clinic Name",
+    "contactEmail": "Contact Email",
+    "contactPhone": "Contact Phone",
+    "address": "Address"
+  },
+  "userCard": {
+    "created": "Created: {{date}}",
+    "lastLogin": "Last login: {{date}}",
+    "noUsers": "No users in this clinic",
+    "usersCount": "{{count}} users"
+  },
+  "clinicCard": {
+    "usersCount": "{{count}} users"
+  },
+  "empty": {
+    "noUsers": "No users found",
+    "noUsersDesc": "Get started by creating a clinic and adding users.",
+    "addFirstClinic": "Add First Clinic",
+    "addFirstUser": "Add First User",
+    "noClinics": "No clinics found",
+    "noClinicsDesc": "Get started by creating your first clinic."
+  },
+  "toast": {
+    "userCreated": "User created successfully",
+    "clinicCreated": "Clinic created successfully"
+  }
+}

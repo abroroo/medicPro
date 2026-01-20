@@ -1,0 +1,47 @@
+{
+  "title": "Queue Management",
+  "subtitle": "Manage today's waiting queue",
+  "display": {
+    "waitMessage": "Please wait for your number to be called",
+    "nowServing": "NOW SERVING",
+    "thankYouWaiting": "Thank you for waiting",
+    "nextInLine": "NEXT IN LINE",
+    "thankYouPatience": "Thank you for your patience",
+    "updatesEvery": "Updates every 10 seconds"
+  },
+  "currentlyServing": "Currently Serving",
+  "nextInLine": "Next in Line",
+  "inQueue": "In Queue",
+  "noOneServing": "No one being served",
+  "noOneWaiting": "No one waiting",
+  "patientsWaiting": "Patients waiting",
+  "todaysQueue": "Today's Queue",
+  "activeQueue": "Active Queue",
+  "completedToday": "Completed Today",
+  "empty": {
+    "noPatients": "No patients in queue today."
+  },
+  "loading": "Loading queue...",
+  "addedAt": "Added at {{time}}",
+  "toast": {
+    "calledNext": "Called Next Patient",
+    "calledNextDesc": "Patient #{{number}} - {{name}}",
+    "completed": "Patient Completed",
+    "completedDesc": "Patient service marked as completed",
+    "skipped": "Patient Skipped",
+    "skippedDesc": "Patient skipped, visit marked as unattended",
+    "cancelled": "Patient Cancelled",
+    "cancelledDesc": "Patient cancelled, visit marked as unattended",
+    "addedToQueue": "Visit scheduled and patient added to queue"
+  },
+  "addModal": {
+    "title": "Add Patient to Queue",
+    "searchExisting": "Search Existing Patient",
+    "searchPlaceholder": "Search by name or phone...",
+    "selectedPatient": "Selected - please fill visit details below",
+    "searchHelp": "Search for an existing patient to add to queue",
+    "noPatients": "No patients found",
+    "tryDifferent": "Try a different search term",
+    "scheduleAndQueue": "Schedule Visit & Add to Queue"
+  }
+}

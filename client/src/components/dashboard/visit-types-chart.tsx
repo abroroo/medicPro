@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Activity } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface VisitTypesChartProps {
   data: { type: string; count: number }[];
@@ -26,6 +27,8 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function VisitTypesChart({ data, isLoading = false }: VisitTypesChartProps) {
+  const { t } = useTranslation(['dashboard', 'common']);
+
   if (isLoading) {
     return (
       <Card>
@@ -51,8 +54,8 @@ export function VisitTypesChart({ data, isLoading = false }: VisitTypesChartProp
       <CardHeader className="flex flex-row items-center gap-2 pb-2">
         <Activity className="h-5 w-5 text-muted-foreground" />
         <div>
-          <CardTitle className="text-lg">Visit Types</CardTitle>
-          <CardDescription>Distribution by visit type</CardDescription>
+          <CardTitle className="text-lg">{t('dashboard:charts.visitTypes')}</CardTitle>
+          <CardDescription>{t('common:fields.type')}</CardDescription>
         </div>
       </CardHeader>
       <CardContent>

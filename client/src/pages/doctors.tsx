@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
+import { useTranslation } from "react-i18next";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { DoctorFormModal } from "@/components/doctor-form-modal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -15,9 +17,9 @@ import {
   Edit,
   Mail,
   Phone,
-  Badge,
   Stethoscope,
-  Settings
+  Settings,
+  Building2
 } from "lucide-react";
 import { User } from "@shared/schema";
 
@@ -28,6 +30,7 @@ export default function Doctors() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<User | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation(['doctors', 'common']);
 
   const { data: doctors = [], isLoading } = useQuery<User[]>({
     queryKey: ["/api/users", { role: "doctor", search: searchQuery || undefined }],
@@ -49,13 +52,13 @@ export default function Doctors() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
-        title: "Success",
-        description: "Doctor deleted successfully",
+        title: t('common:messages.success'),
+        description: t('doctors:toast.deleted'),
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error", 
+        title: t('common:messages.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -76,7 +79,7 @@ export default function Doctors() {
   };
 
   const handleDeleteDoctor = (doctorId: number) => {
-    if (confirm("Are you sure you want to delete this doctor? This action cannot be undone.")) {
+    if (confirm(t('common:messages.confirmDelete'))) {
       deleteDocMutation.mutate(doctorId);
     }
   };
@@ -84,12 +87,12 @@ export default function Doctors() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto p-4 space-y-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Doctors</h1>
-            <p className="text-muted-foreground">Manage your clinic's medical staff</p>
+            <h1 className="text-2xl font-bold text-foreground">{t('doctors:title')}</h1>
+            <p className="text-muted-foreground">{t('doctors:subtitle')}</p>
           </div>
           {isHeadDoctor ? (
             <Button
@@ -99,7 +102,7 @@ export default function Doctors() {
               data-testid="button-add-doctor"
             >
               <UserPlus className="w-4 h-4 mr-2" />
-              Add Doctor
+              {t('common:buttons.addDoctor')}
             </Button>
           ) : (
             <Button
@@ -107,14 +110,14 @@ export default function Doctors() {
               size={isMobile ? "sm" : "default"}
               className="w-full sm:w-auto"
               onClick={() => toast({
-                title: "Admin Required",
-                description: "Contact your administrator to add new doctors",
+                title: t('doctors:adminRequired'),
+                description: t('doctors:adminRequiredDesc'),
                 variant: "destructive"
               })}
               data-testid="button-admin-required"
             >
               <Settings className="w-4 h-4 mr-2" />
-              Admin Required
+              {t('doctors:adminRequired')}
             </Button>
           )}
         </div>
@@ -123,7 +126,7 @@ export default function Doctors() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Search doctors by name, specialty, or license..."
+              placeholder={t('doctors:searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -154,12 +157,12 @@ export default function Doctors() {
             <CardContent className="text-center py-8">
               <Stethoscope className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">
-                {searchQuery ? "No doctors found" : "No doctors added yet"}
+                {searchQuery ? t('doctors:empty.noResults') : t('doctors:empty.noDoctors')}
               </h3>
               <p className="text-muted-foreground mb-4">
-                {searchQuery 
-                  ? `No doctors match "${searchQuery}". Try a different search term.`
-                  : "Add your first doctor to get started with medical staff management."
+                {searchQuery
+                  ? t('doctors:empty.noResultsDesc', { query: searchQuery })
+                  : t('doctors:empty.noDoctorsDesc')
                 }
               </p>
               {!searchQuery && isAdmin && (
@@ -168,12 +171,12 @@ export default function Doctors() {
                   data-testid="button-add-first-doctor"
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
-                  Add First Doctor
+                  {t('doctors:empty.addFirstDoctor')}
                 </Button>
               )}
               {!searchQuery && !isHeadDoctor && (
                 <p className="text-sm text-muted-foreground mt-2">
-                  Contact your administrator to add doctors.
+                  {t('doctors:empty.contactAdmin')}
                 </p>
               )}
             </CardContent>
@@ -201,7 +204,7 @@ export default function Doctors() {
                         variant={doctor.role === 'head_doctor' ? 'default' : 'secondary'}
                         className="text-xs"
                       >
-                        {doctor.role === 'head_doctor' ? 'Head Doctor' : 'Doctor'}
+                        {doctor.role === 'head_doctor' ? t('common:roles.headDoctor') : t('common:roles.doctor')}
                       </Badge>
                     </div>
 
@@ -226,9 +229,9 @@ export default function Doctors() {
                     {/* Office Information */}
                     {doctor.cabinetNumber && (
                       <div className="flex items-center text-muted-foreground">
-                        <Badge className="w-4 h-4 mr-2" />
+                        <Building2 className="w-4 h-4 mr-2" />
                         <span data-testid={`text-doctor-cabinet-${doctor.id}`}>
-                          Cabinet: {doctor.cabinetNumber}
+                          {t('doctors:card.cabinet', { number: doctor.cabinetNumber })}
                         </span>
                       </div>
                     )}
@@ -237,14 +240,14 @@ export default function Doctors() {
                     <div className="flex items-center text-muted-foreground">
                       <div className={`w-2 h-2 rounded-full mr-2 ${doctor.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
                       <span className="text-xs">
-                        {doctor.isActive ? 'Active' : 'Inactive'}
+                        {doctor.isActive ? t('doctors:card.active') : t('doctors:card.inactive')}
                       </span>
                     </div>
 
                     {/* Join Date */}
                     {doctor.createdAt && (
                       <div className="text-xs text-muted-foreground">
-                        Joined: {new Date(doctor.createdAt).toLocaleDateString()}
+                        {t('doctors:card.joined', { date: new Date(doctor.createdAt).toLocaleDateString() })}
                       </div>
                     )}
                   </div>
@@ -260,7 +263,7 @@ export default function Doctors() {
                         data-testid={`button-edit-doctor-${doctor.id}`}
                       >
                         <Edit className="w-4 h-4 mr-1" />
-                        Edit
+                        {t('common:buttons.edit')}
                       </Button>
                       <Button
                         variant="outline"
@@ -269,7 +272,7 @@ export default function Doctors() {
                         className="flex-1 text-destructive hover:text-destructive"
                         data-testid={`button-delete-doctor-${doctor.id}`}
                       >
-                        Delete
+                        {t('common:buttons.delete')}
                       </Button>
                     </div>
                   )}

@@ -1,0 +1,62 @@
+{
+  "title": "Управление пациентами",
+  "subtitle": "Управление базой данных пациентов вашей клиники",
+  "searchPlaceholder": "Поиск пациентов по имени или телефону...",
+  "patientCount": "Пациенты ({{count}})",
+  "table": {
+    "name": "Имя",
+    "phone": "Телефон",
+    "age": "Возраст",
+    "lastVisit": "Последний визит",
+    "actions": "Действия"
+  },
+  "empty": {
+    "noPatients": "Пациенты ещё не зарегистрированы.",
+    "noResults": "Пациенты по вашему запросу не найдены."
+  },
+  "loading": "Загрузка пациентов...",
+  "form": {
+    "addTitle": "Добавить пациента",
+    "editTitle": "Редактировать пациента",
+    "name": "ФИО",
+    "namePlaceholder": "Полное имя пациента",
+    "phone": "Телефон",
+    "phonePlaceholder": "Номер телефона",
+    "age": "Возраст",
+    "agePlaceholder": "Возраст в годах",
+    "address": "Адрес",
+    "addressPlaceholder": "Полный адрес",
+    "dateOfBirth": "Дата рождения",
+    "bloodType": "Группа крови",
+    "bloodTypePlaceholder": "напр., A+, B-, O+, AB-",
+    "allergies": "Аллергии",
+    "allergiesPlaceholder": "Перечислите аллергии на лекарства, продукты или факторы окружающей среды",
+    "chronicConditions": "Хронические заболевания",
+    "chronicConditionsPlaceholder": "Перечислите хронические заболевания (диабет, гипертония и т.д.)",
+    "notes": "Заметки",
+    "notesPlaceholder": "Дополнительные заметки"
+  },
+  "detail": {
+    "title": "Медицинская карта",
+    "backToPatients": "К списку пациентов",
+    "editPatient": "Редактировать",
+    "patientInfo": "Информация о пациенте",
+    "medicalInfo": "Медицинская информация",
+    "medicalTimeline": "История лечения",
+    "yearsOld": "{{age}} лет",
+    "noVisits": "Визиты не записаны",
+    "noVisitsDesc": "У этого пациента ещё не было визитов.",
+    "scheduleFirstVisit": "Запланировать первый визит",
+    "loadingDetails": "Загрузка данных пациента...",
+    "loadingHistory": "Загрузка медицинской истории...",
+    "errorLoading": "Ошибка загрузки пациента",
+    "patientNotFound": "Пациент не найден",
+    "noDataReceived": "Данные пациента не получены от API"
+  },
+  "toast": {
+    "created": "Пациент успешно создан",
+    "updated": "Пациент успешно обновлён",
+    "deleted": "Пациент успешно удалён"
+  },
+  "never": "Никогда"
+}

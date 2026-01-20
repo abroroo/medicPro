@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "react-i18next";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,10 +11,10 @@ import { PatientFormModal } from "@/components/patient-form-modal";
 import { VisitFormModal } from "@/components/visit-form-modal";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Search, 
-  UserPlus, 
-  Edit, 
+import {
+  Search,
+  UserPlus,
+  Edit,
   PlusCircle
 } from "lucide-react";
 import { Patient } from "@shared/schema";
@@ -29,6 +30,7 @@ export default function Patients() {
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation(['patients', 'common']);
 
   const { data: patients = [], isLoading } = useQuery<PatientWithVisitType[]>({
     queryKey: ["/api/patients", { search: searchQuery || undefined }],
@@ -66,15 +68,15 @@ export default function Patients() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-3xl font-bold text-foreground">Patient Management</h2>
-            <p className="text-muted-foreground mt-2">Manage your clinic's patient database</p>
+            <h2 className="text-3xl font-bold text-foreground">{t('patients:title')}</h2>
+            <p className="text-muted-foreground mt-2">{t('patients:subtitle')}</p>
           </div>
-          <Button 
+          <Button
             onClick={() => setIsModalOpen(true)}
             data-testid="button-add-patient"
           >
             <UserPlus className="w-4 h-4 mr-2" />
-            Add Patient
+            {t('common:buttons.addPatient')}
           </Button>
         </div>
 
@@ -83,7 +85,7 @@ export default function Patients() {
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
-              placeholder="Search patients by name or phone..."
+              placeholder={t('patients:searchPlaceholder')}
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -95,14 +97,14 @@ export default function Patients() {
         {/* Patient List */}
         <Card>
           <CardHeader>
-            <CardTitle>Patients ({filteredPatients.length})</CardTitle>
+            <CardTitle>{t('patients:patientCount', { count: filteredPatients.length })}</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8">Loading patients...</div>
+              <div className="text-center py-8">{t('patients:loading')}</div>
             ) : filteredPatients.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                {searchQuery ? "No patients found matching your search." : "No patients registered yet."}
+                {searchQuery ? t('patients:empty.noResults') : t('patients:empty.noPatients')}
               </div>
             ) : isMobile ? (
               // Mobile Compact List Layout with Scrolling
@@ -121,7 +123,7 @@ export default function Patients() {
                           {patient.name}
                         </p>
                         <p className="text-xs text-muted-foreground" data-testid={`patient-phone-${patient.id}`}>
-                          {patient.phone} • Age: {patient.age || 'N/A'} • Last: {patient.lastVisit ? `${new Date(patient.lastVisit).toLocaleDateString()}${patient.lastVisitType ? ` (${patient.lastVisitType})` : ''}` : 'Never'}
+                          {patient.phone} • Age: {patient.age || 'N/A'} • Last: {patient.lastVisit ? `${new Date(patient.lastVisit).toLocaleDateString()}${patient.lastVisitType ? ` (${patient.lastVisitType})` : ''}` : t('patients:never')}
                         </p>
                       </div>
                     </div>
@@ -145,19 +147,19 @@ export default function Patients() {
                   <thead className="bg-muted">
                     <tr>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Name
+                        {t('patients:table.name')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Phone
+                        {t('patients:table.phone')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Age
+                        {t('patients:table.age')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Last Visit
+                        {t('patients:table.lastVisit')}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        Actions
+                        {t('patients:table.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -195,7 +197,7 @@ export default function Patients() {
                                   </div>
                                 )}
                               </div>
-                            ) : 'Never'}
+                            ) : t('patients:never')}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -238,7 +240,7 @@ export default function Patients() {
               setSelectedPatientId(null);
             }
           }}
-          preSelectedPatientId={selectedPatientId}
+          preSelectedPatientId={selectedPatientId ?? undefined}
         />
       </div>
     </div>

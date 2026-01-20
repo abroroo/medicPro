@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { 
   Dialog, 
   DialogContent, 
@@ -23,6 +24,7 @@ interface PatientFormModalProps {
 }
 
 export function PatientFormModal({ open, onOpenChange, patient }: PatientFormModalProps) {
+  const { t } = useTranslation(['patients', 'common']);
   const { toast } = useToast();
   const isEditing = !!patient;
 
@@ -49,15 +51,15 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
       toast({
-        title: "Success",
-        description: "Patient created successfully",
+        title: t('common:messages.success'),
+        description: t('patients:toast.created'),
       });
       onOpenChange(false);
       form.reset();
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: t('common:messages.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -72,15 +74,15 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
       toast({
-        title: "Success",
-        description: "Patient updated successfully",
+        title: t('common:messages.success'),
+        description: t('patients:toast.updated'),
       });
       onOpenChange(false);
       form.reset();
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: t('common:messages.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -129,13 +131,13 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
       <DialogContent className="max-w-sm w-[calc(100vw-2rem)] mx-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Patient" : "Add New Patient"}
+            {isEditing ? t('patients:form.editTitle') : t('patients:form.addTitle')}
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name">{t('patients:form.name')} *</Label>
             <Input
               id="name"
               {...form.register("name")}
@@ -149,7 +151,7 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone *</Label>
+            <Label htmlFor="phone">{t('patients:form.phone')} *</Label>
             <Input
               id="phone"
               type="tel"
@@ -164,7 +166,7 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="age">Age</Label>
+            <Label htmlFor="age">{t('patients:form.age')}</Label>
             <Input
               id="age"
               type="number"
@@ -179,7 +181,7 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address">{t('patients:form.address')}</Label>
             <Textarea
               id="address"
               rows={2}
@@ -189,7 +191,7 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dateOfBirth">Date of Birth</Label>
+            <Label htmlFor="dateOfBirth">{t('patients:form.dateOfBirth')}</Label>
             <Input
               id="dateOfBirth"
               type="date"
@@ -199,10 +201,10 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="bloodType">Blood Type</Label>
+            <Label htmlFor="bloodType">{t('patients:form.bloodType')}</Label>
             <Input
               id="bloodType"
-              placeholder="e.g., A+, B-, O+, AB-"
+              placeholder={t('patients:form.bloodTypePlaceholder')}
               {...form.register("bloodType")}
               data-testid="input-patient-bloodtype"
             />
@@ -210,29 +212,29 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
 
 
           <div className="space-y-2">
-            <Label htmlFor="allergies">Allergies</Label>
+            <Label htmlFor="allergies">{t('patients:form.allergies')}</Label>
             <Textarea
               id="allergies"
               rows={2}
-              placeholder="List any allergies to medications, foods, or environmental factors"
+              placeholder={t('patients:form.allergiesPlaceholder')}
               {...form.register("allergies")}
               data-testid="input-patient-allergies"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="chronicConditions">Chronic Conditions</Label>
+            <Label htmlFor="chronicConditions">{t('patients:form.chronicConditions')}</Label>
             <Textarea
               id="chronicConditions"
               rows={2}
-              placeholder="List any chronic medical conditions (diabetes, hypertension, etc.)"
+              placeholder={t('patients:form.chronicConditionsPlaceholder')}
               {...form.register("chronicConditions")}
               data-testid="input-patient-chronic-conditions"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{t('patients:form.notes')}</Label>
             <Textarea
               id="notes"
               rows={2}
@@ -242,27 +244,25 @@ export function PatientFormModal({ open, onOpenChange, patient }: PatientFormMod
           </div>
 
           <div className="flex space-x-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="flex-1"
               disabled={createPatientMutation.isPending || updatePatientMutation.isPending}
               data-testid="button-save-patient"
             >
               {createPatientMutation.isPending || updatePatientMutation.isPending
-                ? "Saving..." 
-                : isEditing 
-                  ? "Update Patient" 
-                  : "Add Patient"
+                ? t('common:messages.saving')
+                : t('common:buttons.save')
               }
             </Button>
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               variant="secondary"
               className="flex-1"
               onClick={() => onOpenChange(false)}
               data-testid="button-cancel-patient"
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </Button>
           </div>
         </form>

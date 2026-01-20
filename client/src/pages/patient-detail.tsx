@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import { getApiUrl, apiRequest } from "@/lib/queryClient";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Navbar } from "@/components/navbar";
@@ -73,6 +74,7 @@ export default function PatientDetail() {
   const [match, params] = useRoute("/patients/:id");
   const [location, setLocation] = useLocation();
   const isMobile = useIsMobile();
+  const { t } = useTranslation(['patients', 'visits', 'common']);
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [editingVisit, setEditingVisit] = useState<any>(null);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
@@ -299,7 +301,7 @@ export default function PatientDetail() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="max-w-7xl mx-auto p-4">
-          <div className="text-center py-8">Loading patient details...</div>
+          <div className="text-center py-8">{t('patients:detail.loadingDetails')}</div>
         </div>
       </div>
     );
@@ -311,9 +313,9 @@ export default function PatientDetail() {
         <Navbar />
         <div className="max-w-7xl mx-auto p-4">
           <div className="text-center py-8">
-            <h2 className="text-xl font-semibold mb-2">Error loading patient</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('patients:detail.errorLoading')}</h2>
             <p className="text-red-600 mb-4">Error: {error.message}</p>
-            <Button onClick={handleBack}>Back to Patients</Button>
+            <Button onClick={handleBack}>{t('patients:detail.backToPatients')}</Button>
           </div>
         </div>
       </div>
@@ -326,9 +328,9 @@ export default function PatientDetail() {
         <Navbar />
         <div className="max-w-7xl mx-auto p-4">
           <div className="text-center py-8">
-            <h2 className="text-xl font-semibold mb-2">Patient not found</h2>
-            <p className="text-muted-foreground mb-4">No patient data received from API</p>
-            <Button onClick={handleBack}>Back to Patients</Button>
+            <h2 className="text-xl font-semibold mb-2">{t('patients:detail.patientNotFound')}</h2>
+            <p className="text-muted-foreground mb-4">{t('patients:detail.noDataReceived')}</p>
+            <Button onClick={handleBack}>{t('patients:detail.backToPatients')}</Button>
           </div>
         </div>
       </div>
@@ -343,20 +345,20 @@ export default function PatientDetail() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleBack}
               data-testid="button-back-to-patients"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Patients
+              {t('patients:detail.backToPatients')}
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-foreground" data-testid="patient-detail-name">
                 {patient.name}
               </h1>
-              <p className="text-muted-foreground">Medical Record</p>
+              <p className="text-muted-foreground">{t('patients:detail.title')}</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -367,15 +369,15 @@ export default function PatientDetail() {
               data-testid="button-edit-patient-detail"
             >
               <Edit className="w-4 h-4 mr-2" />
-              Edit Patient
+              {t('patients:detail.editPatient')}
             </Button>
-            <Button 
+            <Button
               size={isMobile ? "sm" : "default"}
               onClick={handleNewVisit}
               data-testid="button-new-visit"
             >
               <PlusCircle className="w-4 h-4 mr-2" />
-              New Visit
+              {t('common:buttons.newVisit')}
             </Button>
           </div>
         </div>
@@ -386,13 +388,13 @@ export default function PatientDetail() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <User className="w-5 h-5 mr-2" />
-                Patient Information
+                {t('patients:detail.patientInfo')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div>
-                  <p className="text-sm text-muted-foreground">Phone</p>
+                  <p className="text-sm text-muted-foreground">{t('patients:form.phone')}</p>
                   <p className="flex items-center" data-testid="patient-detail-phone">
                     <Phone className="w-4 h-4 mr-2 text-muted-foreground" />
                     {patient.phone}
@@ -401,14 +403,14 @@ export default function PatientDetail() {
                 
                 {patient.age && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Age</p>
-                    <p data-testid="patient-detail-age">{patient.age} years old</p>
+                    <p className="text-sm text-muted-foreground">{t('patients:table.age')}</p>
+                    <p data-testid="patient-detail-age">{t('patients:detail.yearsOld', { age: patient.age })}</p>
                   </div>
                 )}
 
                 {patient.dateOfBirth && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Date of Birth</p>
+                    <p className="text-sm text-muted-foreground">{t('patients:form.dateOfBirth')}</p>
                     <p className="flex items-center" data-testid="patient-detail-dob">
                       <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
                       {new Date(patient.dateOfBirth).toLocaleDateString()}
@@ -418,7 +420,7 @@ export default function PatientDetail() {
 
                 {patient.bloodType && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Blood Type</p>
+                    <p className="text-sm text-muted-foreground">{t('patients:form.bloodType')}</p>
                     <Badge variant="secondary" data-testid="patient-detail-blood-type">
                       {patient.bloodType}
                     </Badge>
@@ -427,7 +429,7 @@ export default function PatientDetail() {
 
                 {patient.address && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Address</p>
+                    <p className="text-sm text-muted-foreground">{t('patients:form.address')}</p>
                     <p className="text-sm" data-testid="patient-detail-address">{patient.address}</p>
                   </div>
                 )}
@@ -438,15 +440,15 @@ export default function PatientDetail() {
 
               {/* Medical Information */}
               <div>
-                <p className="text-sm font-medium text-foreground mb-2">Medical Information</p>
+                <p className="text-sm font-medium text-foreground mb-2">{t('patients:detail.medicalInfo')}</p>
                 
                 {patient.allergies && (
                   <div className="mb-3">
                     <p className="text-sm text-muted-foreground flex items-center">
                       <AlertTriangle className="w-4 h-4 mr-2 text-orange-500" />
-                      Allergies
+                      {t('patients:form.allergies')}
                     </p>
-                    <p className="text-sm text-orange-700 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-300 p-2 rounded" 
+                    <p className="text-sm text-orange-700 bg-orange-50 dark:bg-orange-900/20 dark:text-orange-300 p-2 rounded"
                        data-testid="patient-detail-allergies">
                       {patient.allergies}
                     </p>
@@ -457,7 +459,7 @@ export default function PatientDetail() {
                   <div className="mb-3">
                     <p className="text-sm text-muted-foreground flex items-center">
                       <Heart className="w-4 h-4 mr-2 text-red-500" />
-                      Chronic Conditions
+                      {t('patients:form.chronicConditions')}
                     </p>
                     <p className="text-sm text-red-700 bg-red-50 dark:bg-red-900/20 dark:text-red-300 p-2 rounded"
                        data-testid="patient-detail-chronic-conditions">
@@ -468,7 +470,7 @@ export default function PatientDetail() {
 
                 {patient.notes && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Notes</p>
+                    <p className="text-sm text-muted-foreground">{t('patients:form.notes')}</p>
                     <p className="text-sm" data-testid="patient-detail-notes">{patient.notes}</p>
                   </div>
                 )}
@@ -482,7 +484,7 @@ export default function PatientDetail() {
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center">
                   <ClipboardList className="w-5 h-5 mr-2" />
-                  Medical Timeline
+                  {t('patients:detail.medicalTimeline')}
                 </CardTitle>
                 {visits.length > 0 && (
                   <div className="flex gap-2">
@@ -493,7 +495,7 @@ export default function PatientDetail() {
                       data-testid="button-export-history"
                     >
                       <Download className="w-4 h-4 mr-1" />
-                      Export
+                      {t('common:buttons.export')}
                     </Button>
                     <Button
                       variant="outline"
@@ -502,7 +504,7 @@ export default function PatientDetail() {
                       data-testid="button-print-history"
                     >
                       <Printer className="w-4 h-4 mr-1" />
-                      Print
+                      {t('common:buttons.print')}
                     </Button>
                   </div>
                 )}
@@ -510,15 +512,15 @@ export default function PatientDetail() {
             </CardHeader>
             <CardContent>
               {visitsLoading ? (
-                <div className="text-center py-4">Loading medical history...</div>
+                <div className="text-center py-4">{t('patients:detail.loadingHistory')}</div>
               ) : visits.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-medium mb-2">No visits recorded</h3>
-                  <p className="mb-4">This patient hasn't had any visits yet.</p>
+                  <h3 className="text-lg font-medium mb-2">{t('patients:detail.noVisits')}</h3>
+                  <p className="mb-4">{t('patients:detail.noVisitsDesc')}</p>
                   <Button onClick={handleNewVisit} data-testid="button-first-visit">
                     <PlusCircle className="w-4 h-4 mr-2" />
-                    Schedule First Visit
+                    {t('patients:detail.scheduleFirstVisit')}
                   </Button>
                 </div>
               ) : (
@@ -599,32 +601,32 @@ export default function PatientDetail() {
                                     <div key={note.id} className="text-sm space-y-1" data-testid={`clinical-note-${note.id}`}>
                                       {note.diagnosis && (
                                         <div className="flex flex-wrap items-start gap-x-2">
-                                          <span className="font-medium text-muted-foreground min-w-fit">Diagnosis:</span>
+                                          <span className="font-medium text-muted-foreground min-w-fit">{t('visits:clinicalNotes.diagnosis')}:</span>
                                           <span className="text-foreground">{note.diagnosis}</span>
                                         </div>
                                       )}
                                       {note.symptoms && (
                                         <div className="flex flex-wrap items-start gap-x-2">
-                                          <span className="font-medium text-muted-foreground min-w-fit">Symptoms:</span>
+                                          <span className="font-medium text-muted-foreground min-w-fit">{t('visits:clinicalNotes.symptoms')}:</span>
                                           <span className="text-muted-foreground">{note.symptoms}</span>
                                         </div>
                                       )}
                                       {note.treatmentGiven && (
                                         <div className="flex flex-wrap items-start gap-x-2">
-                                          <span className="font-medium text-muted-foreground min-w-fit">Treatment:</span>
+                                          <span className="font-medium text-muted-foreground min-w-fit">{t('visits:clinicalNotes.treatment')}:</span>
                                           <span className="text-muted-foreground">{note.treatmentGiven}</span>
                                         </div>
                                       )}
                                       {note.medications && (
                                         <div className="flex flex-wrap items-start gap-x-2">
-                                          <span className="font-medium text-muted-foreground min-w-fit">Medications:</span>
+                                          <span className="font-medium text-muted-foreground min-w-fit">{t('visits:clinicalNotes.medications')}:</span>
                                           <span className="text-muted-foreground">{note.medications}</span>
                                         </div>
                                       )}
                                       {note.followUpNeeded && note.followUpDate && (
                                         <div className="flex items-center text-sm text-amber-600 dark:text-amber-400 mt-1">
                                           <Clock className="w-3 h-3 mr-1" />
-                                          <span className="font-medium">Follow-up:</span>
+                                          <span className="font-medium">{t('visits:clinicalNotes.followUp')}:</span>
                                           <span className="ml-1">{new Date(note.followUpDate).toLocaleDateString()}</span>
                                         </div>
                                       )}

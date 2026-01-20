@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [timeRange, setTimeRange] = useState(30);
   const { user } = useAuth();
+  const { t } = useTranslation(['dashboard', 'common']);
 
   const { data: queueStats, isLoading: queueStatsLoading } = useQuery<QueueStats>({
     queryKey: ["/api/queue/stats"],
@@ -88,6 +90,16 @@ export default function Dashboard() {
   const recentActivity = queue?.slice(-8).reverse() || [];
   const isLoading = queueStatsLoading || patientStatsLoading || chartLoading;
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'completed': return t('common:status.completed');
+      case 'serving': return t('dashboard:recentActivity.currentlyServing');
+      case 'cancelled': return t('common:status.cancelled');
+      case 'skipped': return t('common:status.skipped');
+      default: return t('common:status.waiting');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -95,37 +107,37 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-foreground">Dashboard</h2>
+          <h2 className="text-3xl font-bold text-foreground">{t('dashboard:title')}</h2>
           <p className="text-muted-foreground mt-2">
-            Welcome back{user?.firstName ? `, ${user.firstName}` : ''}! Here's what's happening at your clinic.
+            {t('dashboard:welcome', { name: user?.firstName ? `, ${user.firstName}` : '' })}
           </p>
         </div>
 
         {/* Stats Cards Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <StatsCard
-            title="Today's Patients"
+            title={t('dashboard:stats.todaysPatients')}
             value={patientStats?.today || 0}
             icon={CalendarDays}
             color="blue"
             isLoading={patientStatsLoading}
           />
           <StatsCard
-            title="In Queue"
+            title={t('dashboard:stats.inQueue')}
             value={queueStats?.waiting || 0}
             icon={Clock}
             color="amber"
             isLoading={queueStatsLoading}
           />
           <StatsCard
-            title="Completed Today"
+            title={t('dashboard:stats.completedToday')}
             value={queueStats?.completed || 0}
             icon={CheckCircle}
             color="green"
             isLoading={queueStatsLoading}
           />
           <StatsCard
-            title="Total Patients"
+            title={t('dashboard:stats.totalPatients')}
             value={patientStats?.total || 0}
             icon={Users}
             color="purple"
@@ -168,7 +180,7 @@ export default function Dashboard() {
           {/* Quick Actions */}
           <Card>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+              <CardTitle>{t('dashboard:quickActions.title')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <Button
@@ -179,8 +191,8 @@ export default function Dashboard() {
               >
                 <UserPlus className="text-primary mr-3 w-5 h-5" />
                 <div className="text-left">
-                  <p className="font-medium text-foreground">Add New Patient</p>
-                  <p className="text-sm text-muted-foreground">Register a new patient in the system</p>
+                  <p className="font-medium text-foreground">{t('dashboard:quickActions.addNewPatient')}</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard:quickActions.addNewPatientDesc')}</p>
                 </div>
               </Button>
 
@@ -192,8 +204,8 @@ export default function Dashboard() {
               >
                 <PlusCircle className="text-blue-600 mr-3 w-5 h-5" />
                 <div className="text-left">
-                  <p className="font-medium text-foreground">Add to Queue</p>
-                  <p className="text-sm text-muted-foreground">Add patient to today's waiting queue</p>
+                  <p className="font-medium text-foreground">{t('dashboard:quickActions.addToQueue')}</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard:quickActions.addToQueueDesc')}</p>
                 </div>
               </Button>
 
@@ -205,8 +217,8 @@ export default function Dashboard() {
               >
                 <Monitor className="text-green-600 mr-3 w-5 h-5" />
                 <div className="text-left">
-                  <p className="font-medium text-foreground">Waiting Room Display</p>
-                  <p className="text-sm text-muted-foreground">Show queue status on waiting room screen</p>
+                  <p className="font-medium text-foreground">{t('dashboard:quickActions.waitingRoomDisplay')}</p>
+                  <p className="text-sm text-muted-foreground">{t('dashboard:quickActions.waitingRoomDisplayDesc')}</p>
                 </div>
               </Button>
             </CardContent>
@@ -217,7 +229,7 @@ export default function Dashboard() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Activity className="w-5 h-5 mr-2" />
-                Recent Activity
+                {t('dashboard:recentActivity.title')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -236,8 +248,8 @@ export default function Dashboard() {
               ) : recentActivity.length === 0 ? (
                 <div className="text-center py-8">
                   <Activity className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
-                  <p className="text-muted-foreground text-sm">No recent activity</p>
-                  <p className="text-muted-foreground text-xs mt-1">Activity will appear here when patients are added to the queue</p>
+                  <p className="text-muted-foreground text-sm">{t('dashboard:recentActivity.noActivity')}</p>
+                  <p className="text-muted-foreground text-xs mt-1">{t('dashboard:recentActivity.activityAppears')}</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -254,10 +266,7 @@ export default function Dashboard() {
                           #{item.queueNumber} - {item.patient?.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {item.status === 'completed' ? 'Completed' :
-                           item.status === 'serving' ? 'Currently serving' :
-                           item.status === 'cancelled' ? 'Cancelled' :
-                           item.status === 'skipped' ? 'Skipped' : 'Waiting'}
+                          {getStatusLabel(item.status)}
                           {item.visitType && ` • ${item.visitType}`}
                           {' • '}
                           {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

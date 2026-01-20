@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format, startOfDay, startOfWeek, startOfMonth, subDays } from "date-fns";
@@ -7,13 +8,13 @@ interface DateRangePresetsProps {
   selected: string;
 }
 
-const presets = [
-  { label: "Today", value: "today" },
-  { label: "This Week", value: "this-week" },
-  { label: "This Month", value: "this-month" },
-  { label: "Last 30 Days", value: "last-30" },
-  { label: "Last 90 Days", value: "last-90" },
-  { label: "All Time", value: "all" },
+const presetValues = [
+  { key: "today", value: "today" },
+  { key: "thisWeek", value: "this-week" },
+  { key: "thisMonth", value: "this-month" },
+  { key: "last30Days", value: "last-30" },
+  { key: "last90Days", value: "last-90" },
+  { key: "allTime", value: "all" },
 ];
 
 function getDateRange(preset: string): { from: string; to: string } {
@@ -50,6 +51,13 @@ function getDateRange(preset: string): { from: string; to: string } {
 }
 
 export function DateRangePresets({ onSelect, selected }: DateRangePresetsProps) {
+  const { t } = useTranslation(['reports']);
+
+  const presets = presetValues.map((preset) => ({
+    label: t(`reports:datePresets.${preset.key}`),
+    value: preset.value,
+  }));
+
   const handlePresetClick = (preset: string) => {
     const { from, to } = getDateRange(preset);
     onSelect(from, to, preset);

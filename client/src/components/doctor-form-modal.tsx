@@ -2,11 +2,12 @@ import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle 
+import { useTranslation } from "react-i18next";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ interface DoctorFormModalProps {
 
 export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalProps) {
   const { toast } = useToast();
+  const { t } = useTranslation(['doctors', 'common']);
   const isEditing = !!doctor;
 
   const form = useForm<InsertUser>({
@@ -49,15 +51,15 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
-        title: "Success",
-        description: "Doctor created successfully",
+        title: t('common:messages.success'),
+        description: t('doctors:toast.created'),
       });
       onOpenChange(false);
       form.reset();
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: t('common:messages.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -72,15 +74,15 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
-        title: "Success",
-        description: "Doctor updated successfully",
+        title: t('common:messages.success'),
+        description: t('doctors:toast.updated'),
       });
       onOpenChange(false);
       form.reset();
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: t('common:messages.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -127,13 +129,13 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
       <DialogContent className="max-w-sm w-[calc(100vw-2rem)] mx-4 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Doctor" : "Add New Doctor"}
+            {isEditing ? t('doctors:form.editTitle') : t('doctors:form.addTitle')}
           </DialogTitle>
         </DialogHeader>
         
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="firstName">First Name *</Label>
+            <Label htmlFor="firstName">{t('doctors:form.firstName')} *</Label>
             <Input
               id="firstName"
               {...form.register("firstName")}
@@ -147,7 +149,7 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="lastName">Last Name *</Label>
+            <Label htmlFor="lastName">{t('doctors:form.lastName')} *</Label>
             <Input
               id="lastName"
               {...form.register("lastName")}
@@ -161,10 +163,10 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="specialization">Specialization *</Label>
+            <Label htmlFor="specialization">{t('doctors:form.specialization')} *</Label>
             <Input
               id="specialization"
-              placeholder="e.g., General Dentistry, Orthodontics, Oral Surgery"
+              placeholder={t('doctors:form.specializationPlaceholder')}
               {...form.register("specialization")}
               data-testid="input-doctor-specialization"
             />
@@ -176,21 +178,21 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cabinetNumber">Cabinet Number</Label>
+            <Label htmlFor="cabinetNumber">{t('doctors:form.cabinetNumber')}</Label>
             <Input
               id="cabinetNumber"
-              placeholder="Office/cabinet number"
+              placeholder={t('doctors:form.cabinetNumberPlaceholder')}
               {...form.register("cabinetNumber")}
               data-testid="input-doctor-cabinet"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email">{t('doctors:form.email')} *</Label>
             <Input
               id="email"
               type="email"
-              placeholder="doctor@example.com"
+              placeholder={t('doctors:form.emailPlaceholder')}
               {...form.register("email")}
               data-testid="input-doctor-email"
             />
@@ -203,11 +205,11 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
 
           {!isEditing && (
             <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
+              <Label htmlFor="password">{t('doctors:form.password')} *</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter password"
+                placeholder={t('doctors:form.passwordPlaceholder')}
                 {...form.register("password")}
                 data-testid="input-doctor-password"
               />
@@ -220,17 +222,17 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="role">Role *</Label>
+            <Label htmlFor="role">{t('doctors:form.role')} *</Label>
             <Select
               value={form.watch("role") || "doctor"}
               onValueChange={(value) => form.setValue("role", value as "doctor" | "head_doctor")}
             >
               <SelectTrigger data-testid="select-doctor-role">
-                <SelectValue placeholder="Select role" />
+                <SelectValue placeholder={t('doctors:form.selectRole')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="doctor">Doctor</SelectItem>
-                <SelectItem value="head_doctor">Head Doctor</SelectItem>
+                <SelectItem value="doctor">{t('common:roles.doctor')}</SelectItem>
+                <SelectItem value="head_doctor">{t('common:roles.headDoctor')}</SelectItem>
               </SelectContent>
             </Select>
             {form.formState.errors.role && (
@@ -241,11 +243,11 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone">{t('doctors:form.phone')}</Label>
             <Input
               id="phone"
               type="tel"
-              placeholder="Contact phone number"
+              placeholder={t('doctors:form.phonePlaceholder')}
               {...form.register("phone")}
               data-testid="input-doctor-phone"
             />
@@ -253,27 +255,25 @@ export function DoctorFormModal({ open, onOpenChange, doctor }: DoctorFormModalP
 
 
           <div className="flex space-x-3 pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="flex-1"
               disabled={createDoctorMutation.isPending || updateDoctorMutation.isPending}
               data-testid="button-save-doctor"
             >
               {createDoctorMutation.isPending || updateDoctorMutation.isPending
-                ? "Saving..." 
-                : isEditing 
-                  ? "Update Doctor" 
-                  : "Add Doctor"
+                ? t('common:messages.saving')
+                : t('common:buttons.save')
               }
             </Button>
-            <Button 
-              type="button" 
+            <Button
+              type="button"
               variant="secondary"
               className="flex-1"
               onClick={() => onOpenChange(false)}
               data-testid="button-cancel-doctor"
             >
-              Cancel
+              {t('common:buttons.cancel')}
             </Button>
           </div>
         </form>

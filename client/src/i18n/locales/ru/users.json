@@ -1,0 +1,58 @@
+{
+  "title": "Управление пользователями",
+  "subtitle": "Управление пользователями для {{clinicName}}",
+  "loading": "Загрузка пользователей...",
+  "tabs": {
+    "users": "Пользователи",
+    "clinics": "Клиники"
+  },
+  "accessRestricted": {
+    "title": "Доступ ограничен",
+    "message": "Только главные врачи и администраторы могут управлять пользователями."
+  },
+  "createUser": {
+    "title": "Создать пользователя",
+    "firstName": "Имя",
+    "lastName": "Фамилия",
+    "email": "Эл. почта",
+    "password": "Пароль",
+    "clinic": "Клиника",
+    "selectClinic": "Выберите клинику",
+    "role": "Роль",
+    "selectRole": "Выберите роль",
+    "specialization": "Специализация",
+    "specializationPlaceholder": "напр., Терапевт, Ортодонт",
+    "cabinetNumber": "Номер кабинета",
+    "cabinetNumberPlaceholder": "Номер кабинета/офиса",
+    "phone": "Телефон",
+    "phonePlaceholder": "Контактный номер телефона"
+  },
+  "createClinic": {
+    "title": "Создать клинику",
+    "name": "Название клиники",
+    "contactEmail": "Контактный email",
+    "contactPhone": "Контактный телефон",
+    "address": "Адрес"
+  },
+  "userCard": {
+    "created": "Создан: {{date}}",
+    "lastLogin": "Последний вход: {{date}}",
+    "noUsers": "Нет пользователей в этой клинике",
+    "usersCount": "{{count}} пользователей"
+  },
+  "clinicCard": {
+    "usersCount": "{{count}} пользователей"
+  },
+  "empty": {
+    "noUsers": "Пользователи не найдены",
+    "noUsersDesc": "Начните с создания клиники и добавления пользователей.",
+    "addFirstClinic": "Добавить первую клинику",
+    "addFirstUser": "Добавить первого пользователя",
+    "noClinics": "Клиники не найдены",
+    "noClinicsDesc": "Начните с создания первой клиники."
+  },
+  "toast": {
+    "userCreated": "Пользователь успешно создан",
+    "clinicCreated": "Клиника успешно создана"
+  }
+}

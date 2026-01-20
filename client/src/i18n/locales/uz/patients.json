@@ -1,0 +1,62 @@
+{
+  "title": "Bemorlarni boshqarish",
+  "subtitle": "Klinikangiz bemorlar bazasini boshqaring",
+  "searchPlaceholder": "Bemorlarni ism yoki telefon raqami bo'yicha qidiring...",
+  "patientCount": "Bemorlar ({{count}})",
+  "table": {
+    "name": "Ism",
+    "phone": "Telefon",
+    "age": "Yosh",
+    "lastVisit": "Oxirgi tashrif",
+    "actions": "Harakatlar"
+  },
+  "empty": {
+    "noPatients": "Bemorlar hali ro'yxatdan o'tmagan.",
+    "noResults": "Qidiruv bo'yicha bemorlar topilmadi."
+  },
+  "loading": "Bemorlar yuklanmoqda...",
+  "form": {
+    "addTitle": "Yangi bemor qo'shish",
+    "editTitle": "Bemorni tahrirlash",
+    "name": "F.I.O.",
+    "namePlaceholder": "Bemorning to'liq ismi",
+    "phone": "Telefon",
+    "phonePlaceholder": "Telefon raqami",
+    "age": "Yosh",
+    "agePlaceholder": "Yosh",
+    "address": "Manzil",
+    "addressPlaceholder": "To'liq manzil",
+    "dateOfBirth": "Tug'ilgan sana",
+    "bloodType": "Qon guruhi",
+    "bloodTypePlaceholder": "masalan, A+, B-, O+, AB-",
+    "allergies": "Allergiyalar",
+    "allergiesPlaceholder": "Dori, oziq-ovqat yoki atrof-muhit omillariga allergiyalarni sanab o'ting",
+    "chronicConditions": "Surunkali kasalliklar",
+    "chronicConditionsPlaceholder": "Surunkali kasalliklarni sanab o'ting (diabet, gipertenziya va h.k.)",
+    "notes": "Izohlar",
+    "notesPlaceholder": "Qo'shimcha izohlar"
+  },
+  "detail": {
+    "title": "Tibbiy karta",
+    "backToPatients": "Bemorlar ro'yxatiga",
+    "editPatient": "Tahrirlash",
+    "patientInfo": "Bemor haqida ma'lumot",
+    "medicalInfo": "Tibbiy ma'lumot",
+    "medicalTimeline": "Davolash tarixi",
+    "yearsOld": "{{age}} yosh",
+    "noVisits": "Tashriflar qayd etilmagan",
+    "noVisitsDesc": "Bu bemorning hali tashrifi bo'lmagan.",
+    "scheduleFirstVisit": "Birinchi tashrifni rejalashtirish",
+    "loadingDetails": "Bemor ma'lumotlari yuklanmoqda...",
+    "loadingHistory": "Tibbiy tarix yuklanmoqda...",
+    "errorLoading": "Bemorni yuklashda xatolik",
+    "patientNotFound": "Bemor topilmadi",
+    "noDataReceived": "API dan bemor ma'lumotlari olinmadi"
+  },
+  "toast": {
+    "created": "Bemor muvaffaqiyatli yaratildi",
+    "updated": "Bemor muvaffaqiyatli yangilandi",
+    "deleted": "Bemor muvaffaqiyatli o'chirildi"
+  },
+  "never": "Hech qachon"
+}

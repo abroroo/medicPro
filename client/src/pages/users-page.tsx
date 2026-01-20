@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,7 @@ export default function UsersPage() {
   const { user, isAdmin, isHeadDoctor } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation(['users', 'common']);
   const [isCreateUserModalOpen, setIsCreateUserModalOpen] = useState(false);
   const [isCreateClinicModalOpen, setIsCreateClinicModalOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole | "">();
@@ -29,9 +31,9 @@ export default function UsersPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Shield className="h-12 w-12 text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Access Restricted</h2>
+            <h2 className="text-xl font-semibold mb-2">{t('accessRestricted.title')}</h2>
             <p className="text-muted-foreground text-center">
-              Only head doctors and administrators can access user management.
+              {t('accessRestricted.message')}
             </p>
           </CardContent>
         </Card>
@@ -62,14 +64,14 @@ export default function UsersPage() {
       setIsCreateUserModalOpen(false);
       setSelectedRole("");
       toast({
-        title: "Success",
-        description: "User created successfully",
+        title: t('common:messages.success'),
+        description: t('toast.userCreated'),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create user",
+        title: t('common:messages.error'),
+        description: error.message || t('common:messages.error'),
         variant: "destructive",
       });
     },
@@ -85,14 +87,14 @@ export default function UsersPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/clinics"] });
       setIsCreateClinicModalOpen(false);
       toast({
-        title: "Success",
-        description: "Clinic created successfully",
+        title: t('common:messages.success'),
+        description: t('toast.clinicCreated'),
       });
     },
     onError: (error: any) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create clinic",
+        title: t('common:messages.error'),
+        description: error.message || t('common:messages.error'),
         variant: "destructive",
       });
     },
@@ -152,7 +154,7 @@ export default function UsersPage() {
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p>Loading users...</p>
+            <p>{t('loading')}</p>
           </div>
         </div>
       </div>
@@ -163,9 +165,9 @@ export default function UsersPage() {
     <div className="container mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Manage users for {user?.clinic?.name || 'your clinic'}
+            {t('subtitle', { clinicName: user?.clinic?.name || 'your clinic' })}
           </p>
         </div>
         <div className="flex gap-2">
@@ -173,28 +175,28 @@ export default function UsersPage() {
             <DialogTrigger asChild>
               <Button variant="outline">
                 <Building2 className="h-4 w-4 mr-2" />
-                Add Clinic
+                {t('common:buttons.addClinic')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New Clinic</DialogTitle>
+                <DialogTitle>{t('createClinic.title')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreateClinic} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Clinic Name</Label>
+                  <Label htmlFor="name">{t('createClinic.name')}</Label>
                   <Input id="name" name="name" required />
                 </div>
                 <div>
-                  <Label htmlFor="contactEmail">Contact Email</Label>
+                  <Label htmlFor="contactEmail">{t('createClinic.contactEmail')}</Label>
                   <Input id="contactEmail" name="contactEmail" type="email" required />
                 </div>
                 <div>
-                  <Label htmlFor="contactPhone">Contact Phone</Label>
+                  <Label htmlFor="contactPhone">{t('createClinic.contactPhone')}</Label>
                   <Input id="contactPhone" name="contactPhone" required />
                 </div>
                 <div>
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">{t('createClinic.address')}</Label>
                   <Input id="address" name="address" required />
                 </div>
                 <Button
@@ -202,7 +204,7 @@ export default function UsersPage() {
                   className="w-full"
                   disabled={createClinicMutation.isPending}
                 >
-                  {createClinicMutation.isPending ? "Creating..." : "Create Clinic"}
+                  {createClinicMutation.isPending ? t('common:messages.saving') : t('common:buttons.create')}
                 </Button>
               </form>
             </DialogContent>
@@ -211,37 +213,37 @@ export default function UsersPage() {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Add User
+                {t('common:buttons.addUser')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Create New User</DialogTitle>
+                <DialogTitle>{t('createUser.title')}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreateUser} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="firstName">First Name</Label>
+                    <Label htmlFor="firstName">{t('createUser.firstName')}</Label>
                     <Input id="firstName" name="firstName" required />
                   </div>
                   <div>
-                    <Label htmlFor="lastName">Last Name</Label>
+                    <Label htmlFor="lastName">{t('createUser.lastName')}</Label>
                     <Input id="lastName" name="lastName" required />
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('createUser.email')}</Label>
                   <Input id="email" name="email" type="email" required />
                 </div>
                 <div>
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('createUser.password')}</Label>
                   <Input id="password" name="password" type="password" required />
                 </div>
                 <div>
-                  <Label htmlFor="clinicId">Clinic</Label>
+                  <Label htmlFor="clinicId">{t('createUser.clinic')}</Label>
                   <Select name="clinicId" required>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select clinic" />
+                      <SelectValue placeholder={t('createUser.selectClinic')} />
                     </SelectTrigger>
                     <SelectContent>
                       {clinics?.map((clinic) => (
@@ -253,16 +255,16 @@ export default function UsersPage() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="role">Role</Label>
+                  <Label htmlFor="role">{t('createUser.role')}</Label>
                   <Select name="role" required onValueChange={(value) => setSelectedRole(value as UserRole)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
+                      <SelectValue placeholder={t('createUser.selectRole')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="receptionist">Receptionist</SelectItem>
-                      <SelectItem value="doctor">Doctor</SelectItem>
-                      <SelectItem value="head_doctor">Head Doctor</SelectItem>
+                      <SelectItem value="user">{t('common:roles.user')}</SelectItem>
+                      <SelectItem value="receptionist">{t('common:roles.receptionist')}</SelectItem>
+                      <SelectItem value="doctor">{t('common:roles.doctor')}</SelectItem>
+                      <SelectItem value="head_doctor">{t('common:roles.headDoctor')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -270,29 +272,29 @@ export default function UsersPage() {
                 {(selectedRole === 'doctor' || selectedRole === 'head_doctor') && (
                   <>
                     <div>
-                      <Label htmlFor="specialization">Specialization *</Label>
+                      <Label htmlFor="specialization">{t('createUser.specialization')} *</Label>
                       <Input
                         id="specialization"
                         name="specialization"
-                        placeholder="e.g., General Dentistry, Orthodontics"
+                        placeholder={t('createUser.specializationPlaceholder')}
                         required
                       />
                     </div>
                     <div>
-                      <Label htmlFor="cabinetNumber">Cabinet Number</Label>
+                      <Label htmlFor="cabinetNumber">{t('createUser.cabinetNumber')}</Label>
                       <Input
                         id="cabinetNumber"
                         name="cabinetNumber"
-                        placeholder="Office/cabinet number"
+                        placeholder={t('createUser.cabinetNumberPlaceholder')}
                       />
                     </div>
                     <div>
-                      <Label htmlFor="phone">Phone</Label>
+                      <Label htmlFor="phone">{t('createUser.phone')}</Label>
                       <Input
                         id="phone"
                         name="phone"
                         type="tel"
-                        placeholder="Contact phone number"
+                        placeholder={t('createUser.phonePlaceholder')}
                       />
                     </div>
                   </>
@@ -302,7 +304,7 @@ export default function UsersPage() {
                   className="w-full"
                   disabled={createUserMutation.isPending}
                 >
-                  {createUserMutation.isPending ? "Creating..." : "Create User"}
+                  {createUserMutation.isPending ? t('common:messages.saving') : t('common:buttons.create')}
                 </Button>
               </form>
             </DialogContent>
@@ -312,8 +314,8 @@ export default function UsersPage() {
 
       <Tabs defaultValue="users" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="clinics">Clinics</TabsTrigger>
+          <TabsTrigger value="users">{t('tabs.users')}</TabsTrigger>
+          <TabsTrigger value="clinics">{t('tabs.clinics')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users" className="space-y-4">
@@ -325,7 +327,7 @@ export default function UsersPage() {
                   <CardTitle className="flex items-center gap-2">
                     <Building2 className="h-5 w-5" />
                     {clinic.name}
-                    <Badge variant="outline">{clinicUsers.length} users</Badge>
+                    <Badge variant="outline">{t('userCard.usersCount', { count: clinicUsers.length })}</Badge>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -346,17 +348,17 @@ export default function UsersPage() {
                             </h4>
                             <p className="text-sm text-muted-foreground">{user.email}</p>
                             <p className="text-xs text-muted-foreground">
-                              Created: {new Date(user.createdAt).toLocaleDateString()}
-                              {user.lastLogin && ` • Last login: ${new Date(user.lastLogin).toLocaleDateString()}`}
+                              {t('userCard.created', { date: new Date(user.createdAt).toLocaleDateString() })}
+                              {user.lastLogin && ` • ${t('userCard.lastLogin', { date: new Date(user.lastLogin).toLocaleDateString() })}`}
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant={getRoleBadgeVariant(user.role)}>
-                            {user.role}
+                            {t(`common:roles.${user.role === 'head_doctor' ? 'headDoctor' : user.role}`)}
                           </Badge>
                           {!user.isActive && (
-                            <Badge variant="destructive">Inactive</Badge>
+                            <Badge variant="destructive">{t('common:status.inactive')}</Badge>
                           )}
                         </div>
                       </div>
@@ -364,7 +366,7 @@ export default function UsersPage() {
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <Users className="h-8 w-8 mx-auto mb-2" />
-                      <p>No users in this clinic</p>
+                      <p>{t('userCard.noUsers')}</p>
                     </div>
                   )}
                 </CardContent>
@@ -376,18 +378,18 @@ export default function UsersPage() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Users className="h-12 w-12 text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold mb-2">No users found</h2>
+                <h2 className="text-xl font-semibold mb-2">{t('empty.noUsers')}</h2>
                 <p className="text-muted-foreground text-center mb-4">
-                  Get started by creating a clinic and adding users.
+                  {t('empty.noUsersDesc')}
                 </p>
                 <div className="flex gap-2">
                   <Button onClick={() => setIsCreateClinicModalOpen(true)} variant="outline">
                     <Building2 className="h-4 w-4 mr-2" />
-                    Add First Clinic
+                    {t('empty.addFirstClinic')}
                   </Button>
                   <Button onClick={() => setIsCreateUserModalOpen(true)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Add First User
+                    {t('empty.addFirstUser')}
                   </Button>
                 </div>
               </CardContent>
@@ -413,11 +415,11 @@ export default function UsersPage() {
                           <p className="text-sm text-muted-foreground">{clinic.contactPhone}</p>
                           <p className="text-sm text-muted-foreground">{clinic.address}</p>
                           <p className="text-xs text-muted-foreground mt-2">
-                            Created: {new Date(clinic.createdAt).toLocaleDateString()}
+                            {t('userCard.created', { date: new Date(clinic.createdAt).toLocaleDateString() })}
                           </p>
                         </div>
                       </div>
-                      <Badge variant="secondary">{clinicUserCount} users</Badge>
+                      <Badge variant="secondary">{t('clinicCard.usersCount', { count: clinicUserCount })}</Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -428,13 +430,13 @@ export default function UsersPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Building2 className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h2 className="text-xl font-semibold mb-2">No clinics found</h2>
+                  <h2 className="text-xl font-semibold mb-2">{t('empty.noClinics')}</h2>
                   <p className="text-muted-foreground text-center mb-4">
-                    Get started by creating your first clinic.
+                    {t('empty.noClinicsDesc')}
                   </p>
                   <Button onClick={() => setIsCreateClinicModalOpen(true)}>
                     <Building2 className="h-4 w-4 mr-2" />
-                    Add First Clinic
+                    {t('empty.addFirstClinic')}
                   </Button>
                 </CardContent>
               </Card>

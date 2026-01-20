@@ -1,0 +1,58 @@
+{
+  "title": "Foydalanuvchilarni boshqarish",
+  "subtitle": "{{clinicName}} uchun foydalanuvchilarni boshqaring",
+  "loading": "Foydalanuvchilar yuklanmoqda...",
+  "tabs": {
+    "users": "Foydalanuvchilar",
+    "clinics": "Klinikalar"
+  },
+  "accessRestricted": {
+    "title": "Kirish cheklangan",
+    "message": "Faqat bosh shifokorlar va administratorlar foydalanuvchilarni boshqarishi mumkin."
+  },
+  "createUser": {
+    "title": "Yangi foydalanuvchi yaratish",
+    "firstName": "Ism",
+    "lastName": "Familiya",
+    "email": "Elektron pochta",
+    "password": "Parol",
+    "clinic": "Klinika",
+    "selectClinic": "Klinikani tanlang",
+    "role": "Rol",
+    "selectRole": "Rolni tanlang",
+    "specialization": "Mutaxassislik",
+    "specializationPlaceholder": "masalan, Terapevt, Ortodont",
+    "cabinetNumber": "Kabinet raqami",
+    "cabinetNumberPlaceholder": "Kabinet/ofis raqami",
+    "phone": "Telefon",
+    "phonePlaceholder": "Aloqa telefon raqami"
+  },
+  "createClinic": {
+    "title": "Yangi klinika yaratish",
+    "name": "Klinika nomi",
+    "contactEmail": "Aloqa email",
+    "contactPhone": "Aloqa telefoni",
+    "address": "Manzil"
+  },
+  "userCard": {
+    "created": "Yaratilgan: {{date}}",
+    "lastLogin": "Oxirgi kirish: {{date}}",
+    "noUsers": "Bu klinikada foydalanuvchi yo'q",
+    "usersCount": "{{count}} foydalanuvchi"
+  },
+  "clinicCard": {
+    "usersCount": "{{count}} foydalanuvchi"
+  },
+  "empty": {
+    "noUsers": "Foydalanuvchilar topilmadi",
+    "noUsersDesc": "Klinika yaratish va foydalanuvchilar qo'shish bilan boshlang.",
+    "addFirstClinic": "Birinchi klinikani qo'shish",
+    "addFirstUser": "Birinchi foydalanuvchini qo'shish",
+    "noClinics": "Klinikalar topilmadi",
+    "noClinicsDesc": "Birinchi klinikangizni yaratish bilan boshlang."
+  },
+  "toast": {
+    "userCreated": "Foydalanuvchi muvaffaqiyatli yaratildi",
+    "clinicCreated": "Klinika muvaffaqiyatli yaratildi"
+  }
+}

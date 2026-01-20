@@ -1,0 +1,44 @@
+{
+  "form": {
+    "scheduleTitle": "Schedule New Visit",
+    "editTitle": "Edit Visit",
+    "patient": "Patient",
+    "selectPatient": "Select a patient",
+    "doctor": "Doctor",
+    "selectDoctor": "Select a doctor",
+    "visitDate": "Visit Date",
+    "visitType": "Visit Type",
+    "selectVisitType": "Select visit type",
+    "status": "Status",
+    "statusManaged": "{{status}} (managed automatically)",
+    "statusHint": "Visit status is automatically updated based on queue actions",
+    "chiefComplaint": "Chief Complaint",
+    "chiefComplaintPlaceholder": "Describe the main reason for this visit...",
+    "reasonPlaceholder": "Reason for visit..."
+  },
+  "types": {
+    "consultation": "Consultation",
+    "dental": "Dental",
+    "gynecology": "Gynecology",
+    "followUp": "Follow-up",
+    "emergency": "Emergency"
+  },
+  "statuses": {
+    "scheduled": "Scheduled",
+    "inProgress": "In-Progress",
+    "completed": "Completed",
+    "cancelled": "Cancelled"
+  },
+  "toast": {
+    "scheduled": "Visit scheduled and added to queue successfully",
+    "updated": "Visit updated successfully",
+    "error": "Failed to schedule visit"
+  },
+  "clinicalNotes": {
+    "diagnosis": "Diagnosis",
+    "symptoms": "Symptoms",
+    "treatment": "Treatment",
+    "medications": "Medications",
+    "followUp": "Follow-up"
+  }
+}

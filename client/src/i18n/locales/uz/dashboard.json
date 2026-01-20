@@ -1,0 +1,37 @@
+{
+  "title": "Boshqaruv paneli",
+  "welcome": "Xush kelibsiz{{name}}! Klinikangizda nima sodir bo'layotganini ko'ring.",
+  "stats": {
+    "todaysPatients": "Bugungi bemorlar",
+    "inQueue": "Navbatda",
+    "completedToday": "Bugun bajarilgan",
+    "totalPatients": "Jami bemorlar"
+  },
+  "charts": {
+    "visitTrends": "Tashrif tendensiyalari",
+    "visitStatus": "Holat bo'yicha taqsimot",
+    "doctorPerformance": "Shifokorlar ko'rsatkichlari",
+    "visitTypes": "Tashrif turlari taqsimoti"
+  },
+  "quickActions": {
+    "title": "Tezkor harakatlar",
+    "addNewPatient": "Yangi bemor qo'shish",
+    "addNewPatientDesc": "Tizimda yangi bemorni ro'yxatdan o'tkazish",
+    "addToQueue": "Navbatga qo'shish",
+    "addToQueueDesc": "Bemorni bugungi navbatga qo'shish",
+    "waitingRoomDisplay": "Kutish xonasi displeyi",
+    "waitingRoomDisplayDesc": "Kutish xonasi ekranida navbat holatini ko'rsatish"
+  },
+  "recentActivity": {
+    "title": "So'nggi faoliyat",
+    "noActivity": "Faoliyat yo'q",
+    "activityAppears": "Bemorlar navbatga qo'shilganda faoliyat bu yerda ko'rinadi",
+    "currentlyServing": "Xizmat ko'rsatilmoqda",
+    "waiting": "Kutmoqda"
+  },
+  "timeRange": {
+    "days7": "7 kun",
+    "days30": "30 kun",
+    "days90": "90 kun"
+  }
+}

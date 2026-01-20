@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 import {
   BarChart3,
   Users,
@@ -15,22 +16,24 @@ import {
   UserCog,
 } from "lucide-react";
 import { useState } from "react";
+import { LanguageSwitcher } from "./language-switcher";
 
 export function Navbar() {
   const { user, logoutMutation, isAdmin, isHeadDoctor } = useAuth();
   const [location, setLocation] = useLocation();
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation('common');
 
   const navItems = [
-    { path: "/", label: "Dashboard", icon: BarChart3 },
-    { path: "/patients", label: "Patients", icon: Users },
-    { path: "/doctors", label: "Doctors", icon: Stethoscope },
-    { path: "/queue", label: "Queue", icon: Clock },
-    { path: "/display", label: "Display", icon: Monitor },
-    { path: "/reports", label: "Reports", icon: FileText },
+    { path: "/", labelKey: "nav.dashboard", icon: BarChart3 },
+    { path: "/patients", labelKey: "nav.patients", icon: Users },
+    { path: "/doctors", labelKey: "nav.doctors", icon: Stethoscope },
+    { path: "/queue", labelKey: "nav.queue", icon: Clock },
+    { path: "/display", labelKey: "nav.display", icon: Monitor },
+    { path: "/reports", labelKey: "nav.reports", icon: FileText },
     ...(isHeadDoctor
-      ? [{ path: "/users", label: "Users", icon: UserCog }]
+      ? [{ path: "/users", labelKey: "nav.users", icon: UserCog }]
       : []),
   ];
 
@@ -75,6 +78,7 @@ export function Navbar() {
                     {navItems.map((item) => {
                       const Icon = item.icon;
                       const isActive = location === item.path;
+                      const label = t(item.labelKey);
 
                       return (
                         <button
@@ -85,13 +89,16 @@ export function Navbar() {
                               ? "bg-primary text-primary-foreground"
                               : "text-foreground hover:bg-accent"
                           } w-full flex items-center px-4 py-3 text-left transition-colors`}
-                          data-testid={`nav-${item.label.toLowerCase()}`}
+                          data-testid={`nav-${item.labelKey.split('.')[1]}`}
                         >
                           <Icon className="w-5 h-5 mr-3" />
-                          {item.label}
+                          {label}
                         </button>
                       );
                     })}
+                  </div>
+                  <div className="border-t">
+                    <LanguageSwitcher variant="mobile" />
                   </div>
                   <div className="p-4 border-t">
                     <Button
@@ -103,7 +110,7 @@ export function Navbar() {
                       data-testid="button-logout"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
-                      Logout
+                      {t('buttons.logout')}
                     </Button>
                   </div>
                 </div>
@@ -144,6 +151,7 @@ export function Navbar() {
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location === item.path;
+                const label = t(item.labelKey);
 
                 return (
                   <button
@@ -154,10 +162,10 @@ export function Navbar() {
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     } px-3 py-2 rounded-md text-sm font-medium flex items-center transition-colors`}
-                    data-testid={`nav-${item.label.toLowerCase()}`}
+                    data-testid={`nav-${item.labelKey.split('.')[1]}`}
                   >
                     <Icon className="w-4 h-4 mr-2" />
-                    {item.label}
+                    {label}
                   </button>
                 );
               })}
@@ -170,6 +178,7 @@ export function Navbar() {
             >
               {user?.name}
             </span>
+            <LanguageSwitcher variant="desktop" />
             <Button
               variant="ghost"
               size="sm"

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +24,7 @@ export default function Queue() {
   const isMobile = useIsMobile();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation(['queue', 'common']);
 
   const { data: queue = [], isLoading } = useQuery<QueueWithPatient[]>({
     queryKey: ["/api/queue"],
@@ -45,7 +47,7 @@ export default function Queue() {
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
+        title: t('common:messages.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -69,8 +71,8 @@ export default function Queue() {
     if (nextInLine) {
       updateQueueMutation.mutate({ id: nextInLine.id, status: 'serving' });
       toast({
-        title: "Called Next Patient",
-        description: `Patient #${nextInLine.queueNumber} - ${nextInLine.patient.name}`,
+        title: t('queue:toast.calledNext'),
+        description: t('queue:toast.calledNextDesc', { number: nextInLine.queueNumber, name: nextInLine.patient.name }),
       });
     }
   };
@@ -78,16 +80,16 @@ export default function Queue() {
   const handleMarkComplete = (id: number) => {
     updateQueueMutation.mutate({ id, status: 'completed' });
     toast({
-      title: "Patient Completed",
-      description: "Patient service marked as completed",
+      title: t('queue:toast.completed'),
+      description: t('queue:toast.completedDesc'),
     });
   };
 
   const handleSkipPatient = (id: number) => {
     updateQueueMutation.mutate({ id, status: 'skipped' });
     toast({
-      title: "Patient Skipped",
-      description: "Patient skipped, visit marked as unattended",
+      title: t('queue:toast.skipped'),
+      description: t('queue:toast.skippedDesc'),
       variant: "default",
     });
   };
@@ -95,8 +97,8 @@ export default function Queue() {
   const handleCancelPatient = (id: number) => {
     updateQueueMutation.mutate({ id, status: 'cancelled' });
     toast({
-      title: "Patient Cancelled",
-      description: "Patient cancelled, visit marked as unattended",
+      title: t('queue:toast.cancelled'),
+      description: t('queue:toast.cancelledDesc'),
       variant: "default",
     });
   };
@@ -131,25 +133,25 @@ export default function Queue() {
         {/* Header */}
         <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-center'} mb-6`}>
           <div>
-            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>Queue Management</h2>
-            <p className="text-muted-foreground mt-2">Manage today's waiting queue</p>
+            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>{t('queue:title')}</h2>
+            <p className="text-muted-foreground mt-2">{t('queue:subtitle')}</p>
           </div>
           <div className={`${isMobile ? 'grid grid-cols-1 gap-3' : 'flex space-x-3'}`}>
-            <Button 
+            <Button
               onClick={handleCallNext}
               disabled={!nextInLine || updateQueueMutation.isPending}
               className="bg-green-600 hover:bg-green-700 text-white"
               data-testid="button-call-next"
             >
               <Megaphone className="w-4 h-4 mr-2" />
-              Call Next
+              {t('common:buttons.callNext')}
             </Button>
-            <Button 
+            <Button
               onClick={() => setIsModalOpen(true)}
               data-testid="button-add-to-queue"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Add to Queue
+              {t('common:buttons.addToQueue')}
             </Button>
           </div>
         </div>
@@ -158,35 +160,35 @@ export default function Queue() {
         <div className={`grid ${isMobile ? 'grid-cols-1 gap-4' : 'grid-cols-1 md:grid-cols-3 gap-6'} mb-8`}>
           <Card>
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-2">Currently Serving</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('queue:currentlyServing')}</h3>
               <div className="text-4xl font-bold text-primary" data-testid="current-serving">
                 {currentServing ? `#${currentServing.queueNumber}` : '--'}
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                {currentServing ? currentServing.patient.name : 'No one being served'}
+                {currentServing ? currentServing.patient.name : t('queue:noOneServing')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-2">Next in Line</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('queue:nextInLine')}</h3>
               <div className="text-4xl font-bold text-secondary" data-testid="next-in-line">
                 {nextInLine ? `#${nextInLine.queueNumber}` : '--'}
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                {nextInLine ? nextInLine.patient.name : 'No one waiting'}
+                {nextInLine ? nextInLine.patient.name : t('queue:noOneWaiting')}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-2">In Queue</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">{t('queue:inQueue')}</h3>
               <div className="text-4xl font-bold text-amber-600" data-testid="waiting-count">
                 {waitingCount}
               </div>
-              <p className="text-sm text-muted-foreground mt-2">Patients waiting</p>
+              <p className="text-sm text-muted-foreground mt-2">{t('queue:patientsWaiting')}</p>
             </CardContent>
           </Card>
         </div>
@@ -194,14 +196,14 @@ export default function Queue() {
         {/* Queue List */}
         <Card>
           <CardHeader>
-            <CardTitle>Today's Queue</CardTitle>
+            <CardTitle>{t('queue:todaysQueue')}</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading ? (
-              <div className="text-center py-8">Loading queue...</div>
+              <div className="text-center py-8">{t('queue:loading')}</div>
             ) : queue.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                No patients in queue today.
+                {t('queue:empty.noPatients')}
               </div>
             ) : (
               <div className="space-y-6">
@@ -210,7 +212,7 @@ export default function Queue() {
                   <div>
                     <div className="flex items-center mb-4">
                       <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                      <h3 className="text-lg font-semibold text-foreground">Active Queue</h3>
+                      <h3 className="text-lg font-semibold text-foreground">{t('queue:activeQueue')}</h3>
                       <div className="flex-1 border-b border-border ml-4"></div>
                     </div>
                     <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">
@@ -234,7 +236,7 @@ export default function Queue() {
                                 {item.patient.name}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                Added at {new Date(item.createdAt).toLocaleTimeString()}
+                                {t('queue:addedAt', { time: new Date(item.createdAt).toLocaleTimeString() })}
                               </p>
                             </div>
                             {!isMobile && (
@@ -243,7 +245,7 @@ export default function Queue() {
                                   variant={getStatusBadgeVariant(item.status)}
                                   data-testid={`status-${item.id}`}
                                 >
-                                  {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                                  {t(`common:status.${item.status}`)}
                                 </Badge>
 
                                 {item.status === 'serving' && (
@@ -256,7 +258,7 @@ export default function Queue() {
                                       data-testid={`button-complete-${item.id}`}
                                     >
                                       <Check className="w-4 h-4 mr-1" />
-                                      Complete
+                                      {t('common:buttons.complete')}
                                     </Button>
                                     <Button
                                       size="sm"
@@ -266,7 +268,7 @@ export default function Queue() {
                                       data-testid={`button-skip-${item.id}`}
                                     >
                                       <SkipForward className="w-4 h-4 mr-1" />
-                                      Skip
+                                      {t('common:buttons.skip')}
                                     </Button>
                                   </>
                                 )}
@@ -280,7 +282,7 @@ export default function Queue() {
                                     data-testid={`button-cancel-${item.id}`}
                                   >
                                     <X className="w-4 h-4 mr-1" />
-                                    Cancel
+                                    {t('common:buttons.cancel')}
                                   </Button>
                                 )}
                               </div>
@@ -293,7 +295,7 @@ export default function Queue() {
                                 variant={getStatusBadgeVariant(item.status)}
                                 data-testid={`status-${item.id}`}
                               >
-                                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                                {t(`common:status.${item.status}`)}
                               </Badge>
 
                               {item.status === 'serving' && (
@@ -306,7 +308,7 @@ export default function Queue() {
                                     data-testid={`button-complete-${item.id}`}
                                   >
                                     <Check className="w-4 h-4 mr-1" />
-                                    Complete
+                                    {t('common:buttons.complete')}
                                   </Button>
                                   <Button
                                     size="sm"
@@ -316,7 +318,7 @@ export default function Queue() {
                                     data-testid={`button-skip-${item.id}`}
                                   >
                                     <SkipForward className="w-4 h-4 mr-1" />
-                                    Skip
+                                    {t('common:buttons.skip')}
                                   </Button>
                                 </div>
                               )}
@@ -330,7 +332,7 @@ export default function Queue() {
                                   data-testid={`button-cancel-${item.id}`}
                                 >
                                   <X className="w-4 h-4 mr-1" />
-                                  Cancel
+                                  {t('common:buttons.cancel')}
                                 </Button>
                               )}
                             </div>
@@ -346,7 +348,7 @@ export default function Queue() {
                   <div>
                     <div className="flex items-center mb-4">
                       <div className="w-3 h-3 bg-gray-400 rounded-full mr-3"></div>
-                      <h3 className="text-lg font-semibold text-muted-foreground">Completed Today</h3>
+                      <h3 className="text-lg font-semibold text-muted-foreground">{t('queue:completedToday')}</h3>
                       <div className="flex-1 border-b border-border ml-4"></div>
                     </div>
                     <div className="max-h-[50vh] overflow-y-auto space-y-3 pr-2">
@@ -367,7 +369,7 @@ export default function Queue() {
                                 {item.patient.name}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                Added at {new Date(item.createdAt).toLocaleTimeString()}
+                                {t('queue:addedAt', { time: new Date(item.createdAt).toLocaleTimeString() })}
                               </p>
                             </div>
                             <div className="flex items-center space-x-2">
@@ -375,7 +377,7 @@ export default function Queue() {
                                 variant={getStatusBadgeVariant(item.status)}
                                 data-testid={`status-${item.id}`}
                               >
-                                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                                {t(`common:status.${item.status}`)}
                               </Badge>
                             </div>
                           </div>
@@ -388,7 +390,7 @@ export default function Queue() {
                 {/* Empty State */}
                 {activeQueue.length === 0 && completedQueue.length === 0 && (
                   <div className="text-center py-8 text-muted-foreground">
-                    No patients in queue today.
+                    {t('queue:empty.noPatients')}
                   </div>
                 )}
               </div>

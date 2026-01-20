@@ -1,0 +1,37 @@
+{
+  "title": "Dashboard",
+  "welcome": "Welcome back{{name}}! Here's what's happening at your clinic.",
+  "stats": {
+    "todaysPatients": "Today's Patients",
+    "inQueue": "In Queue",
+    "completedToday": "Completed Today",
+    "totalPatients": "Total Patients"
+  },
+  "charts": {
+    "visitTrends": "Visit Trends",
+    "visitStatus": "Visit Status Distribution",
+    "doctorPerformance": "Doctor Performance",
+    "visitTypes": "Visit Types Distribution"
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "addNewPatient": "Add New Patient",
+    "addNewPatientDesc": "Register a new patient in the system",
+    "addToQueue": "Add to Queue",
+    "addToQueueDesc": "Add patient to today's waiting queue",
+    "waitingRoomDisplay": "Waiting Room Display",
+    "waitingRoomDisplayDesc": "Show queue status on waiting room screen"
+  },
+  "recentActivity": {
+    "title": "Recent Activity",
+    "noActivity": "No recent activity",
+    "activityAppears": "Activity will appear here when patients are added to the queue",
+    "currentlyServing": "Currently serving",
+    "waiting": "Waiting"
+  },
+  "timeRange": {
+    "days7": "7 Days",
+    "days30": "30 Days",
+    "days90": "90 Days"
+  }
+}

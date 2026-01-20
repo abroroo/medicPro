@@ -6,6 +6,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } f
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { TrendingUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface VisitTrendsChartProps {
   data: { date: string; count: number }[];
@@ -33,6 +34,14 @@ export function VisitTrendsChart({
   selectedRange,
   onRangeChange,
 }: VisitTrendsChartProps) {
+  const { t } = useTranslation(['dashboard', 'common']);
+
+  const rangeLabels: Record<number, string> = {
+    7: t('dashboard:timeRange.days7'),
+    30: t('dashboard:timeRange.days30'),
+    90: t('dashboard:timeRange.days90'),
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -68,7 +77,7 @@ export function VisitTrendsChart({
         <div className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-muted-foreground" />
           <div>
-            <CardTitle className="text-lg">Visit Trends</CardTitle>
+            <CardTitle className="text-lg">{t('dashboard:charts.visitTrends')}</CardTitle>
             <CardDescription>
               {totalVisits} total visits in the last {selectedRange} days
             </CardDescription>
@@ -83,7 +92,7 @@ export function VisitTrendsChart({
               onClick={() => onRangeChange(option.value)}
               className="h-8 px-3 text-xs"
             >
-              {option.label}
+              {rangeLabels[option.value] || option.label}
             </Button>
           ))}
         </div>

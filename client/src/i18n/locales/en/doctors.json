@@ -1,0 +1,44 @@
+{
+  "title": "Doctors",
+  "subtitle": "Manage your clinic's medical staff",
+  "searchPlaceholder": "Search doctors by name, specialty, or license...",
+  "adminRequired": "Admin Required",
+  "adminRequiredDesc": "Contact your administrator to add new doctors",
+  "empty": {
+    "noDoctors": "No doctors added yet",
+    "noDoctorsDesc": "Add your first doctor to get started with medical staff management.",
+    "noResults": "No doctors found",
+    "noResultsDesc": "No doctors match \"{{query}}\". Try a different search term.",
+    "contactAdmin": "Contact your administrator to add doctors.",
+    "addFirstDoctor": "Add First Doctor"
+  },
+  "card": {
+    "cabinet": "Cabinet: {{number}}",
+    "joined": "Joined: {{date}}",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "form": {
+    "addTitle": "Add New Doctor",
+    "editTitle": "Edit Doctor",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "email": "Email",
+    "emailPlaceholder": "doctor@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter password",
+    "specialization": "Specialization",
+    "specializationPlaceholder": "e.g., General Dentistry, Orthodontics, Oral Surgery",
+    "cabinetNumber": "Cabinet Number",
+    "cabinetNumberPlaceholder": "Office/cabinet number",
+    "phone": "Phone",
+    "phonePlaceholder": "Contact phone number",
+    "role": "Role",
+    "selectRole": "Select role"
+  },
+  "toast": {
+    "created": "Doctor created successfully",
+    "updated": "Doctor updated successfully",
+    "deleted": "Doctor deleted successfully"
+  }
+}

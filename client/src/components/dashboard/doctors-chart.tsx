@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface DoctorsChartProps {
   data: { name: string; visits: number }[];
@@ -28,6 +29,8 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function DoctorsChart({ data, isLoading = false }: DoctorsChartProps) {
+  const { t } = useTranslation(['dashboard', 'common']);
+
   if (isLoading) {
     return (
       <Card>
@@ -53,9 +56,9 @@ export function DoctorsChart({ data, isLoading = false }: DoctorsChartProps) {
       <CardHeader className="items-center pb-0">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-muted-foreground" />
-          <CardTitle className="text-lg">Doctor Performance</CardTitle>
+          <CardTitle className="text-lg">{t('dashboard:charts.doctorPerformance')}</CardTitle>
         </div>
-        <CardDescription>Visits per doctor</CardDescription>
+        <CardDescription>{t('common:nav.doctors')}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-4">
         <ChartContainer config={chartConfig} className="h-[250px] w-full">
