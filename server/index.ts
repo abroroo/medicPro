@@ -14,7 +14,8 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'https://medic-pro.vercel.app',
-  'https://medicpro-50xk.onrender.com'
+  'https://medicpro-50xk.onrender.com',
+'http://localhost:5001',
 ].filter(Boolean);
 
 app.use(cors({
