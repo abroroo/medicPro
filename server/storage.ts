@@ -70,7 +70,13 @@ export interface IStorage {
   // Report methods
   getPatientsReport(clinicId: number, filters?: { dateFrom?: string; dateTo?: string; patientName?: string }): Promise<Patient[]>;
   getPatientStats(clinicId: number): Promise<{ total: number; thisMonth: number; thisWeek: number; today: number }>;
-  
+
+  // Dashboard chart data methods
+  getVisitTrends(clinicId: number, days?: number): Promise<{ date: string; count: number }[]>;
+  getVisitStatusDistribution(clinicId: number): Promise<{ status: string; count: number }[]>;
+  getDoctorPerformance(clinicId: number): Promise<{ name: string; visits: number }[]>;
+  getVisitTypeDistribution(clinicId: number): Promise<{ type: string; count: number }[]>;
+
   sessionStore: session.Store;
 }
 
@@ -1049,6 +1055,117 @@ export class DatabaseStorage implements IStorage {
       .delete(clinicalNotes)
       .where(eq(clinicalNotes.id, id));
     return (result.rowCount || 0) > 0;
+  }
+
+  // Dashboard chart data methods
+  async getVisitTrends(clinicId: number, days: number = 30): Promise<{ date: string; count: number }[]> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    startDate.setHours(0, 0, 0, 0);
+    const startDateStr = startDate.toISOString().split('T')[0];
+
+    // Get all visits within the date range
+    const visitsInRange = await db
+      .select({
+        visitDate: visits.visitDate,
+      })
+      .from(visits)
+      .where(
+        and(
+          eq(visits.clinicId, clinicId),
+          gte(visits.visitDate, startDateStr)
+        )
+      );
+
+    // Group visits by date
+    const dateCountMap = new Map<string, number>();
+
+    // Initialize all dates in range with 0
+    for (let i = days; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      dateCountMap.set(dateStr, 0);
+    }
+
+    // Count visits per date
+    for (const visit of visitsInRange) {
+      const dateStr = typeof visit.visitDate === 'string'
+        ? visit.visitDate
+        : new Date(visit.visitDate).toISOString().split('T')[0];
+      dateCountMap.set(dateStr, (dateCountMap.get(dateStr) || 0) + 1);
+    }
+
+    // Convert to array sorted by date
+    return Array.from(dateCountMap.entries())
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  async getVisitStatusDistribution(clinicId: number): Promise<{ status: string; count: number }[]> {
+    const allVisits = await db
+      .select({ status: visits.status })
+      .from(visits)
+      .where(eq(visits.clinicId, clinicId));
+
+    // Count by status
+    const statusCounts = new Map<string, number>();
+    for (const visit of allVisits) {
+      statusCounts.set(visit.status, (statusCounts.get(visit.status) || 0) + 1);
+    }
+
+    return Array.from(statusCounts.entries())
+      .map(([status, count]) => ({ status, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  async getDoctorPerformance(clinicId: number): Promise<{ name: string; visits: number }[]> {
+    const doctorVisits = await db
+      .select({
+        doctorId: visits.doctorId,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
+      .from(visits)
+      .innerJoin(users, eq(visits.doctorId, users.id))
+      .where(
+        and(
+          eq(visits.clinicId, clinicId),
+          eq(users.clinicId, clinicId)
+        )
+      );
+
+    // Count visits per doctor
+    const doctorCounts = new Map<number, { name: string; visits: number }>();
+    for (const visit of doctorVisits) {
+      const doctorName = `${visit.firstName} ${visit.lastName}`;
+      const existing = doctorCounts.get(visit.doctorId);
+      if (existing) {
+        existing.visits += 1;
+      } else {
+        doctorCounts.set(visit.doctorId, { name: doctorName, visits: 1 });
+      }
+    }
+
+    return Array.from(doctorCounts.values())
+      .sort((a, b) => b.visits - a.visits);
+  }
+
+  async getVisitTypeDistribution(clinicId: number): Promise<{ type: string; count: number }[]> {
+    const allVisits = await db
+      .select({ visitType: visits.visitType })
+      .from(visits)
+      .where(eq(visits.clinicId, clinicId));
+
+    // Count by type
+    const typeCounts = new Map<string, number>();
+    for (const visit of allVisits) {
+      typeCounts.set(visit.visitType, (typeCounts.get(visit.visitType) || 0) + 1);
+    }
+
+    return Array.from(typeCounts.entries())
+      .map(([type, count]) => ({ type, count }))
+      .sort((a, b) => b.count - a.count);
   }
 }
 

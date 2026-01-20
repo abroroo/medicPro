@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -6,29 +6,24 @@ import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Download, 
-  Printer, 
-  Filter,
-  Users, 
-  Calendar, 
-  CalendarDays, 
+import { DateRangePresets } from "@/components/reports/date-range-presets";
+import { SortableTable } from "@/components/reports/sortable-table";
+import {
+  Download,
+  Printer,
+  Users,
+  Calendar,
+  CalendarDays,
   CalendarCheck,
-  RotateCcw,
   Stethoscope,
-  FileText
+  FileText,
+  Search,
+  TrendingUp
 } from "lucide-react";
 import { Patient, User } from "@shared/schema";
-
-interface ReportFilters {
-  dateFrom: string;
-  dateTo: string;
-  patientName: string;
-}
 
 interface VisitFilters {
   dateFrom: string;
@@ -52,21 +47,38 @@ interface VisitWithRelations {
   };
   doctor: {
     id: number;
-    name: string;
+    firstName: string;
+    lastName: string;
+    name?: string;
     specialization: string;
   };
-  clinicalNotes: any[];
+  clinicalNotes: unknown[];
+}
+
+interface PatientStats {
+  total: number;
+  thisMonth: number;
+  thisWeek: number;
+  today: number;
+}
+
+interface VisitStats {
+  total: number;
+  thisMonth: number;
+  thisWeek: number;
+  today: number;
+  completed: number;
+  scheduled: number;
+  cancelled: number;
 }
 
 export default function Reports() {
   const isMobile = useIsMobile();
   const [activeTab, setActiveTab] = useState("patients");
-  const [filters, setFilters] = useState<ReportFilters>({
-    dateFrom: "",
-    dateTo: "",
-    patientName: "",
-  });
-  
+  const [datePreset, setDatePreset] = useState("all");
+  const [dateRange, setDateRange] = useState({ from: "", to: "" });
+  const [patientSearch, setPatientSearch] = useState("");
+
   const [visitFilters, setVisitFilters] = useState<VisitFilters>({
     dateFrom: "",
     dateTo: "",
@@ -76,11 +88,11 @@ export default function Reports() {
     status: "all",
   });
 
-  const { data: patientStats } = useQuery({
+  const { data: patientStats, isLoading: patientStatsLoading } = useQuery<PatientStats>({
     queryKey: ["/api/reports/stats"],
   });
 
-  const { data: visitStats } = useQuery({
+  const { data: visitStats, isLoading: visitStatsLoading } = useQuery<VisitStats>({
     queryKey: ["/api/reports/visits/stats"],
   });
 
@@ -92,14 +104,14 @@ export default function Reports() {
     },
   });
 
-  const { data: patients = [] } = useQuery<Patient[]>({
-    queryKey: ["/api/reports/patients", filters],
+  const { data: patients = [], isLoading: patientsLoading } = useQuery<Patient[]>({
+    queryKey: ["/api/reports/patients", dateRange, patientSearch],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-      if (filters.dateTo) params.append('dateTo', filters.dateTo);
-      if (filters.patientName) params.append('patientName', filters.patientName);
-      
+      if (dateRange.from) params.append('dateFrom', dateRange.from);
+      if (dateRange.to) params.append('dateTo', dateRange.to);
+      if (patientSearch) params.append('patientName', patientSearch);
+
       const url = `/api/reports/patients${params.toString() ? '?' + params.toString() : ''}`;
       const res = await apiRequest("GET", url);
       return res.json();
@@ -107,17 +119,17 @@ export default function Reports() {
     enabled: activeTab === "patients",
   });
 
-  const { data: visits = [] } = useQuery<VisitWithRelations[]>({
-    queryKey: ["/api/reports/visits", visitFilters],
+  const { data: visits = [], isLoading: visitsLoading } = useQuery<VisitWithRelations[]>({
+    queryKey: ["/api/reports/visits", { ...visitFilters, ...dateRange, patientName: patientSearch }],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (visitFilters.dateFrom) params.append('dateFrom', visitFilters.dateFrom);
-      if (visitFilters.dateTo) params.append('dateTo', visitFilters.dateTo);
-      if (visitFilters.patientName) params.append('patientName', visitFilters.patientName);
+      if (dateRange.from) params.append('dateFrom', dateRange.from);
+      if (dateRange.to) params.append('dateTo', dateRange.to);
+      if (patientSearch) params.append('patientName', patientSearch);
       if (visitFilters.doctorId && visitFilters.doctorId !== "all") params.append('doctorId', visitFilters.doctorId);
       if (visitFilters.visitType && visitFilters.visitType !== "all") params.append('visitType', visitFilters.visitType);
       if (visitFilters.status && visitFilters.status !== "all") params.append('status', visitFilters.status);
-      
+
       const url = `/api/reports/visits${params.toString() ? '?' + params.toString() : ''}`;
       const res = await apiRequest("GET", url);
       return res.json();
@@ -125,11 +137,9 @@ export default function Reports() {
     enabled: activeTab === "visits",
   });
 
-  const handleFilterChange = (field: keyof ReportFilters, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+  const handleDatePresetChange = (from: string, to: string, preset: string) => {
+    setDatePreset(preset);
+    setDateRange({ from, to });
   };
 
   const handleVisitFilterChange = (field: keyof VisitFilters, value: string) => {
@@ -139,39 +149,15 @@ export default function Reports() {
     }));
   };
 
-  const handleResetFilters = () => {
-    if (activeTab === "patients") {
-      setFilters({
-        dateFrom: "",
-        dateTo: "",
-        patientName: "",
-      });
-    } else {
-      setVisitFilters({
-        dateFrom: "",
-        dateTo: "",
-        patientName: "",
-        doctorId: "all",
-        visitType: "all",
-        status: "all",
-      });
-    }
-  };
-
   const handleExportCSV = () => {
+    const params = new URLSearchParams();
+    if (dateRange.from) params.append('dateFrom', dateRange.from);
+    if (dateRange.to) params.append('dateTo', dateRange.to);
+    if (patientSearch) params.append('patientName', patientSearch);
+
     if (activeTab === "patients") {
-      // Export patient data
-      const params = new URLSearchParams();
-      if (filters.dateFrom) params.append('dateFrom', filters.dateFrom);
-      if (filters.dateTo) params.append('dateTo', filters.dateTo);
-      if (filters.patientName) params.append('patientName', filters.patientName);
       window.open(`/api/reports/export?${params.toString()}`, '_blank');
     } else {
-      // Export visit data
-      const params = new URLSearchParams();
-      if (visitFilters.dateFrom) params.append('dateFrom', visitFilters.dateFrom);
-      if (visitFilters.dateTo) params.append('dateTo', visitFilters.dateTo);
-      if (visitFilters.patientName) params.append('patientName', visitFilters.patientName);
       if (visitFilters.doctorId && visitFilters.doctorId !== "all") params.append('doctorId', visitFilters.doctorId);
       if (visitFilters.visitType && visitFilters.visitType !== "all") params.append('visitType', visitFilters.visitType);
       if (visitFilters.status && visitFilters.status !== "all") params.append('status', visitFilters.status);
@@ -183,7 +169,7 @@ export default function Reports() {
     window.print();
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (status) {
       case 'Completed':
         return 'default';
@@ -196,40 +182,198 @@ export default function Reports() {
     }
   };
 
+  // Patient table columns
+  const patientColumns = useMemo(() => [
+    {
+      key: "name",
+      label: "Name",
+      sortable: true,
+      render: (value: unknown) => (
+        <span className="font-medium">{String(value)}</span>
+      ),
+    },
+    {
+      key: "phone",
+      label: "Phone",
+      sortable: false,
+    },
+    {
+      key: "age",
+      label: "Age",
+      sortable: true,
+      render: (value: unknown) => value ? String(value) : "N/A",
+    },
+    {
+      key: "address",
+      label: "Address",
+      sortable: false,
+      className: "max-w-[200px] truncate",
+      render: (value: unknown) => value ? String(value) : "N/A",
+    },
+    {
+      key: "lastVisit",
+      label: "Last Visit",
+      sortable: true,
+      render: (value: unknown) =>
+        value ? new Date(value as string).toLocaleDateString() : "Never",
+    },
+  ], []);
+
+  // Visit table columns
+  const visitColumns = useMemo(() => [
+    {
+      key: "visitDate",
+      label: "Date",
+      sortable: true,
+      render: (value: unknown) => new Date(value as string).toLocaleDateString(),
+    },
+    {
+      key: "patient.name",
+      label: "Patient",
+      sortable: true,
+      render: (_: unknown, row: VisitWithRelations) => (
+        <div>
+          <div className="font-medium">{row.patient.name}</div>
+          <div className="text-xs text-muted-foreground">{row.patient.phone}</div>
+        </div>
+      ),
+    },
+    {
+      key: "doctor.firstName",
+      label: "Doctor",
+      sortable: true,
+      render: (_: unknown, row: VisitWithRelations) => (
+        <div>
+          <div>{row.doctor.firstName} {row.doctor.lastName}</div>
+          <div className="text-xs text-muted-foreground">{row.doctor.specialization}</div>
+        </div>
+      ),
+    },
+    {
+      key: "visitType",
+      label: "Type",
+      sortable: true,
+    },
+    {
+      key: "status",
+      label: "Status",
+      sortable: true,
+      render: (value: unknown) => (
+        <Badge variant={getStatusBadgeVariant(value as string)}>
+          {String(value)}
+        </Badge>
+      ),
+    },
+    {
+      key: "chiefComplaint",
+      label: "Chief Complaint",
+      sortable: false,
+      className: "max-w-[200px] truncate",
+      render: (value: unknown) => value ? String(value) : "N/A",
+    },
+  ], []);
+
+  const currentStats = activeTab === "patients" ? patientStats : visitStats;
+  const statsLoading = activeTab === "patients" ? patientStatsLoading : visitStatsLoading;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className={`${isMobile ? 'space-y-4' : 'flex justify-between items-center'} mb-6 no-print`}>
           <div>
-            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>Reports & Analytics</h2>
-            <p className="text-muted-foreground mt-2">View patient data and export reports</p>
+            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-foreground`}>Reports</h2>
+            <p className="text-muted-foreground mt-1">View and export patient and visit data</p>
           </div>
-          <div className={`${isMobile ? 'grid grid-cols-1 gap-3' : 'flex space-x-3'}`}>
-            <Button 
+          <div className={`${isMobile ? 'flex gap-2' : 'flex space-x-3'}`}>
+            <Button
               onClick={handleExportCSV}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-green-600 hover:bg-green-700 text-white flex-1 md:flex-none"
               data-testid="button-export-csv"
             >
               <Download className="w-4 h-4 mr-2" />
               Export CSV
             </Button>
-            <Button 
+            <Button
               onClick={handlePrint}
-              variant="secondary"
+              variant="outline"
+              className="flex-1 md:flex-none"
               data-testid="button-print-report"
             >
               <Printer className="w-4 h-4 mr-2" />
-              Printer Report
+              Print
             </Button>
           </div>
         </div>
 
-        {/* Main Content with Tabs */}
+        {/* Stats Summary Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 no-print">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{currentStats?.total || 0}</p>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-50 dark:bg-green-950 rounded-lg">
+                  <Calendar className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{currentStats?.thisMonth || 0}</p>
+                  <p className="text-xs text-muted-foreground">This Month</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-50 dark:bg-amber-950 rounded-lg">
+                  <CalendarDays className="h-5 w-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{currentStats?.thisWeek || 0}</p>
+                  <p className="text-xs text-muted-foreground">This Week</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-50 dark:bg-purple-950 rounded-lg">
+                  <CalendarCheck className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{currentStats?.today || 0}</p>
+                  <p className="text-xs text-muted-foreground">Today</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Date Range Presets */}
+        <div className="mb-6 no-print">
+          <DateRangePresets
+            selected={datePreset}
+            onSelect={handleDatePresetChange}
+          />
+        </div>
+
+        {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          {/* Tab Navigation */}
           <div className="no-print">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="patients" className="flex items-center gap-2" data-testid="tab-patient-reports">
@@ -243,484 +387,195 @@ export default function Reports() {
             </TabsList>
           </div>
 
-          <div className={`${isMobile ? 'space-y-6' : 'grid grid-cols-12 gap-6'}`}>
-            {/* Tab-aware Filters */}
-            <Card className={`${isMobile ? '' : 'col-span-4'} no-print`}>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Filter className="w-5 h-5 mr-2" />
-                  Filters
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* Common Filters */}
-                  <div>
-                    <Label htmlFor="dateFrom">Date From</Label>
+          {/* Filters Row */}
+          <Card className="no-print">
+            <CardContent className="p-4">
+              <div className={`flex ${isMobile ? 'flex-col' : 'flex-row items-end'} gap-4`}>
+                {/* Search */}
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                      id="dateFrom"
-                      type="date"
-                      value={activeTab === "patients" ? filters.dateFrom : visitFilters.dateFrom}
-                      onChange={(e) => activeTab === "patients" 
-                        ? handleFilterChange('dateFrom', e.target.value)
-                        : handleVisitFilterChange('dateFrom', e.target.value)
-                      }
-                      data-testid="input-filter-date-from"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="dateTo">Date To</Label>
-                    <Input
-                      id="dateTo"
-                      type="date"
-                      value={activeTab === "patients" ? filters.dateTo : visitFilters.dateTo}
-                      onChange={(e) => activeTab === "patients" 
-                        ? handleFilterChange('dateTo', e.target.value)
-                        : handleVisitFilterChange('dateTo', e.target.value)
-                      }
-                      data-testid="input-filter-date-to"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="patientName">Patient Name</Label>
-                    <Input
-                      id="patientName"
-                      placeholder="Search patient..."
-                      value={activeTab === "patients" ? filters.patientName : visitFilters.patientName}
-                      onChange={(e) => activeTab === "patients" 
-                        ? handleFilterChange('patientName', e.target.value)
-                        : handleVisitFilterChange('patientName', e.target.value)
-                      }
+                      placeholder="Search patient name..."
+                      value={patientSearch}
+                      onChange={(e) => setPatientSearch(e.target.value)}
+                      className="pl-9"
                       data-testid="input-filter-patient-name"
                     />
                   </div>
-
-                  {/* Visit-specific Filters */}
-                  {activeTab === "visits" && (
-                    <>
-                      <div>
-                        <Label htmlFor="doctorSelect">Doctor</Label>
-                        <Select
-                          value={visitFilters.doctorId}
-                          onValueChange={(value) => handleVisitFilterChange('doctorId', value)}
-                        >
-                          <SelectTrigger data-testid="select-filter-doctor">
-                            <SelectValue placeholder="All doctors" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All doctors</SelectItem>
-                            {doctors.map((doctor) => (
-                              <SelectItem key={doctor.id} value={doctor.id.toString()}>
-                                {doctor.name} - {doctor.specialization}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="visitTypeSelect">Visit Type</Label>
-                        <Select
-                          value={visitFilters.visitType}
-                          onValueChange={(value) => handleVisitFilterChange('visitType', value)}
-                        >
-                          <SelectTrigger data-testid="select-filter-visit-type">
-                            <SelectValue placeholder="All visit types" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All visit types</SelectItem>
-                            <SelectItem value="Consultation">Consultation</SelectItem>
-                            <SelectItem value="Cleaning">Cleaning</SelectItem>
-                            <SelectItem value="Treatment">Treatment</SelectItem>
-                            <SelectItem value="Follow-up">Follow-up</SelectItem>
-                            <SelectItem value="Emergency">Emergency</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="statusSelect">Status</Label>
-                        <Select
-                          value={visitFilters.status}
-                          onValueChange={(value) => handleVisitFilterChange('status', value)}
-                        >
-                          <SelectTrigger data-testid="select-filter-status">
-                            <SelectValue placeholder="All statuses" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All statuses</SelectItem>
-                            <SelectItem value="Scheduled">Scheduled</SelectItem>
-                            <SelectItem value="Completed">Completed</SelectItem>
-                            <SelectItem value="Cancelled">Cancelled</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </>
-                  )}
-
-                  <Button 
-                    variant="ghost"
-                    size="sm"
-                    className="w-full text-muted-foreground hover:text-foreground"
-                    onClick={handleResetFilters}
-                    data-testid="button-reset-filters"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Clear Filters
-                  </Button>
-                  
-                  {/* Desktop Tab-aware Stats */}
-                  {!isMobile && (
-                    <div className="mt-6 pt-6 border-t border-border">
-                      <h4 className="font-medium text-foreground mb-4 flex items-center">
-                        {activeTab === "patients" ? (
-                          <>
-                            <Users className="w-4 h-4 mr-2" />
-                            Patient Statistics
-                          </>
-                        ) : (
-                          <>
-                            <Stethoscope className="w-4 h-4 mr-2" />
-                            Visit Statistics
-                          </>
-                        )}
-                      </h4>
-                      <div className="space-y-3">
-                        {activeTab === "patients" ? (
-                          <>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">Total</span>
-                              <span className="font-medium" data-testid="stat-total-patients">{(patientStats as any)?.total || 0}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">This Month</span>
-                              <span className="font-medium" data-testid="stat-this-month">{(patientStats as any)?.thisMonth || 0}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">This Week</span>
-                              <span className="font-medium" data-testid="stat-this-week">{(patientStats as any)?.thisWeek || 0}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">Today</span>
-                              <span className="font-medium" data-testid="stat-today">{(patientStats as any)?.today || 0}</span>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">Total</span>
-                              <span className="font-medium" data-testid="stat-total-visits">{(visitStats as any)?.total || 0}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">This Month</span>
-                              <span className="font-medium" data-testid="stat-visits-this-month">{(visitStats as any)?.thisMonth || 0}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">This Week</span>
-                              <span className="font-medium" data-testid="stat-visits-this-week">{(visitStats as any)?.thisWeek || 0}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">Today</span>
-                              <span className="font-medium" data-testid="stat-visits-today">{(visitStats as any)?.today || 0}</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Mobile Tab-aware Summary Statistics */}
-            {isMobile && (
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-lg">
-                    {activeTab === "patients" ? (
-                      <>
-                        <Users className="w-5 h-5 mr-2" />
-                        Patient Statistics
-                      </>
-                    ) : (
-                      <>
-                        <Stethoscope className="w-5 h-5 mr-2" />
-                        Visit Statistics
-                      </>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4">
-                    {activeTab === "patients" ? (
-                      <>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-foreground" data-testid="stat-total-patients">
-                            {(patientStats as any)?.total || 0}
-                          </p>
-                          <p className="text-xs text-muted-foreground">Total Patients</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-foreground" data-testid="stat-this-month">
-                            {(patientStats as any)?.thisMonth || 0}
-                          </p>
-                          <p className="text-xs text-muted-foreground">This Month</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-foreground" data-testid="stat-this-week">
-                            {(patientStats as any)?.thisWeek || 0}
-                          </p>
-                          <p className="text-xs text-muted-foreground">This Week</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-foreground" data-testid="stat-today">
-                            {(patientStats as any)?.today || 0}
-                          </p>
-                          <p className="text-xs text-muted-foreground">Today</p>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-foreground" data-testid="stat-total-visits">
-                            {(visitStats as any)?.total || 0}
-                          </p>
-                          <p className="text-xs text-muted-foreground">Total Visits</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-foreground" data-testid="stat-visits-this-month">
-                            {(visitStats as any)?.thisMonth || 0}
-                          </p>
-                          <p className="text-xs text-muted-foreground">This Month</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-foreground" data-testid="stat-visits-this-week">
-                            {(visitStats as any)?.thisWeek || 0}
-                          </p>
-                          <p className="text-xs text-muted-foreground">This Week</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-2xl font-bold text-foreground" data-testid="stat-visits-today">
-                            {(visitStats as any)?.today || 0}
-                          </p>
-                          <p className="text-xs text-muted-foreground">Today</p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+                {/* Visit-specific filters */}
+                {activeTab === "visits" && (
+                  <>
+                    <Select
+                      value={visitFilters.doctorId}
+                      onValueChange={(value) => handleVisitFilterChange('doctorId', value)}
+                    >
+                      <SelectTrigger className="w-full md:w-[180px]" data-testid="select-filter-doctor">
+                        <SelectValue placeholder="All doctors" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All doctors</SelectItem>
+                        {doctors.map((doctor) => (
+                          <SelectItem key={doctor.id} value={doctor.id.toString()}>
+                            {doctor.firstName} {doctor.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
-            {/* Tab Content */}
-            <div className={`${isMobile ? '' : 'col-span-8'}`}>
-              <TabsContent value="patients">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <FileText className="w-5 h-5 mr-2" />
-                      Patient Report
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {patients.length === 0 ? (
+                    <Select
+                      value={visitFilters.visitType}
+                      onValueChange={(value) => handleVisitFilterChange('visitType', value)}
+                    >
+                      <SelectTrigger className="w-full md:w-[150px]" data-testid="select-filter-visit-type">
+                        <SelectValue placeholder="Visit type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All types</SelectItem>
+                        <SelectItem value="Consultation">Consultation</SelectItem>
+                        <SelectItem value="Dental">Dental</SelectItem>
+                        <SelectItem value="Follow-up">Follow-up</SelectItem>
+                        <SelectItem value="Emergency">Emergency</SelectItem>
+                        <SelectItem value="Gynecology">Gynecology</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select
+                      value={visitFilters.status}
+                      onValueChange={(value) => handleVisitFilterChange('status', value)}
+                    >
+                      <SelectTrigger className="w-full md:w-[140px]" data-testid="select-filter-status">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All statuses</SelectItem>
+                        <SelectItem value="Scheduled">Scheduled</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Patient Reports Tab */}
+          <TabsContent value="patients">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-lg">
+                  <FileText className="w-5 h-5 mr-2" />
+                  Patient Report
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({patients.length} {patients.length === 1 ? 'patient' : 'patients'})
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isMobile ? (
+                  // Mobile Card Layout
+                  <div className="space-y-3">
+                    {patientsLoading ? (
+                      [...Array(3)].map((_, i) => (
+                        <Card key={i} className="p-4 animate-pulse">
+                          <div className="h-5 bg-muted rounded w-1/2 mb-2" />
+                          <div className="h-4 bg-muted rounded w-3/4 mb-1" />
+                          <div className="h-4 bg-muted rounded w-1/2" />
+                        </Card>
+                      ))
+                    ) : patients.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
                         No patients found matching the current filters.
                       </div>
-                    ) : isMobile ? (
-                      // Mobile Card Layout with Scrolling
-                      <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">
-                        {patients.map((patient) => (
-                          <Card key={patient.id} className="p-4 flex-shrink-0" data-testid={`report-patient-${patient.id}`}>
-                            <div className="space-y-2">
-                              <h3 className="font-semibold text-foreground">{patient.name}</h3>
-                              <div className="text-sm text-muted-foreground space-y-1">
-                                <p><span className="font-medium">Phone:</span> {patient.phone}</p>
-                                <p><span className="font-medium">Age:</span> {patient.age || 'N/A'}</p>
-                                {patient.address && (
-                                  <p><span className="font-medium">Address:</span> {patient.address}</p>
-                                )}
-                                <p><span className="font-medium">Last Visit:</span> {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}</p>
-                              </div>
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
                     ) : (
-                      // Desktop Table Layout with Scrolling
-                      <div className="max-h-[70vh] overflow-auto border rounded-md">
-                        <table className="min-w-full divide-y divide-border">
-                          <thead className="bg-muted">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Name
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Phone
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Age
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Address
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Last Visit
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-card divide-y divide-border">
-                            {patients.map((patient) => (
-                              <tr key={patient.id} className="hover:bg-accent transition-colors" data-testid={`report-patient-${patient.id}`}>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm font-medium text-foreground">
-                                    {patient.name}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-muted-foreground">
-                                    {patient.phone}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-muted-foreground">
-                                    {patient.age || 'N/A'}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="text-sm text-muted-foreground">
-                                    {patient.address || 'N/A'}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-muted-foreground">
-                                    {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      patients.map((patient) => (
+                        <Card key={patient.id} className="p-4" data-testid={`report-patient-${patient.id}`}>
+                          <h3 className="font-semibold text-foreground">{patient.name}</h3>
+                          <div className="text-sm text-muted-foreground space-y-1 mt-2">
+                            <p>Phone: {patient.phone}</p>
+                            <p>Age: {patient.age || 'N/A'}</p>
+                            {patient.address && <p>Address: {patient.address}</p>}
+                            <p>Last Visit: {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'Never'}</p>
+                          </div>
+                        </Card>
+                      ))
                     )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  </div>
+                ) : (
+                  <SortableTable
+                    columns={patientColumns}
+                    data={patients}
+                    isLoading={patientsLoading}
+                    emptyMessage="No patients found matching the current filters."
+                    keyExtractor={(patient) => patient.id}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <TabsContent value="visits">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Calendar className="w-5 h-5 mr-2" />
-                      Visit History
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {visits.length === 0 ? (
+          {/* Visit History Tab */}
+          <TabsContent value="visits">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-lg">
+                  <Calendar className="w-5 h-5 mr-2" />
+                  Visit History
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({visits.length} {visits.length === 1 ? 'visit' : 'visits'})
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isMobile ? (
+                  // Mobile Card Layout
+                  <div className="space-y-3">
+                    {visitsLoading ? (
+                      [...Array(3)].map((_, i) => (
+                        <Card key={i} className="p-4 animate-pulse">
+                          <div className="h-5 bg-muted rounded w-1/2 mb-2" />
+                          <div className="h-4 bg-muted rounded w-3/4 mb-1" />
+                          <div className="h-4 bg-muted rounded w-1/2" />
+                        </Card>
+                      ))
+                    ) : visits.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
                         No visits found matching the current filters.
                       </div>
-                    ) : isMobile ? (
-                      // Mobile Card Layout with Scrolling
-                      <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-2">
-                        {visits.map((visit) => (
-                          <Card key={visit.id} className="p-4 flex-shrink-0" data-testid={`report-visit-${visit.id}`}>
-                            <div className="space-y-3">
-                              <div className="flex justify-between items-start">
-                                <h3 className="font-semibold text-foreground">{visit.patient.name}</h3>
-                                <Badge variant={getStatusBadgeVariant(visit.status)} data-testid={`badge-status-${visit.status.toLowerCase()}`}>
-                                  {visit.status}
-                                </Badge>
-                              </div>
-                              <div className="text-sm text-muted-foreground space-y-1">
-                                <p><span className="font-medium">Date:</span> {new Date(visit.visitDate).toLocaleDateString()}</p>
-                                <p><span className="font-medium">Doctor:</span> {visit.doctor.firstName} {visit.doctor.lastName} ({visit.doctor.specialization})</p>
-                                <p><span className="font-medium">Type:</span> {visit.visitType}</p>
-                                <p><span className="font-medium">Phone:</span> {visit.patient.phone}</p>
-                                {visit.chiefComplaint && (
-                                  <p><span className="font-medium">Chief Complaint:</span> {visit.chiefComplaint}</p>
-                                )}
-                              </div>
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
                     ) : (
-                      // Desktop Table Layout with Scrolling
-                      <div className="max-h-[70vh] overflow-auto border rounded-md">
-                        <table className="min-w-full divide-y divide-border">
-                          <thead className="bg-muted">
-                            <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Date
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Patient
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Doctor
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Type
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Status
-                              </th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                                Chief Complaint
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-card divide-y divide-border">
-                            {visits.map((visit) => (
-                              <tr key={visit.id} className="hover:bg-accent transition-colors" data-testid={`report-visit-${visit.id}`}>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-foreground">
-                                    {new Date(visit.visitDate).toLocaleDateString()}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm font-medium text-foreground">
-                                    {visit.patient.name}
-                                  </div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {visit.patient.phone}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-foreground">
-                                    {visit.doctor.name}
-                                  </div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {visit.doctor.specialization}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm text-muted-foreground">
-                                    {visit.visitType}
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <Badge variant={getStatusBadgeVariant(visit.status)} data-testid={`badge-status-${visit.status.toLowerCase()}`}>
-                                    {visit.status}
-                                  </Badge>
-                                </td>
-                                <td className="px-6 py-4">
-                                  <div className="text-sm text-muted-foreground">
-                                    {visit.chiefComplaint || 'N/A'}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                      visits.map((visit) => (
+                        <Card key={visit.id} className="p-4" data-testid={`report-visit-${visit.id}`}>
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-semibold text-foreground">{visit.patient.name}</h3>
+                            <Badge variant={getStatusBadgeVariant(visit.status)}>
+                              {visit.status}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            <p>Date: {new Date(visit.visitDate).toLocaleDateString()}</p>
+                            <p>Doctor: {visit.doctor.firstName} {visit.doctor.lastName}</p>
+                            <p>Type: {visit.visitType}</p>
+                            {visit.chiefComplaint && <p>Complaint: {visit.chiefComplaint}</p>}
+                          </div>
+                        </Card>
+                      ))
                     )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </div>
-          </div>
+                  </div>
+                ) : (
+                  <SortableTable
+                    columns={visitColumns}
+                    data={visits}
+                    isLoading={visitsLoading}
+                    emptyMessage="No visits found matching the current filters."
+                    keyExtractor={(visit) => visit.id}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </div>

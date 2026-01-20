@@ -1,101 +1,167 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/navbar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { 
-  Users, 
-  Clock, 
-  CheckCircle, 
-  Database, 
-  UserPlus, 
-  PlusCircle, 
+import {
+  Users,
+  Clock,
+  CheckCircle,
+  Database,
+  UserPlus,
+  PlusCircle,
   Monitor,
-  Activity
+  Activity,
+  CalendarDays
 } from "lucide-react";
+import { StatsCard } from "@/components/dashboard/stats-card";
+import { VisitTrendsChart } from "@/components/dashboard/visit-trends-chart";
+import { VisitStatusChart } from "@/components/dashboard/visit-status-chart";
+import { DoctorsChart } from "@/components/dashboard/doctors-chart";
+import { VisitTypesChart } from "@/components/dashboard/visit-types-chart";
+import { useAuth } from "@/hooks/use-auth";
+
+interface ChartData {
+  visitTrends: { date: string; count: number }[];
+  statusDistribution: { status: string; count: number }[];
+  doctorPerformance: { name: string; visits: number }[];
+  typeDistribution: { type: string; count: number }[];
+}
+
+interface QueueStats {
+  waiting: number;
+  serving: number;
+  completed: number;
+  skipped: number;
+  cancelled: number;
+}
+
+interface PatientStats {
+  total: number;
+  thisMonth: number;
+  thisWeek: number;
+  today: number;
+}
+
+interface QueueItem {
+  id: number;
+  queueNumber: number;
+  status: string;
+  createdAt: string;
+  patient: {
+    name: string;
+  };
+  visitType?: string;
+}
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+  const [timeRange, setTimeRange] = useState(30);
+  const { user } = useAuth();
 
-  const { data: queueStats } = useQuery({
+  const { data: queueStats, isLoading: queueStatsLoading } = useQuery<QueueStats>({
     queryKey: ["/api/queue/stats"],
   });
 
-  const { data: patientStats } = useQuery({
+  const { data: patientStats, isLoading: patientStatsLoading } = useQuery<PatientStats>({
     queryKey: ["/api/reports/stats"],
   });
 
-  const { data: queue } = useQuery({
+  const { data: queue, isLoading: queueLoading } = useQuery<QueueItem[]>({
     queryKey: ["/api/queue"],
   });
 
-  const recentActivity = (queue as any[])?.slice(-4).reverse() || [];
+  const { data: chartData, isLoading: chartLoading } = useQuery<ChartData>({
+    queryKey: ["/api/dashboard/chart-data", { days: timeRange }],
+    queryFn: async () => {
+      const response = await fetch(`/api/dashboard/chart-data?days=${timeRange}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch chart data');
+      }
+      return response.json();
+    },
+  });
+
+  const recentActivity = queue?.slice(-8).reverse() || [];
+  const isLoading = queueStatsLoading || patientStatsLoading || chartLoading;
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-foreground">Dashboard</h2>
           <p className="text-muted-foreground mt-2">
-            Welcome back! Here's what's happening at your clinic today.
+            Welcome back{user?.firstName ? `, ${user.firstName}` : ''}! Here's what's happening at your clinic.
           </p>
         </div>
 
-        {/* Compact Stats Overview */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Activity className="w-5 h-5 mr-2" />
-              Today's Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-primary" />
-                <div>
-                  <p className="text-lg font-bold text-foreground" data-testid="stat-today-patients">
-                    {(patientStats as any)?.today || 0}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Today's Patients</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
-                <div>
-                  <p className="text-lg font-bold text-foreground" data-testid="stat-queue-length">
-                    {(queueStats as any)?.waiting || 0}
-                  </p>
-                  <p className="text-xs text-muted-foreground">In Queue</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <div>
-                  <p className="text-lg font-bold text-foreground" data-testid="stat-completed">
-                    {(queueStats as any)?.completed || 0}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Completed</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 rounded-full bg-amber-500" />
-                <div>
-                  <p className="text-lg font-bold text-foreground" data-testid="stat-total-patients">
-                    {(patientStats as any)?.total || 0}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Total Patients</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Stats Cards Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatsCard
+            title="Today's Patients"
+            value={patientStats?.today || 0}
+            icon={CalendarDays}
+            color="blue"
+            isLoading={patientStatsLoading}
+          />
+          <StatsCard
+            title="In Queue"
+            value={queueStats?.waiting || 0}
+            icon={Clock}
+            color="amber"
+            isLoading={queueStatsLoading}
+          />
+          <StatsCard
+            title="Completed Today"
+            value={queueStats?.completed || 0}
+            icon={CheckCircle}
+            color="green"
+            isLoading={queueStatsLoading}
+          />
+          <StatsCard
+            title="Total Patients"
+            value={patientStats?.total || 0}
+            icon={Users}
+            color="purple"
+            isLoading={patientStatsLoading}
+          />
+        </div>
+
+        {/* Visit Trends Chart - Full Width */}
+        <div className="mb-8">
+          <VisitTrendsChart
+            data={chartData?.visitTrends || []}
+            isLoading={chartLoading}
+            selectedRange={timeRange}
+            onRangeChange={setTimeRange}
+          />
+        </div>
+
+        {/* Status Distribution and Doctor Performance */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          <VisitStatusChart
+            data={chartData?.statusDistribution || []}
+            isLoading={chartLoading}
+          />
+          <DoctorsChart
+            data={chartData?.doctorPerformance || []}
+            isLoading={chartLoading}
+          />
+        </div>
+
+        {/* Visit Types Chart - Full Width */}
+        <div className="mb-8">
+          <VisitTypesChart
+            data={chartData?.typeDistribution || []}
+            isLoading={chartLoading}
+          />
+        </div>
 
         {/* Quick Actions and Recent Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -124,7 +190,7 @@ export default function Dashboard() {
                 onClick={() => setLocation("/queue")}
                 data-testid="quick-action-add-queue"
               >
-                <PlusCircle className="text-secondary mr-3 w-5 h-5" />
+                <PlusCircle className="text-blue-600 mr-3 w-5 h-5" />
                 <div className="text-left">
                   <p className="font-medium text-foreground">Add to Queue</p>
                   <p className="text-sm text-muted-foreground">Add patient to today's waiting queue</p>
@@ -155,24 +221,46 @@ export default function Dashboard() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {recentActivity.length === 0 ? (
-                <p className="text-muted-foreground text-sm">No recent activity</p>
+              {queueLoading ? (
+                <div className="space-y-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="flex items-center space-x-3 animate-pulse">
+                      <div className="w-2 h-2 rounded-full bg-muted" />
+                      <div className="flex-1">
+                        <div className="h-4 bg-muted rounded w-3/4 mb-1" />
+                        <div className="h-3 bg-muted rounded w-1/2" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : recentActivity.length === 0 ? (
+                <div className="text-center py-8">
+                  <Activity className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground text-sm">No recent activity</p>
+                  <p className="text-muted-foreground text-xs mt-1">Activity will appear here when patients are added to the queue</p>
+                </div>
               ) : (
                 <div className="space-y-4">
-                  {recentActivity.map((item: any) => (
+                  {recentActivity.map((item) => (
                     <div key={item.id} className="flex items-center space-x-3" data-testid={`activity-${item.id}`}>
-                      <div className={`w-2 h-2 rounded-full ${
-                        item.status === 'completed' ? 'bg-green-500' : 
-                        item.status === 'serving' ? 'bg-yellow-500' : 'bg-blue-500'
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                        item.status === 'completed' ? 'bg-green-500' :
+                        item.status === 'serving' ? 'bg-yellow-500' :
+                        item.status === 'cancelled' ? 'bg-red-500' :
+                        item.status === 'skipped' ? 'bg-orange-500' : 'bg-blue-500'
                       }`} />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          Patient #{item.queueNumber} - {item.patient?.name}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          #{item.queueNumber} - {item.patient?.name}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {item.status === 'completed' ? 'Service completed' : 
-                           item.status === 'serving' ? 'Currently serving' : 'Added to queue'} •{' '}
-                          {new Date(item.createdAt).toLocaleTimeString()}
+                          {item.status === 'completed' ? 'Completed' :
+                           item.status === 'serving' ? 'Currently serving' :
+                           item.status === 'cancelled' ? 'Cancelled' :
+                           item.status === 'skipped' ? 'Skipped' : 'Waiting'}
+                          {item.visitType && ` • ${item.visitType}`}
+                          {' • '}
+                          {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>

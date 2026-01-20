@@ -413,6 +413,32 @@ export function registerRoutes(app: Express): Server {
   });
 
 
+  // Dashboard chart data endpoint
+  app.get("/api/dashboard/chart-data", requireAuth, async (req, res) => {
+    addNoCacheHeaders(res);
+    try {
+      const days = req.query.days ? parseInt(req.query.days as string) : 30;
+      const clinicId = req.user!.clinicId;
+
+      const [visitTrends, statusDistribution, doctorPerformance, typeDistribution] = await Promise.all([
+        storage.getVisitTrends(clinicId, days),
+        storage.getVisitStatusDistribution(clinicId),
+        storage.getDoctorPerformance(clinicId),
+        storage.getVisitTypeDistribution(clinicId),
+      ]);
+
+      res.json({
+        visitTrends,
+        statusDistribution,
+        doctorPerformance,
+        typeDistribution,
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard chart data:', error);
+      res.status(500).json({ message: "Failed to fetch dashboard chart data" });
+    }
+  });
+
   // Visit routes
 
 
