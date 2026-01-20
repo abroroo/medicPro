@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Patient, Visit, ClinicalNotes, Doctor } from "@shared/schema";
 import { VisitFormModal } from "@/components/visit-form-modal";
+import { PatientFormModal } from "@/components/patient-form-modal";
 
 type VisitWithRelations = Visit & { patient: Patient; doctor: Doctor };
 
@@ -74,6 +75,7 @@ export default function PatientDetail() {
   const isMobile = useIsMobile();
   const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
   const [editingVisit, setEditingVisit] = useState<any>(null);
+  const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
 
   // Export and Print handlers
   const handleExportToCSV = () => {
@@ -358,9 +360,10 @@ export default function PatientDetail() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size={isMobile ? "sm" : "default"}
+              onClick={() => setIsPatientModalOpen(true)}
               data-testid="button-edit-patient-detail"
             >
               <Edit className="w-4 h-4 mr-2" />
@@ -660,6 +663,13 @@ export default function PatientDetail() {
           }}
           preSelectedPatientId={patientId}
           visit={editingVisit}
+        />
+
+        {/* Patient Edit Modal */}
+        <PatientFormModal
+          open={isPatientModalOpen}
+          onOpenChange={setIsPatientModalOpen}
+          patient={patient}
         />
       </div>
     </div>

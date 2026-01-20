@@ -194,8 +194,19 @@ export function registerRoutes(app: Express): Server {
       
       // Basic validation
       if (!patientId || !doctorId || !visitType || !visitDate) {
-        return res.status(400).json({ 
-          message: "Missing required fields: patientId, doctorId, visitType, visitDate" 
+        return res.status(400).json({
+          message: "Missing required fields: patientId, doctorId, visitType, visitDate"
+        });
+      }
+
+      // Validate visitDate is not in the past
+      const visitDateObj = new Date(visitDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (visitDateObj < today) {
+        return res.status(400).json({
+          message: "Visit date cannot be in the past"
         });
       }
 
@@ -228,8 +239,13 @@ export function registerRoutes(app: Express): Server {
         visit
       });
     } catch (error) {
-      if (error instanceof Error && error.message.includes('not found')) {
-        return res.status(404).json({ message: error.message });
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          return res.status(404).json({ message: error.message });
+        }
+        if (error.message.includes('already has an active queue entry')) {
+          return res.status(409).json({ message: error.message });
+        }
       }
       console.error("Queue creation error:", error);
       res.status(500).json({ message: "Failed to schedule visit and add to queue" });
@@ -698,6 +714,13 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Specialization is required for doctor roles" });
       }
 
+      // Head doctors can only create users in their own clinic
+      if (req.user!.role === 'head_doctor' && clinicId !== req.user!.clinicId) {
+        return res.status(403).json({
+          message: "Head doctors can only create users in their own clinic"
+        });
+      }
+
       const hashedPassword = await hashPassword(password);
 
       const userData = {
@@ -743,6 +766,39 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.delete("/api/users/:id", requireHeadDoctor, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+
+      // Prevent self-deletion
+      if (id === req.user!.id) {
+        return res.status(400).json({ message: "Cannot delete your own account" });
+      }
+
+      // Check if user has visit history
+      const hasHistory = await storage.hasUserVisitHistory(id);
+
+      if (hasHistory) {
+        // Soft delete - deactivate user to preserve visit records
+        const success = await storage.deactivateUser(id, req.user!.clinicId);
+        if (!success) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        return res.json({ message: "User deactivated (has visit history)" });
+      }
+
+      // Hard delete - no visit history
+      const success = await storage.deleteUser(id, req.user!.clinicId);
+      if (!success) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.sendStatus(204);
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
 
   // Migration route (temporary - for migrating remaining clinics)
   app.post("/api/migrate-clinics", requireAdmin, async (req, res) => {
