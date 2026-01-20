@@ -68,14 +68,15 @@ export default function AuthPage() {
                 <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
                   <Stethoscope className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <h1 className="text-3xl font-bold text-foreground">DentalQueue Pro</h1>
+                <h1 className="text-3xl font-bold text-foreground">MedicPro</h1>
               </div>
               <h2 className="text-4xl font-bold text-foreground leading-tight">
                 Transform Your Dental Practice Management
               </h2>
               <p className="text-xl text-muted-foreground">
-                Streamline patient management, queue operations, and waiting room experience 
-                with our comprehensive dental clinic SaaS solution.
+                Streamline patient management, queue operations, and waiting
+                room experience with our comprehensive dental clinic SaaS
+                solution.
               </p>
             </div>
 
@@ -85,9 +86,12 @@ export default function AuthPage() {
                   <Users className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Patient Management</h3>
+                  <h3 className="font-semibold text-foreground">
+                    Patient Management
+                  </h3>
                   <p className="text-muted-foreground">
-                    Complete patient database with search, edit, and detailed patient records.
+                    Complete patient database with search, edit, and detailed
+                    patient records.
                   </p>
                 </div>
               </div>
@@ -97,9 +101,12 @@ export default function AuthPage() {
                   <Clock className="w-5 h-5 text-secondary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Digital Queue System</h3>
+                  <h3 className="font-semibold text-foreground">
+                    Digital Queue System
+                  </h3>
                   <p className="text-muted-foreground">
-                    Automated queue management with real-time waiting room displays.
+                    Automated queue management with real-time waiting room
+                    displays.
                   </p>
                 </div>
               </div>
@@ -109,9 +116,12 @@ export default function AuthPage() {
                   <Shield className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Secure & Compliant</h3>
+                  <h3 className="font-semibold text-foreground">
+                    Secure & Compliant
+                  </h3>
                   <p className="text-muted-foreground">
-                    Multi-clinic data isolation with secure authentication and reporting.
+                    Multi-clinic data isolation with secure authentication and
+                    reporting.
                   </p>
                 </div>
               </div>
@@ -122,18 +132,31 @@ export default function AuthPage() {
           <Card className="w-full max-w-md mx-auto">
             <CardHeader>
               <CardTitle className="text-2xl text-center">
-                {activeTab === "login" ? "Sign In to Your Clinic" : "Create Your Clinic Account"}
+                {activeTab === "login"
+                  ? "Sign In to Your Clinic"
+                  : "Create Your Clinic Account"}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+              >
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="login" data-testid="tab-login">Sign In</TabsTrigger>
-                  <TabsTrigger value="register" data-testid="tab-register">Sign Up</TabsTrigger>
+                  <TabsTrigger value="login" data-testid="tab-login">
+                    Sign In
+                  </TabsTrigger>
+                  <TabsTrigger value="register" data-testid="tab-register">
+                    Sign Up
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="login" className="space-y-4 mt-6">
-                  <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+                  <form
+                    onSubmit={loginForm.handleSubmit(handleLogin)}
+                    className="space-y-4"
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="login-email">Email</Label>
                       <Input
@@ -166,8 +189,8 @@ export default function AuthPage() {
                       )}
                     </div>
 
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="w-full"
                       disabled={loginMutation.isPending}
                       data-testid="button-login"
@@ -178,7 +201,10 @@ export default function AuthPage() {
                 </TabsContent>
 
                 <TabsContent value="register" className="space-y-4 mt-6">
-                  <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
+                  <form
+                    onSubmit={registerForm.handleSubmit(handleRegister)}
+                    className="space-y-4"
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="register-clinic">Clinic Name</Label>
                       <Input
@@ -226,13 +252,15 @@ export default function AuthPage() {
                       )}
                     </div>
 
-                    <Button 
-                      type="submit" 
+                    <Button
+                      type="submit"
                       className="w-full"
                       disabled={registerMutation.isPending}
                       data-testid="button-register"
                     >
-                      {registerMutation.isPending ? "Creating Account..." : "Create Account"}
+                      {registerMutation.isPending
+                        ? "Creating Account..."
+                        : "Create Account"}
                     </Button>
                   </form>
                 </TabsContent>
@@ -241,7 +269,8 @@ export default function AuthPage() {
               <div className="mt-6">
                 <Separator />
                 <div className="mt-4 text-center text-sm text-muted-foreground">
-                  By continuing, you agree to our Terms of Service and Privacy Policy
+                  By continuing, you agree to our Terms of Service and Privacy
+                  Policy
                 </div>
               </div>
             </CardContent>
